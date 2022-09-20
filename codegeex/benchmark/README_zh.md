@@ -28,7 +28,7 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 可以直接从Docker Hub拉取镜像：
 
 ```bash
-docker pull rishubi/codegeex:HumanEval-X
+docker pull rishubi/codegeex:latest
 ```
 
 如果您熟悉Dockerfile，也可以从`codegeex/docker/Dockerfile`构建镜像，或者修改之以定制自己的配置：
@@ -54,7 +54,7 @@ docker run -it --gpus all --mount type=bind,source=<LOCAL PATH>,target=<PATH IN 
 ...
 ```
 
-并在本仓库的根目录下使用如下指令（请谨慎执行，生成的代码可能有极低概率产生意外行为。在[execution.py](execution.py)中查看警告并取消执行代码的注释，风险自负）：
+并在本仓库的根目录下使用如下指令（<font color='red'>请谨慎执行，生成的代码可能有极低概率产生意外行为。在[execution.py](execution.py)中查看警告并取消执行代码的注释，风险自负</font>）：
 
 ```bash
 bash scripts/evaluate_humaneval_x.sh <RESULT_FILE> <LANG> <N_WORKERS>

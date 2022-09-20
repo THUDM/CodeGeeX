@@ -28,7 +28,7 @@ The evaluation of the generated codes involves compiling and running in multiple
 You can directly pull the image from Docker Hub:
 
 ```bash
-docker pull rishubi/codegeex:HumanEval-X
+docker pull rishubi/codegeex:latest
 ```
 
 Alternatively, if you are familiar with Dockerfile, you can build the image from `codegeex/docker/Dockerfile` or configure the Dockerfile as you like it:
@@ -54,7 +54,7 @@ We recommend evaluating in [the provided image](#evaluation-environment). To eva
 ...
 ```
 
-and evaluate them using the following script under the root directory of the repository (please execute with caution, the generated codes might have unexpected behaviours though with very low possibility. See the warnings in [execution.py](execution.py) and uncomment the execution lines at your own risk):
+and evaluate them using the following script under the root directory of the repository (<font color='red'>please execute with caution, the generated codes might have unexpected behaviours though with very low possibility. See the warnings in [execution.py](execution.py) and uncomment the execution lines at your own risk</font>):
 
 ```bash
 bash scripts/evaluate_humaneval_x.sh <RESULT_FILE> <LANG> <N_WORKERS>
