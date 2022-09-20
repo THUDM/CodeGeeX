@@ -23,7 +23,21 @@ Data are stored in ``codegeex/benchmark/humaneval-x/[LANG]/data/humaneval_[LANG]
 
 ### Evaluation Environment
 
-The evaluation of the generated codes involves compiling and running in multiple programming languages. In order to save everyone the trouble of setting up the environments for these languages, we build a Docker image with the required environments and CodeGeeX installed.
+The evaluation of the generated codes involves compiling and running in multiple programming languages. The versions of the programming language environments and packages we use are as follows:
+
+| Dependency | Version  |
+| ---------- | -------- |
+| Python     | 3.8.12   |
+| JDK        | 18.0.2.1 |
+| Node.js    | 16.14.0  |
+| js-md5     | 0.7.3    |
+| C++        | 11       |
+| g++        | 7.5.0    |
+| Boost      | 1.71.0   |
+| OpenSSL    | 3.0.0    |
+| go         | 1.18.4   |
+
+In order to save everyone the trouble of setting up the environments for these languages, we build a Docker image with the required environments and CodeGeeX installed.
 
 You can directly pull the image from Docker Hub:
 
