@@ -23,12 +23,26 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 
 ### 评测环境
 
-评测生成的代码需要使用多种语言编译、运行。为了省去使用者配置这些语言环境的麻烦，我们构建了一个Docker镜像，并在其中配置了所需要的环境。
+评测生成的代码需要使用多种语言编译、运行。我们使用的各编程语言依赖及所用包的版本如下：
+
+| 依赖    | 版本     |
+| ------- | -------- |
+| Python  | 3.8.12   |
+| JDK     | 18.0.2.1 |
+| Node.js | 16.14.0  |
+| js-md5  | 0.7.3    |
+| C++     | 11       |
+| g++     | 7.5.0    |
+| Boost   | 1.71.0   |
+| OpenSSL | 3.0.0    |
+| go      | 1.18.4   |
+
+为了省去使用者配置这些语言环境的麻烦，我们构建了一个Docker镜像，并在其中配置了所需要的环境。
 
 可以直接从Docker Hub拉取镜像：
 
 ```bash
-docker pull rishubi/codegeex:HumanEval-X
+docker pull rishubi/codegeex:latest
 ```
 
 如果您熟悉Dockerfile，也可以从`codegeex/docker/Dockerfile`构建镜像，或者修改之以定制自己的配置：
@@ -54,7 +68,7 @@ docker run -it --gpus all --mount type=bind,source=<LOCAL PATH>,target=<PATH IN 
 ...
 ```
 
-并在本仓库的根目录下使用如下指令（请谨慎执行，生成的代码可能有极低概率产生意外行为。在[execution.py](execution.py)中查看警告并取消执行代码的注释，风险自负）：
+并在本仓库的根目录下使用如下指令（<font color='red'>请谨慎执行，生成的代码可能有极低概率产生意外行为。在[execution.py](execution.py)中查看警告并取消执行代码的注释，风险自负</font>）：
 
 ```bash
 bash scripts/evaluate_humaneval_x.sh <RESULT_FILE> <LANG> <N_WORKERS>
