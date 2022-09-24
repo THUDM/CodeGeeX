@@ -212,7 +212,9 @@ def inspect_result(
                             result_stats[task_id]["runtime error"] += 1
 
                     elif language_type == "go":
-                        if "undefined" in error:
+                        if "Error:      \tNot equal:" in error:
+                            result_stats[task_id]["assertion error"] += 1
+                        elif "undefined" in error:
                             result_stats[task_id]["undefined error"] += 1
                         elif "expected" in error and "found" in error:
                             result_stats[task_id]["syntax error"] += 1
@@ -221,7 +223,7 @@ def inspect_result(
                         elif "unexpected" in error:
                             result_stats[task_id]["syntax error"] += 1
                         elif "FAIL" in error:
-                            result_stats[task_id]["assertion error"] += 1
+                            result_stats[task_id]["runtime error"] += 1
                         elif "timed out" in error:
                             result_stats[task_id]["timeout error"] += 1
                         elif "not used" in error:
