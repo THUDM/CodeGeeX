@@ -1,8 +1,17 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="http://keg.cs.tsinghua.edu.cn/codegeex/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📃 论文（即将推出！）| 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="http://keg.cs.tsinghua.edu.cn/codegeex/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📃 论文（即将推出！）
 </p>
+<p align="center">
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | ⌨️ <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png" target="_blank">加入开发者群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+</p>
+
+![CodeGeeX vscode extension version](https://vsmarketplacebadge.apphb.com/version-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX download](https://vsmarketplacebadge.apphb.com/downloads-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX API calls last week](https://img.shields.io/badge/dynamic/json?label=API%20calls&query=%24.result.count&suffix=%2Fweek&url=http%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dweeks&colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension rating](https://vsmarketplacebadge.apphb.com/rating-star/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension trending](https://vsmarketplacebadge.apphb.com/trending-weekly/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 
 # CodeGeeX: 多语言代码生成模型
 
@@ -10,7 +19,7 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 * **高精度代码生成**：支持生成Python、C++、Java、JavaScript和Go等多种主流编程语言的代码，在HumanEval-X代码生成任务上取得47%~60%求解率，较其他开源基线模型有更佳的平均性能。[代码生成示例](https://models.aminer.cn/codegeex/zh-CN)
 * **跨语言代码翻译**：支持代码片段在不同编程语言间进行自动翻译转换，翻译结果正确率高，在HumanEval-X代码翻译任务上超越了其它基线模型。[代码翻译示例](https://models.aminer.cn/codegeex/zh-CN/codeTranslator)
 * **自动编程插件**：CodeGeeX插件现已上架VSCode插件市场（完全免费），用户可以通过其强大的少样本生成能力，自定义代码生成风格和能力，更好辅助代码编写。[插件下载](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex)
-* **模型跨平台开源**: 所有代码和模型权重将会开源，用作研究用途。我们正在适配除昇腾外的其它平台，并将在短期内开源。
+* **模型跨平台开源**: 所有代码和模型权重开源开放，用作研究用途。CodeGeeX同时支持昇腾和英伟达平台，可在单张昇腾910或英伟达V100/A100上实现推理。[申请模型权重](https://models.aminer.cn/codegeex/download/request)
 
 **全新多编程语言评测基准HumanEval-X**：HumanEval-X是第一个支持功能正确性评测的多语言、多任务的基准，包含820个人工编写的高质量代码生成题目、测试用例与参考答案，覆盖5种编程语言（Python、C++、Java、JavaScript、Go），支持代码生成与代码翻译能力的评测。[如何使用](codegeex/benchmark/README_zh.md)
 
@@ -18,20 +27,44 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 <p align="center"><i>在HumanEval-X代码生成任务上，与其它开源基线模型相比，CodeGeeX取得了最佳的平均性能。</i> </p>
 
+## 新闻
+
+* **2022-09-30**: 我们开源了跨平台代码和模型权重，同时支持昇腾和英伟达平台。
 ## 使用指南
 
+CodeGeeX最初使用Mindspore框架实现，并在昇腾910AI芯片上进行训练。为适配更多平台，我们将其转换到[Megatron-LM](https://github.com/NVIDIA/Megatron-LM)框架，支持Pytorch+GPU环境。
 ### 安装
 
-通过以下命令安装 ``codegeex``: 
+需要Python 3.7+ / CUDA 11+ / PyTorch 1.10+ / DeepSpeed 0.6+，通过以下命令安装 ``codegeex``: 
 ```bash
 git clone git@github.com:THUDM/CodeGeeX.git
 cd CodeGeeX
 pip install -e .
 ```
 
-### 在GPU上进行推理
+### 模型权重
 
-CodeGeeX最初使用Mindspore框架实现，并在昇腾910AI芯片上进行训练。为了支持更多的平台，我们正在迁移代码和模型，并将在近期内开源。
+通过[该链接](https://models.aminer.cn/codegeex/download/request)申请权重，您将收到一个包含临时下载链接文件```urls.txt```的邮件。推荐使用[aria2](https://aria2.github.io/)通过以下命令快速下载（请保证有足够的硬盘空间存放权重（～26GB））：
+```bash
+aria2c -x 16 -s 16 -j 4 --continue=true -i urls.txt 
+``` 
+使用以下命令合并得到完整的权重：
+```bash
+cat codegeex_13b.tar.gz.part.* > codegeex_13b.tar
+tar xvf codegeex_13b.tar.gz
+```
+
+### 用GPU进行推理
+
+尝试使用CodeGeeX模型生成第一个程序吧！首先，在配置文件``configs/codegeex_13b.sh``中写明存放权重的路径。其次，将提示（可以是任意描述或代码片段）写入文件``tests/test_prompt.txt``，运行以下脚本即可开始推理（需指定GPU序号）：
+```bash
+bash ./scripts/test_inference.sh <GPU_ID> ./tests/test_prompt.txt
+```
+
+### VS Code插件使用指南
+
+基于CodeGeeX，我们开发了一款免费的VS Code插件，在应用市场搜索“codegeex”或通过[该链接](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex)安装。详细的使用指南在[CodeGeeX插件使用指南](vscode-extension/README_zh.md).
+
 
 ## CodeGeeX: 多语言代码生成模型
 
@@ -65,7 +98,7 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 <p align="center"><i><b>左侧</b>: HumanEval-X中五种语言具体的pass@k（k=1,10,100）性能。<b>右侧</b>: 模型在所有语言上的平均性能。CodeGeeX的平均表现优于InCoder-6.7B和CodeGen-Multi-6B/16B。</i></p>
 
 
-我们将CodeGeeX与另外两个开源代码生成模型进行比较，分别为Meta的[InCoder](https://github.com/dpfried/incoder)与Salesforce的[CodeGen](https://github.com/salesforce/CodeGen)，选取InCoder-6.7B、CodeGen-Multi-6B 与 CodeGen-Multi-16B。CodeGeeX能获得最佳的平均性能，显著超越了参数量更小的模型(7.5%~16.3%的提升)，与参数量更大的模型CodeGen-Multi-16B表现相当（平均性能 54.76% vs. 54.39%）。除此之外，我们还探索了将生成次数分配给不同语言的效果，在按照训练数据比例分配生成次数时，CodeGeeX的正确率比其在任一单语言下的正确率都更高（如<span style='color:red'>红色虚线圈</span>所示）。
+我们将CodeGeeX与另外两个开源代码生成模型进行比较，分别为Meta的[InCoder](https://github.com/dpfried/incoder)与Salesforce的[CodeGen](https://github.com/salesforce/CodeGen)，选取InCoder-6.7B、CodeGen-Multi-6B 与 CodeGen-Multi-16B。CodeGeeX能获得最佳的平均性能，显著超越了参数量更小的模型(7.5%~16.3%的提升)，与参数量更大的模型CodeGen-Multi-16B表现相当（平均性能 54.76% vs. 54.39%）。
 
 ### 跨语言代码翻译
 
@@ -123,3 +156,5 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 
 [唐杰](http://keg.cs.tsinghua.edu.cn/jietang/)（清华大学知识工程实验室 & 北京智源人工智能研究院）
 </details>
+
+如果遇到问题或有任何建议，欢迎通过邮件与我们联系[codegeex@aminer.cn](mailto:codegeex@aminer.cn).

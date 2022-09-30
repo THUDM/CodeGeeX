@@ -209,7 +209,7 @@ def run_predict(model_predict, config, args_opt, rank):
     part = int(args_opt.part)
     gen_times = 12 # TODO: set as generation times of current task
     print(f"gen times: {gen_times}, part: {part}")
-    save_path = f'/home/work/sfs/xx/pangu_alpha_code/generation_humanevalx/cpp/epoch_6_7375_temp_{args_opt.temperature}/samples_{args_opt.load_ckpt_epoch}_part_{part}.jsonl'  # TODO: set as current save path
+    save_path = f'/home/work/sfs/xx/pangu_alpha_code/generation_humanevalx/cpp/temp_{args_opt.temperature}/samples_{args_opt.load_ckpt_epoch}_part_{part}.jsonl'  # TODO: set as current save path
     if rank == 0 and not os.path.exists(save_path):
         os.makedirs(os.path.split(save_path)[0], exist_ok=True)
         f = open(save_path, 'w')

@@ -2,7 +2,7 @@
 
 🌐 <a href="README_zh.md" target="_blank">中文</a>
 
-HumanEval-X is a new benchmark for better evaluating the multilingual ability of code generative models. While previous works evaluate multilingual program synthesis under semantic similarity (e.g., [CodeBLEU](https://arxiv.org/abs/2009.10297)) which is often misleading, HumanEval-X evaluates the functional correctness of the generated programs. HumanEval-X consists of 820 high-quality human-crafted data samples (each with test cases) in Python, C++, Java, JavaScript, and Go, and can be used for various tasks.
+HumanEval-X is a new benchmark for better evaluating the multilingual ability of code generation models. While previous works evaluate multilingual program synthesis under semantic similarity (e.g., [CodeBLEU](https://arxiv.org/abs/2009.10297)) which is often misleading, HumanEval-X evaluates the functional correctness of the generated programs. HumanEval-X consists of 820 high-quality human-crafted data samples (each with test cases) in Python, C++, Java, JavaScript, and Go, and can be used for various tasks.
 
 <img src="../../resources/en/hx_tasks.png">
 

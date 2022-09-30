@@ -1,8 +1,14 @@
-![codegeex_logo](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/codegeex_logo.png)
+![codegeex_logo](../resources/logo/codegeex_logo.png)
 
 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/vscode-extension/README_zh.md" target="_blank">中文</a>
 
-We introduce CodeGeeX, a large-scale multilingual code generative model with 13 billion parameters, pretrained on a large code corpus of more than 20 programming languages. With CodeGeeX, we can generate codes by only providing natural language descriptions, complete any code snippet, or translate codes to other programming languages, etc. CodeGeeX also provides customizable features (**Prompt Mode**) to help you configure your own programming assistant. Happy coding!
+![CodeGeeX vscode extension version](https://vsmarketplacebadge.apphb.com/version-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX download](https://vsmarketplacebadge.apphb.com/downloads-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX API calls last week](https://img.shields.io/badge/dynamic/json?label=API%20calls&query=%24.result.count&suffix=%2Fweek&url=http%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dweeks&colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension rating](https://vsmarketplacebadge.apphb.com/rating-star/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension trending](https://vsmarketplacebadge.apphb.com/trending-weekly/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+
+We introduce CodeGeeX, a large-scale multilingual code generation model with 13 billion parameters, pretrained on a large code corpus of more than 20 programming languages. With CodeGeeX, we can generate codes by only providing natural language descriptions, complete any code snippet, or translate codes to other programming languages, etc. CodeGeeX also provides customizable features (**Prompt Mode**) to help you configure your own programming assistant. Happy coding!
 
 For more information, please check out our [Homepage](https://models.aminer.cn/codegeex/) and [GitHub repo](https://github.com/THUDM/CodeGeeX). 
 

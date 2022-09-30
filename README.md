@@ -1,37 +1,71 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="http://keg.cs.tsinghua.edu.cn/codegeex/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 📃 Paper(Coming soon!) | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="http://keg.cs.tsinghua.edu.cn/codegeex/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
+</p>
+<p align="center">
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 
+![CodeGeeX vscode extension version](https://vsmarketplacebadge.apphb.com/version-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX download](https://vsmarketplacebadge.apphb.com/downloads-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX API calls last week](https://img.shields.io/badge/dynamic/json?label=API%20calls&query=%24.result.count&suffix=%2Fweek&url=http%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dweeks&colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension rating](https://vsmarketplacebadge.apphb.com/rating-star/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX vscode extension trending](https://vsmarketplacebadge.apphb.com/trending-weekly/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 
-# CodeGeeX: A Multilingual Code Generative Model
-We introduce CodeGeeX, a large-scale multilingual code generative model with 13 billion parameters, pre-trained on a large code corpus of more than 20 programming languages. As of **June 22**, 2022, CodeGeeX has been trained on more than 850 billion tokens on a cluster of 1,536 [Ascend 910 AI Processors](https://e.huawei.com/en/products/servers/ascend). CodeGeeX has several unique features:
+# CodeGeeX: A Multilingual Code Generation Model
+
+We introduce CodeGeeX, a large-scale multilingual code generation model with 13 billion parameters, pre-trained on a large code corpus of more than 20 programming languages. As of **June 22**, 2022, CodeGeeX has been trained on more than 850 billion tokens on a cluster of 1,536 [Ascend 910 AI Processors](https://e.huawei.com/en/products/servers/ascend). CodeGeeX has several unique features:
 * **Multilingual Code Generation**: CodeGeeX has good performance for generating executable programs in several mainstream programming languages, including Python, C++, Java, JavaScript, Go, etc. [DEMO](https://models.aminer.cn/codegeex)
 * **Crosslingual Code Translation**: CodeGeeX supports the translation of code snippets between different languages. Simply by one click, CodeGeeX can transform a program into any expected language with a high accuracy. [DEMO](https://models.aminer.cn/codegeex/codeTranslator)
 * **Customizable Programming Assistant**: CodeGeeX is available in the VS Code extension marketplace **for free**. It supports code completion, explanation, summarization and more, which empower users with a better coding experience. [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex)
-* **Open-Source and Cross-Platform**: All codes and model weights will be made publicly available for research purposes. We have also been working on the adaptation to other GPU platforms, which will be ready soon.
+* **Open-Source and Cross-Platform**: All codes and model weights are publicly available for research purposes. CodeGeeX supports both Ascend and NVIDIA platforms. It supports inference in a single Ascend 910, NVIDIA V100 or A100. [Apply Model Weights](https://models.aminer.cn/codegeex/download/request)
 
-**HumanEval-X for Realistic Multilingual Benchmarking.** To help standardize the evaluation of multilingual code generation and translation, we develop and release the **HumanEval-X** Benchmark. HumanEval-X is a new multilingual benchmark that contains **820 human-crafted** coding problems in **5** programming languages (Python, C++, Java, JavaScript, and Go), each of these problems is associated with tests and solutions. [Usage](codegeex/benchmark/README.md)
+**HumanEval-X for Realistic Multilingual Benchmarking.** To help standardize the evaluation of multilingual code generation and translation, we develop and release the **HumanEval-X** Benchmark. HumanEval-X is a new multilingual benchmark that contains **820 human-crafted** coding problems in **5** programming languages (Python, C++, Java, JavaScript, and Go), each of these problems is associated with tests and solutions. [Usage](codegeex/benchmark/README.md)  [🤗 Available in HuggingFace](https://huggingface.co/datasets/THUDM/humaneval-x)
 
 <img src="resources/en/hx_boxplot.png">
 
 <p align="center"><i>CodeGeeX achieves the highest average performance compared with other open-sourced multilingual baselines.</i> </p>
 
+## News
+
+* **2022-09-30**: We release the cross-platform source code and models weghts for both Ascend and NVIDIA platforms. 
+
 ## Getting Started
 
+CodeGeeX is initially implemented in Mindspore and trained Ascend 910 AI Processors. We provide a torch-compatible version based on [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) to facilitate usage on GPU platforms.
 ### Installation
 
-Download and install ``codegeex`` via: 
+Python 3.7+ / CUDA 11+ / PyTorch 1.10+ / DeepSpeed 0.6+ are required. Install ``codegeex`` package via: 
 ```bash
 git clone git@github.com:THUDM/CodeGeeX.git
 cd CodeGeeX
 pip install -e .
 ```
 
+### Model Weights
+
+Apply and download model weights through this [link](https://models.aminer.cn/codegeex/download/request). You'll receive by mail ```urls.txt``` that contains temporary download links. We recommend you to use [aria2](https://aria2.github.io/) to download it via the following command (Please make sure you have enough disk space to download the checkpoint (~26GB)):
+```bash
+aria2c -x 16 -s 16 -j 4 --continue=true -i urls.txt 
+``` 
+Run the following command to get the full model weights:
+```bash
+cat codegeex_13b.tar.gz.part.* > codegeex_13b.tar
+tar xvf codegeex_13b.tar.gz
+```
+
 ### Inference on GPUs
 
-CodeGeeX is initially implemented in Mindspore and trained on Ascend 910 AI Processors. In addition to the support on the Ascend platform, we have been also working on adapting the model to other GPU platforms, which will be ready soon.
+Have a try on generating the first program with CodeGeeX. First, specify the path of the model weights in ``configs/codegeex_13b.sh``. Second, write the prompt (natural language description or code snippet) into a file, e.g., ``tests/test_prompt.txt``, then run the following script:
+```bash
+bash ./scripts/test_inference.sh <GPU_ID> ./tests/test_prompt.txt
+```
+
+### VS Code Extension Guidance
+
+Based on CodeGeeX, we also develop a free VS Code extention, search "codegeex" in Marketplace or install it [here](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex). Detailed instructions can be found in 
+[CodeGeeX Extension Guidance](vscode-extension/README.md).
 
 ## CodeGeeX: Architecture, Code Corpus, and Implementation
 
@@ -46,7 +80,7 @@ CodeGeeX is initially implemented in Mindspore and trained on Ascend 910 AI Proc
 **Training**: We implement CodeGeeX in [Mindspore 1.7](https://www.mindspore.cn/) and train it on 1,536 Ascend 910 AI Processor (32GB). The model weights are under FP16 format, except that we use FP32 for layer-norm and softmax for higher precision and stability. The entire model consumes about 27GB of memory. To increase the training efficiency, we adopt an 8-way model parallel training together with 192-way data parallel training, with ZeRO-2 optimizer enabled. The micro-batch size is 16 and the global batch size reaches 3,072. Moreover, we adopt techniques to further boost the training efficiency including the element-wise operator fusion, fast gelu activation, matrix multiplication dimension optimization, etc. The entire training process takes nearly two months, spanning from April 18 to June 22, 2022, during which 850B tokens were passed for training, i.e., 5+ epochs.
 
 ## HumanEval-X: A new benchmark for Multilingual Program Synthesis
-To better evaluate the multilingual ability of code generative models, we propose a new benchmark HumanEval-X. While previous works evaluate multilingual program synthesis under semantic similarity (e.g., [CodeBLEU](https://arxiv.org/abs/2009.10297)) which is often misleading, HumanEval-X evaluates the functional correctness of the generated programs. HumanEval-X consists of 820 high-quality human-crafted data samples (each with test cases) in Python, C++, Java, JavaScript, and Go, and can be used for various tasks.
+To better evaluate the multilingual ability of code generation models, we propose a new benchmark HumanEval-X. While previous works evaluate multilingual program synthesis under semantic similarity (e.g., [CodeBLEU](https://arxiv.org/abs/2009.10297)) which is often misleading, HumanEval-X evaluates the functional correctness of the generated programs. HumanEval-X consists of 820 high-quality human-crafted data samples (each with test cases) in Python, C++, Java, JavaScript, and Go, and can be used for various tasks.
 
 <img src="resources/en/hx_tasks.png">
 
@@ -60,7 +94,7 @@ In HumanEval-X, every sample in each language contains declaration, docstring, a
 <p align="center"><i><b>Left</b>: the detailed pass@k (k=1,10,100) performance on code generation task for five languages in HumanEval-X. <b>Right</b>: the average performance of all languages of each model. CodeGeeX achieves the highest average performance compared with InCoder-6.7B, CodeGen-Multi-6B and CodeGen-Multi-16B.</i></p>
 
 
-We compare CodeGeeX with two other open-sourced code generative models, [InCoder](https://github.com/dpfried/incoder) (from Meta) and [CodeGen](https://github.com/salesforce/CodeGen) (from Salesforce). Specifically, InCoder-6.7B, CodeGen-Multi-6B and CodeGen-Multi-16B are considered. CodeGeeX significantly outperforms models with smaller scales (by 7.5%~16.3%) and is competitive with CodeGen-Multi-16B with a larger scale (average performance 54.76% vs. 54.39%). CodeGeeX achieves the best average performance across languages. We further investigate the effect of distributing sampling budgets to different languages. Using a simple heuristic that distributes budgets weighted by the training data distribution, CodeGeeX achieves a higher pass rate than any single language (indicated by the <span style='color:red'>red dotted circle</span>).
+We compare CodeGeeX with two other open-sourced code generation models, [InCoder](https://github.com/dpfried/incoder) (from Meta) and [CodeGen](https://github.com/salesforce/CodeGen) (from Salesforce). Specifically, InCoder-6.7B, CodeGen-Multi-6B and CodeGen-Multi-16B are considered. CodeGeeX significantly outperforms models with smaller scales (by 7.5%~16.3%) and is competitive with CodeGen-Multi-16B with a larger scale (average performance 54.76% vs. 54.39%). CodeGeeX achieves the best average performance across languages.
 
 ### Crosslingual Code Translation
 
