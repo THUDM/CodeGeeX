@@ -29,7 +29,7 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 
 ## News
 
-* **2022-09-30**: We release the cross-platform source code and models weghts for both Ascend and NVIDIA platforms. 
+* **2022-09-30**: We release the cross-platform source code and models weights for both Ascend and NVIDIA platforms. 
 
 ## Getting Started
 
