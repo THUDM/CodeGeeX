@@ -10,8 +10,6 @@
 ![CodeGeeX vscode extension version](https://vsmarketplacebadge.apphb.com/version-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX download](https://vsmarketplacebadge.apphb.com/downloads-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX API calls total](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=API%20calls&query=%24.result.count&url=https%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dall%26apiName%3Dall%26num%3D1%26unit%3Dk&colorA=0B9FE0&colorB=88C692)
-![CodeGeeX vscode extension rating](https://vsmarketplacebadge.apphb.com/rating-star/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
-![CodeGeeX vscode extension trending](https://vsmarketplacebadge.apphb.com/trending-weekly/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 
 # CodeGeeX: A Multilingual Code Generation Model
 

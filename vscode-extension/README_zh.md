@@ -4,13 +4,14 @@
 
 ![CodeGeeX vscode extension version](https://vsmarketplacebadge.apphb.com/version-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX download](https://vsmarketplacebadge.apphb.com/downloads-short/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
+![CodeGeeX API calls total](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=API%20calls&query=%24.result.count&url=https%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dall%26apiName%3Dall%26num%3D1%26unit%3Dk&colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX API calls last week](https://img.shields.io/badge/dynamic/json?label=API%20calls&query=%24.result.count&suffix=%2Fweek&url=http%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dweeks&colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX vscode extension rating](https://vsmarketplacebadge.apphb.com/rating-star/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 ![CodeGeeX vscode extension trending](https://vsmarketplacebadge.apphb.com/trending-weekly/aminer.codegeex.svg?colorA=0B9FE0&colorB=88C692)
 
 CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型，使用超过二十种编程语言训练得到。基于CodeGeeX开发的插件可以实现通过描述生成代码、补全代码、代码翻译等一系列功能。CodeGeeX同样提供可以定制的**提示模式（Prompt Mode）**，构建专属的编程助手。Happy Coding！
 
-VS Code插件市场搜索"codegeex"即可免费使用，更多关于CodeGeeX信息请见我们的[主页](https://models.aminer.cn/codegeex/) and [GitHub仓库](https://github.com/THUDM/CodeGeeX)。
+VS Code插件市场搜索"codegeex"即可免费使用(需要VS Code版本不低于1.68.0)，更多关于CodeGeeX信息请见我们的[主页](https://models.aminer.cn/codegeex/) and [GitHub仓库](https://github.com/THUDM/CodeGeeX)。
 
 如使用过程中遇到问题或有任何改进意见，欢迎发送邮件到[codegeex@aminer.cn](mailto:codegeex@aminer.cn)反馈！
 
@@ -29,7 +30,7 @@ VS Code插件市场搜索"codegeex"即可免费使用，更多关于CodeGeeX信�
 
 以下是CodeGeeX几种模式的详细用法：
 
-###隐匿模式
+### 隐匿模式
 
 在该模式中，CodeGeeX将在您停止输入时，从光标处开始生成（右下角CodeGeeX图标转圈表示正在生成）。生成完毕之后会以灰色显示，按``Tab``即可插入生成结果。 在生成多个候选的情况下，可以使用``Alt/Option+[`` 或 ``]``在几个候选间进行切换。可以在设置中改变``Candidate Num``（增加个数会导致生成速度相对变慢）。**注意**：生成总是从当前光标位置开始，如果您在生成结束前移动光标位置，可能会导致一些bugs。我们正在努力使生成速度变得更快以提升用户体验。
 
