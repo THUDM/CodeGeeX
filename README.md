@@ -1,7 +1,7 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="http://keg.cs.tsinghua.edu.cn/codegeex/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
+    🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
 </p>
 <p align="center">
     🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
@@ -11,7 +11,7 @@
 ![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX API calls total](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=API%20calls&query=%24.result.count&url=https%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dall%26apiName%3Dall%26num%3D1%26unit%3Dk&colorA=0B9FE0&colorB=88C692)
+![CodeGeeX API calls total](https://img.shields.io/badge/dynamic/json?colorA=0B9FE0&colorB=brightgreen&label=API%20calls&query=%24.result.count&url=https%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dall%26apiName%3Dall%26num%3D1)
 
 # CodeGeeX: A Multilingual Code Generation Model
 
