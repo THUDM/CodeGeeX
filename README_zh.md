@@ -49,7 +49,7 @@ aria2c -x 16 -s 16 -j 4 --continue=true -i urls.txt
 ``` 
 使用以下命令合并得到完整的权重：
 ```bash
-cat codegeex_13b.tar.gz.part.* > codegeex_13b.tar
+cat codegeex_13b.tar.gz.* > codegeex_13b.tar.gz
 tar xvf codegeex_13b.tar.gz
 ```
 
@@ -157,3 +157,7 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 </details>
 
 如果遇到问题或有任何建议，欢迎通过邮件与我们联系[codegeex@aminer.cn](mailto:codegeex@aminer.cn).
+
+### 许可证
+
+代码使用[Apache-2.0许可证](LICENSE)
