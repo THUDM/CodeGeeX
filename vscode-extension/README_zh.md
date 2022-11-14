@@ -5,7 +5,6 @@
 ![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX API calls total](https://img.shields.io/badge/dynamic/json?colorA=0B9FE0&colorB=brightgreen&label=API%20calls&query=%24.result.count&url=https%3A%2F%2Ftianqi.aminer.cn%2Fapi%2Fv1%2Fapi%2Fcodegeex%2Fdashboard%3Ftime_type%3Dall%26apiName%3Dall%26num%3D1)
 ![CodeGeeX vscode extension rating](https://img.shields.io/visual-studio-marketplace/stars/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX github stars](https://img.shields.io/github/stars/THUDM/CodeGeeX?style=social)
 
@@ -15,40 +14,54 @@ VS Code插件市场搜索"codegeex"即可免费使用(需要VS Code版本不低�
 
 如使用过程中遇到问题或有任何改进意见，欢迎发送邮件到[codegeex@aminer.cn](mailto:codegeex@aminer.cn)反馈！
 
+- [基本用法](#基本用法)
+- [隐私声明](#隐私声明)
+- [使用指南](#使用指南)
+  - [隐匿模式](#隐匿模式)
+  - [交互模式](#交互模式)
+  - [翻译模式](#翻译模式)
+  - [提示模式（实验功能）](#提示模式实验功能)
+
 ## 基本用法
-安装插件并全局激活CodeGeeX，有以下三种使用模式：
+需要保证VS Code版本 >= 1.68.0。安装插件并全局激活CodeGeeX，有以下四种使用模式：
 
 -   **隐匿模式**: 保持CodeGeeX处于激活状态，当您停止输入时，会从当前光标处开始生成（右下角CodeGeeX图标转圈表示正在生成）。 生成完毕之后会以灰色显示，按``Tab``即可插入生成结果。 
 -   **交互模式**: 按``Ctrl+Enter``激活交互模式，CodeGeeX将生成``X``个候选，并显示在右侧窗口中（``X`` 数量可以在设置的``Candidate Num``中修改）。 点击候选代码上方的``use code``即可插入。
--   **提示模式**: 选择需要作为输入的代码，按``Alt/Option+t``触发提示模式，会显示预定义模板列表，选择其中一个模板，即可将代码插入到模板中进行生成。 这个模式高度自定义，可以在设置中 ``Prompt Templates``修改或添加模板内容，为模型加入额外的提示。 
+-   **翻译模式**: 选择代码，然后按下``Ctrl+Alt+T``激活翻译模式，CodeGeeX会把该代码翻译成匹配您当前编辑器语言的代码。点击翻译结果上方的``use code``插入。您还可以在设置中选择您希望插入的时候如何处理被翻译的代码，您可以选择注释它们或者覆盖它们。
+-   **提示模式（实验功能）**: 选择需要作为输入的代码，按``Alt/Option+t``触发提示模式，会显示预定义模板列表，选择其中一个模板，即可将代码插入到模板中进行生成。 这个模式高度自定义，可以在设置中 ``Prompt Templates``修改或添加模板内容，为模型加入额外的提示。 
 
 ## 隐私声明
 
 我们高度尊重用户代码的隐私，代码仅用来辅助编程。在您第一次使用时，我们会询问您是否同意将生成的代码用于研究用途，帮助CodeGeeX变得更好（该选项默认**关闭**）。
-
 ## 使用指南
 
 以下是CodeGeeX几种模式的详细用法：
 
 ### 隐匿模式
 
-在该模式中，CodeGeeX将在您停止输入时，从光标处开始生成（右下角CodeGeeX图标转圈表示正在生成）。生成完毕之后会以灰色显示，按``Tab``即可插入生成结果。 在生成多个候选的情况下，可以使用``Alt/Option+[`` 或 ``]``在几个候选间进行切换。可以在设置中改变``Candidate Num``（增加个数会导致生成速度相对变慢）。**注意**：生成总是从当前光标位置开始，如果您在生成结束前移动光标位置，可能会导致一些bugs。我们正在努力使生成速度变得更快以提升用户体验。
+在该模式中，CodeGeeX将在您停止输入时，从光标处开始生成（右下角CodeGeeX图标转圈表示正在生成）。生成完毕之后会以灰色显示，按``Tab``即可插入生成结果。 在生成多个候选的情况下，可以使用``Alt/Option+[`` 或 ``]``在几个候选间进行切换。如果你对现有建议不满意，可以使用``Alt/Option+N``去获得新的候选。可以在设置中改变``Candidate Num``（增加个数会导致生成速度相对变慢）。**注意**：生成总是从当前光标位置开始，如果您在生成结束前移动光标位置，可能会导致一些bugs。我们正在努力使生成速度变得更快以提升用户体验。
 
-![image](stealth_mode.gif)
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/bubble_sort_go.gif)
 
 ### 交互模式
 
 在该模式中，按``Ctrl+Enter``激活交互模式，CodeGeeX将生成``X``个候选，并显示在右侧窗口中（``X`` 数量可以在设置的``Candidate Num``中修改）。 点击候选代码上方的``use code``即可插入结果到为当前光标位置。 
 
-![image](interactive_mode.gif)
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/interactive_mode.gif#123)
 
-### 提示模式
+### 翻译模式
+
+在当前的语言的文本编辑器中输入或者粘贴其他语言的代码，您用鼠标选择这些代码，然后按下``Ctrl+Alt+T``激活翻译模式，您根据提示选择该代码的语言，然后CodeGeeX会帮您把该代码翻译成匹配您当前编辑器语言的代码。点击翻译结果上方的``use code``即可插入。您还可以在设置中选择您希望插入的时候如何处理被翻译的代码，您可以选择注释它们或者覆盖它们。
+
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/translation_cpp_to_python.gif)
+
+### 提示模式（实验功能）
 
 在该模式中，您可以在输入中添加额外的提示来实现一些有趣的功能，包括并不限于代码解释、概括、以特定风格生成等。该模式的原理是利用了CodeGeeX强大的少样本生成能力。当您在输入中提供一些例子时，CodeGeeX会模仿这些例子并实现相应的功能。比如，您可以自定义模板中提供一段逐行解释代码的例子。选择您想要解释的代码，按``Alt/Option+t``触发提示模式，选择您写好的模板（如``explanation``），CodeGeeX就会解释您输入的代码。以下我们会详细介绍如何制作模板。
 
-![image](prompt_mode.gif)
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/explanation_python.gif)
 
-上述例子中的模板如下图所示，由``[示例代码]``, ``<INPUT>``, ``[带解释的示例代码]`` and ``[输出函数头]`` 。``<INPUT>``表示您选中的代码将会插入的位置。 ``<INPUT:0,1>`` 这一句用来保证模型解释的是同一个函数。当使用提示模式时，CodeGeeX会将您选择的代码（插入到<INPUT>部分）和模板代码相结合，一起作为模型的输入。 
+上述例子中的模板如下图所示，由``[示例代码]``, ``<INPUT>``, ``[带解释的示例代码]`` and ``[输出函数头]`` 。``<INPUT>``表示您选中的代码将会插入的位置。 ``<INPUT0:1>`` 这一句用来保证模型解释的是同一个函数。当使用提示模式时，CodeGeeX会将您选择的代码（插入到<INPUT>部分）和模板代码相结合，一起作为模型的输入。 
 
 ```python
 # language: Python
