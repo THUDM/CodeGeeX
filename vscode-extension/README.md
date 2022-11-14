@@ -43,7 +43,7 @@ In this mode, CodeGeeX will start generating codes when you stop writing (the ic
 ### Interactive mode
 In this mode, press ``Ctrl+Enter`` to generate codes and visualize the candidates in another panel. Then, click on the best candidate to insert the generated codes to the current position of cursor. 
 
-![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/interactive_mode.gif#123)
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/interactive_mode2.gif)
 
 ### Translation mode
 In this mode, paste or tape some code from another language to the current file, select the code, and press ``Ctrl+Alt+T``. Then, choose the language of the selected code. Wait for a few seconds, you will get the code translated into the same language as your current editor. Click on the ``use code`` button to insert the result into the current position of your cursor. You can also configure in the settings whether to comment out the original code or to replace it.

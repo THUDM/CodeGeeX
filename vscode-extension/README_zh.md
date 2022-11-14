@@ -47,7 +47,7 @@ VS Code插件市场搜索"codegeex"即可免费使用(需要VS Code版本不低�
 
 在该模式中，按``Ctrl+Enter``激活交互模式，CodeGeeX将生成``X``个候选，并显示在右侧窗口中（``X`` 数量可以在设置的``Candidate Num``中修改）。 点击候选代码上方的``use code``即可插入结果到为当前光标位置。 
 
-![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/interactive_mode.gif#123)
+![image](https://lfs.aminer.cn/misc/wangshan/pretrain/codegeex/interactive_mode2.gif)
 
 ### 翻译模式
 
