@@ -4,12 +4,27 @@
     🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📃 论文（即将推出！）
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | ⌨️ <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png" target="_blank">加入开发者群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
+
 
 ![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
+
+- [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型)
+  - [新闻](#新闻)
+  - [使用指南](#使用指南)
+    - [安装](#安装)
+    - [模型权重](#模型权重)
+    - [用GPU进行推理](#用gpu进行推理)
+    - [VS Code插件使用指南](#vs-code插件使用指南)
+  - [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型-1)
+    - [国产平台实现与训练](#国产平台实现与训练)
+  - [HumanEval-X: 多语言代码生成基准](#humaneval-x-多语言代码生成基准)
+    - [多语言代码生成](#多语言代码生成)
+    - [跨语言代码翻译](#跨语言代码翻译)
+  - [许可证](#许可证)
 # CodeGeeX: 多语言代码生成模型
 
 CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型。CodeGeeX采用华为MindSpore框架实现，在鹏城实验室“鹏城云脑II”中的192个节点（共1536个国产[昇腾910 AI处理器](https://e.huawei.com/cn/products/servers/ascend)）上训练而成。截至2022年6月22日，CodeGeeX历时两个月在20多种编程语言的代码语料库（>8500亿Token）上预训练得到。CodeGeeX有以下特点：

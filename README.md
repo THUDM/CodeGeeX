@@ -4,13 +4,27 @@
     🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 👋 Join our <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> or <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png"target="_blank">WeChat</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 
 
 ![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
+
+- [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
+  - [News](#news)
+  - [Getting Started](#getting-started)
+    - [Installation](#installation)
+    - [Model Weights](#model-weights)
+    - [Inference on GPUs](#inference-on-gpus)
+    - [VS Code Extension Guidance](#vs-code-extension-guidance)
+  - [CodeGeeX: Architecture, Code Corpus, and Implementation](#codegeex-architecture-code-corpus-and-implementation)
+  - [HumanEval-X: A new benchmark for Multilingual Program Synthesis](#humaneval-x-a-new-benchmark-for-multilingual-program-synthesis)
+    - [Multilingual Code Generation](#multilingual-code-generation)
+    - [Crosslingual Code Translation](#crosslingual-code-translation)
+    - [How to use HumanEval-X and contribute to it?](#how-to-use-humaneval-x-and-contribute-to-it)
+  - [License](#license)
 
 # CodeGeeX: A Multilingual Code Generation Model
 
