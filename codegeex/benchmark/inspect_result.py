@@ -240,32 +240,36 @@ def inspect_result(
         if incompleted:
             print(f"Language not supported, aborted. {input_file}")
         else:
-            total, correct = [], []
-            for k, res in result_stats.items():
-                total.append(res["n_sample"])
-                correct.append(res["accepted"])
-                df_res = pd.DataFrame(res, index=[int(k.split("/")[-1])])
-                df = pd.concat([df, df_res], axis=0)
+            try:
+                total, correct = [], []
+                for k, res in result_stats.items():
+                    total.append(res["n_sample"])
+                    correct.append(res["accepted"])
+                    df_res = pd.DataFrame(res, index=[int(k.split("/")[-1])])
+                    df = pd.concat([df, df_res], axis=0)
 
-            total = np.array(total)
-            correct = np.array(correct)
+                total = np.array(total)
+                correct = np.array(correct)
 
-            ks = [1, 10, 100, 1000]
-            pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
-                         for k in ks if (total >= k).all()}
+                ks = [1, 10, 100, 1000]
+                pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
+                            for k in ks if (total >= k).all()}
 
-            print(pass_at_k)
-            pass_at_k["file"] = input_file
-            pass_at_k["n"] = res["n_sample"]
-            pass_at_k_outs.append(pass_at_k)
+                print(pass_at_k)
+                pass_at_k["file"] = input_file
+                pass_at_k["n"] = res["n_sample"]
+                pass_at_k_outs.append(pass_at_k)
 
-            output_prefix = input_file.split("/")[-1].split(".jsonl")[0]
-            output_file = os.path.join(output_dir, output_prefix + "_stats.xlsx")
-            df = df.sort_index(ascending=True)
-            df.to_excel(output_file)
+                output_prefix = input_file.split("/")[-1].split(".jsonl")[0]
+                output_file = os.path.join(output_dir, output_prefix + "_stats.xlsx")
+                df = df.sort_index(ascending=True)
+                df.to_excel(output_file)
 
-            print(f"Stats saved in {output_file}")
-
+                print(f"Stats saved in {output_file}")
+            except Exception as e:
+                print(e)
+                print(f"Data incompleted, aborted. {input_file}")
+                
     if pass_at_k_outpath is not None:
         jsonl_path = os.path.join(output_dir, pass_at_k_outpath)
         with open(jsonl_path, "w") as f_out:
