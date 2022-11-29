@@ -9,6 +9,7 @@ from codegeex.megatron import get_tokenizer, get_args
 from codegeex.megatron.initialize import initialize_megatron
 from codegeex.megatron.model import CodeGeeXModel
 from codegeex.megatron.code_generation_utils import get_token_stream
+from codegeex.quantization import quantize
 
 torch.set_printoptions(precision=8)
 
@@ -80,7 +81,7 @@ def add_code_generation_args(parser):
     group.add_argument(
         "--ws-encoding-length",
         type=int,
-        default=80,
+        default=10,
         help="Length of whitespace encoding",
     )
     group.add_argument(
@@ -123,6 +124,10 @@ def add_code_generation_args(parser):
         default=None,
         help='Identify the type of programming language to generate',
     )
+    group.add_argument(
+        "--quantize",
+        action="store_true",
+    )
 
     return parser
 
@@ -151,6 +156,8 @@ def main():
     model.eval()
     if args.fp16 and args.ln_fp16:
         model.half()
+    if args.quantize:
+        model = quantize(model, weight_bit_width=8, backend="megatron")
     model.cuda()
 
     with open(args.prompt_file, "r") as f:

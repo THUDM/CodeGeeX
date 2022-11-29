@@ -169,6 +169,7 @@ def get_token_stream(
         topp: float = 1.0,
         topk: int = 0.0,
         greedy: bool = False,
+        recompute: bool = False,
 ):
     context_tokens, context_lengths = pad_batch(context_tokens, tokenizer.eos_token_id, seq_length)
 
@@ -197,6 +198,7 @@ def get_token_stream(
         topp=topp,
         topk=topk,
         greedy=greedy,
+        recompute=recompute,
     )
 
     for tokens, lengths in batch_token_iterator:
