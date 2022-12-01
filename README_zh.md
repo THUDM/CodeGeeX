@@ -4,7 +4,7 @@
     🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📃 论文（即将推出！）
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> 或 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 
 
