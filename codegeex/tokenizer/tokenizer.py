@@ -1,4 +1,3 @@
-import torch
 from typing import *
 from transformers import AutoTokenizer
 from transformers.models.gpt2 import GPT2TokenizerFast
@@ -75,13 +74,13 @@ class CodeGeeXTokenizer(object):
     def encode_code(self, code: str):
         if self.mode == 'codegeex-13b':
             code = encode_whitespaces(code, self.start_extra_id, self.max_len)
-            input_ids = self.tokenizer(code, is_split_into_words=False).input_ids
+            input_ids = self.tokenizer(code, is_split_into_words=False, verbose=False).input_ids
             
         return input_ids
     
     def decode_code(self, input_ids):
         if self.mode == 'codegeex-13b':
-            text = self.tokenizer.decode(input_ids, skip_special_tokens=False)
+            text = self.tokenizer.decode(input_ids, skip_special_tokens=False, verbose=False)
             output_code = decode_whitespaces(text, self.start_extra_id, self.max_len)
         
         return output_code
