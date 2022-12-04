@@ -24,7 +24,7 @@ if [ -z "$PROMPT_FILE" ]; then
 fi
 
 # remove --greedy if using sampling
-CMD="python $MAIN_DIR/tests/test_inference_quantized.py \
+CMD="python $MAIN_DIR/tests/test_inference.py \
         --prompt-file $PROMPT_FILE \
         --tokenizer-path $TOKENIZER_PATH \
         --micro-batch-size 1 \
@@ -32,6 +32,7 @@ CMD="python $MAIN_DIR/tests/test_inference_quantized.py \
         --temperature 0.2 \
         --top-p 0.95 \
         --top-k 0 \
+        --quantize \
         $MODEL_ARGS"
 
 echo "$CMD"
