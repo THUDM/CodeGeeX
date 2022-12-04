@@ -22,6 +22,8 @@ import torch
 
 from codegeex.megatron.tokenizer import build_tokenizer
 from codegeex.megatron.arguments import parse_args
+from codegeex.megatron.microbatches import build_num_microbatches_calculator
+
 
 _GLOBAL_ARGS = None
 _GLOBAL_NUM_MICROBATCHES_CALCULATOR = None
@@ -82,6 +84,7 @@ def set_global_variables(
         defaults=args_defaults,
         ignore_unknown_args=ignore_unknown_args,
     )
+    _build_num_microbatches_calculator(args)
     if args.vocab_file or args.tokenizer_path:
         _ = _build_tokenizer(args)
     _set_tensorboard_writer(args)
@@ -101,6 +104,16 @@ def _parse_args(extra_args_provider=None, defaults={}, ignore_unknown_args=False
     return _GLOBAL_ARGS
 
 
+def _build_num_microbatches_calculator(args):
+
+    global _GLOBAL_NUM_MICROBATCHES_CALCULATOR
+    _ensure_var_is_not_initialized(
+        _GLOBAL_NUM_MICROBATCHES_CALCULATOR, "num microbatches calculator"
+    )
+
+    _GLOBAL_NUM_MICROBATCHES_CALCULATOR = build_num_microbatches_calculator(args)
+    
+    
 def _build_tokenizer(args):
     """Initialize tokenizer."""
     global _GLOBAL_TOKENIZER

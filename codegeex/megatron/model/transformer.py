@@ -685,6 +685,43 @@ class ParallelTransformerLayer(MegatronModule):
         return output
 
 
+class ParallelTransformerLayerPipe(ParallelTransformerLayer):
+    """Extends ParallelTransformerLayer to forward attention_mask through the pipeline.
+
+    Forward has two usages that affect attention mask communication:
+
+    1) forward((input, attn_mask) , **kwargs) -> (output, mask)
+       When the attention mask is provided as the second positional
+       argument, typical pipeline behavior is used and both the output
+       *and* mask are returned in a tuple. This tuple is then forwarded
+       to the next stage in the pipeline.
+
+       This version is useful if masks are dynamic.
+
+    2) forward(input, **kwargs) -> output
+       When the mask is static over all samples, it is advantageous to
+       cache the mask and avoid communicating it.
+
+       If no mask is provided, the module will query `self._args.attn_mask`
+       for the mask and only return `super().forward(...)`
+    """
+
+    def forward(self, inputs, **kwargs):
+        assert torch.is_tensor(inputs) or isinstance(inputs, tuple)
+        if torch.is_tensor(inputs) or len(inputs) == 1:
+            # No attention mask forwarded, search for args.attn_mask
+            if not hasattr(self, "_args"):
+                self._args = get_args()
+            hidden_states, attention_mask = inputs, self._args.attn_mask
+            return super().forward(hidden_states, attention_mask, **kwargs)
+        elif len(inputs) == 2:
+            # Attention mask is an activation.
+            hidden_states, attention_mask = inputs[0], inputs[1]
+            return super().forward(*inputs, **kwargs), attention_mask
+        else:
+            raise RuntimeError("Received more inputs than understood.")
+
+
 class ParallelTopQueryLayer(MegatronModule):
     """A single top query layer.
 
@@ -810,6 +847,44 @@ class ParallelTopQueryLayer(MegatronModule):
         return output
 
 
+class ParallelTopQueryLayerPipe(ParallelTopQueryLayer):
+    """Extends ParallelTopQueryLayer to forward attention_mask through the pipeline.
+
+    Forward has two usages that affect attention mask communication:
+
+    1) forward((input, attn_mask) , **kwargs) -> (output, mask)
+       When the attention mask is provided as the second positional
+       argument, typical pipeline behavior is used and both the output
+       *and* mask are returned in a tuple. This tuple is then forwarded
+       to the next stage in the pipeline.
+
+       This version is useful if masks are dynamic.
+
+    2) forward(input, **kwargs) -> output
+       When the mask is static over all samples, it is advantageous to
+       cache the mask and avoid communicating it.
+
+       If no mask is provided, the module will query `self._args.attn_mask`
+       for the mask and only return `super().forward(...)`
+    """
+
+    def forward(self, inputs, **kwargs):
+        assert torch.is_tensor(inputs) or isinstance(inputs, tuple)
+        if torch.is_tensor(inputs) or len(inputs) == 2:
+            # No attention mask forwarded, search for args.attn_mask
+            if not hasattr(self, "_args"):
+                self._args = get_args()
+            hidden_states, query_hidden_state = inputs
+            attention_mask = self._args.attn_mask
+            return super().forward(hidden_states, query_hidden_state, attention_mask, **kwargs)
+        elif len(inputs) == 3:
+            # Attention mask is an activation.
+            hidden_states, query_hidden_state, attention_mask = inputs[0], inputs[1]
+            return super().forward(*inputs, **kwargs), attention_mask
+        else:
+            raise RuntimeError("Received more inputs than understood.")
+        
+        
 class ParallelTransformer(MegatronModule):
     """Transformer class."""
 
@@ -892,6 +967,16 @@ class ParallelTransformer(MegatronModule):
 
         return hidden_states
 
+    def set_input_tensor(self, input_tensor):
+        """Set input tensor to be used instead of forward()'s input.
+
+        When doing pipeline parallelism the input from the previous
+        stage comes from communication, not from the input, so the
+        model's forward_step_func won't have it. This function is thus
+        used by internal code to bypass the input provided by the
+        forward_step_func"""
+        self.input_tensor = input_tensor
+        
     def forward(
             self,
             hidden_states,

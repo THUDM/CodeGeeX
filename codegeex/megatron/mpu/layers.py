@@ -271,6 +271,9 @@ class ColumnParallelLinear(torch.nn.Module):
         stride=1,
         keep_master_weight_for_test=False,
         skip_bias_add=False,
+        params_dtype=None,
+        skip_init=False,
+        device=None,
     ):
         super(ColumnParallelLinear, self).__init__()
 
@@ -282,54 +285,60 @@ class ColumnParallelLinear(torch.nn.Module):
         world_size = get_tensor_model_parallel_world_size()
         self.output_size_per_partition = divide(output_size, world_size)
         self.skip_bias_add = skip_bias_add
-
+        self.params_dtype = params_dtype
+        self.device = device
+        
         # Parameters.
         # Note: torch.nn.functional.linear performs XA^T + b and as a result
         # we allocate the transpose.
         # Initialize weight.
         args = get_args()
-        if args.use_cpu_initialization:
-            self.weight = Parameter(
-                torch.empty(
-                    self.output_size_per_partition,
-                    self.input_size,
-                    dtype=args.params_dtype,
+        if not skip_init:
+            if args.use_cpu_initialization:
+                self.weight = Parameter(
+                    torch.empty(
+                        self.output_size_per_partition,
+                        self.input_size,
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                    )
                 )
-            )
-            self.master_weight = _initialize_affine_weight_cpu(
-                self.weight,
-                self.output_size,
-                self.input_size,
-                self.output_size_per_partition,
-                0,
-                init_method,
-                stride=stride,
-                return_master_weight=keep_master_weight_for_test,
-            )
+                self.master_weight = _initialize_affine_weight_cpu(
+                    self.weight,
+                    self.output_size,
+                    self.input_size,
+                    self.output_size_per_partition,
+                    0,
+                    init_method,
+                    stride=stride,
+                    return_master_weight=keep_master_weight_for_test,
+                )
+            else:
+                self.weight = Parameter(
+                    torch.empty(
+                        self.output_size_per_partition,
+                        self.input_size,
+                        device=self.device if self.device is not None else torch.cuda.current_device(),
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                    )
+                )
+                _initialize_affine_weight_gpu(
+                    self.weight, init_method, partition_dim=0, stride=stride
+                )
         else:
-            self.weight = Parameter(
-                torch.empty(
-                    self.output_size_per_partition,
-                    self.input_size,
-                    device=torch.cuda.current_device(),
-                    dtype=args.params_dtype,
-                )
-            )
-            _initialize_affine_weight_gpu(
-                self.weight, init_method, partition_dim=0, stride=stride
-            )
+            self.register_parameter("weight", None)
 
-        if bias:
+        if bias and not skip_init:
             if args.use_cpu_initialization:
                 self.bias = Parameter(
-                    torch.empty(self.output_size_per_partition, dtype=args.params_dtype)
+                    torch.empty(self.output_size_per_partition, 
+                                dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype)
                 )
             else:
                 self.bias = Parameter(
                     torch.empty(
                         self.output_size_per_partition,
-                        device=torch.cuda.current_device(),
-                        dtype=args.params_dtype,
+                        device=self.device if self.device is not None else torch.cuda.current_device(),
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
                     )
                 )
             set_tensor_model_parallel_attributes(self.bias, True, 0, stride)
@@ -395,6 +404,9 @@ class RowParallelLinear(torch.nn.Module):
         stride=1,
         keep_master_weight_for_test=False,
         skip_bias_add=False,
+        params_dtype=None,
+        skip_init=False,
+        device=None,
     ):
         super(RowParallelLinear, self).__init__()
 
@@ -406,53 +418,60 @@ class RowParallelLinear(torch.nn.Module):
         world_size = get_tensor_model_parallel_world_size()
         self.input_size_per_partition = divide(input_size, world_size)
         self.skip_bias_add = skip_bias_add
-
+        self.params_dtype = params_dtype
+        self.device = device
+        
         # Parameters.
         # Note: torch.nn.functional.linear performs XA^T + b and as a result
         # we allocate the transpose.
         # Initialize weight.
         args = get_args()
-        if args.use_cpu_initialization:
-            self.weight = Parameter(
-                torch.empty(
-                    self.output_size,
-                    self.input_size_per_partition,
-                    dtype=args.params_dtype,
+        if not skip_init:
+            if args.use_cpu_initialization:
+                self.weight = Parameter(
+                    torch.empty(
+                        self.output_size,
+                        self.input_size_per_partition,
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                    )
                 )
-            )
-            self.master_weight = _initialize_affine_weight_cpu(
-                self.weight,
-                self.output_size,
-                self.input_size,
-                self.input_size_per_partition,
-                1,
-                init_method,
-                stride=stride,
-                return_master_weight=keep_master_weight_for_test,
-            )
+                self.master_weight = _initialize_affine_weight_cpu(
+                    self.weight,
+                    self.output_size,
+                    self.input_size,
+                    self.input_size_per_partition,
+                    1,
+                    init_method,
+                    stride=stride,
+                    return_master_weight=keep_master_weight_for_test,
+                )
+            else:
+                self.weight = Parameter(
+                    torch.empty(
+                        self.output_size,
+                        self.input_size_per_partition,
+                        device=self.device if self.device is not None else torch.cuda.current_device(),
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                    )
+                )
+                _initialize_affine_weight_gpu(
+                    self.weight, init_method, partition_dim=1, stride=stride
+                )
         else:
-            self.weight = Parameter(
-                torch.empty(
-                    self.output_size,
-                    self.input_size_per_partition,
-                    device=torch.cuda.current_device(),
-                    dtype=args.params_dtype,
-                )
-            )
-            _initialize_affine_weight_gpu(
-                self.weight, init_method, partition_dim=1, stride=stride
-            )
-        if bias:
+            self.register_parameter("weight", None)
+            
+        if bias and not skip_init:
             if args.use_cpu_initialization:
                 self.bias = Parameter(
-                    torch.empty(self.output_size, dtype=args.params_dtype)
+                    torch.empty(self.output_size, 
+                                dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype)
                 )
             else:
                 self.bias = Parameter(
                     torch.empty(
                         self.output_size,
-                        device=torch.cuda.current_device(),
-                        dtype=args.params_dtype,
+                        device=self.device if self.device is not None else torch.cuda.current_device(),
+                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
                     )
                 )
             # Always initialize bias to zero.
