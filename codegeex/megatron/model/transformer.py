@@ -80,7 +80,7 @@ class ParallelMLP(MegatronModule):
         self.dense_4h_to_h = mpu.RowParallelLinear(
             4 * args.hidden_size,
             args.hidden_size,
-            input_is_parallel=False,
+            input_is_parallel=True if args.tensor_model_parallel_size > 1 else False,
             init_method=output_layer_init_method,
             # skip_bias_add=True,
         )
@@ -151,7 +151,7 @@ class ParallelSelfAttention(MegatronModule):
         self.dense = mpu.RowParallelLinear(
             args.hidden_size,
             args.hidden_size,
-            input_is_parallel=False,
+            input_is_parallel=True if args.tensor_model_parallel_size > 1 else False,
             init_method=output_layer_init_method,
             skip_bias_add=True)
 
@@ -374,7 +374,7 @@ class ParallelTopQuerySelfAttention(MegatronModule):
         self.dense = mpu.RowParallelLinear(
             args.hidden_size,
             args.hidden_size,
-            input_is_parallel=False,
+            input_is_parallel=True if args.tensor_model_parallel_size > 1 else False,
             init_method=output_layer_init_method,
             skip_bias_add=True)
 

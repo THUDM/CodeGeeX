@@ -286,8 +286,8 @@ class QueryEmbedding(MegatronModule):
         self.num_tokentypes = num_tokentypes
 
         # Top query position embedding (serial).
-        self.top_query_embeddings = torch.nn.Embedding(
-            max_sequence_length, self.hidden_size)
+        self.top_query_embeddings = mpu.VocabParallelEmbedding(
+            max_sequence_length, self.hidden_size, init_method=self.init_method)
         self.top_query_embeddings = self.top_query_embeddings.half()
         self._top_query_embeddings_key = 'top_query_embeddings'
         # Initialize the top query position embeddings.
