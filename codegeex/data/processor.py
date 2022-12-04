@@ -1,7 +1,7 @@
 from typing import *
 from time import perf_counter
 
-from codegeex.data.utils import sliding_window
+from codegeex.data.data_utils import sliding_window
 from codegeex.data.types import PromptSample, LabelSample
 
 

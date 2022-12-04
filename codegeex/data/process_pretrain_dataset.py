@@ -9,10 +9,10 @@ from tqdm.auto import tqdm
 from time import perf_counter
 from black import format_str, FileMode
 
-from codegeex.data.indexed_dataset import make_mmap_builder
 from codegeex.data.types import PromptDataset, PromptSample
 from codegeex.data.processor import PromptDatasetProcessor
-from codegeex.data.utils import stream_jsonl, LANGUAGE_TAG
+from codegeex.data.data_utils import stream_jsonl, LANGUAGE_TAG
+from codegeex.megatron.data.indexed_dataset import make_mmap_builder
 from codegeex.tokenizer import CodeGeeXTokenizer
 
 
@@ -42,7 +42,7 @@ def load_pretrain_dataset(dataset_path: Union[str, List[str]]) -> Dict:
             p_list = glob.glob(p + "/*")
             for p_ in p_list:
                 if p_.endswith(".gz") or p_.endswith(".jsonl"):
-                    print(f"loading from {p}")
+                    print(f"loading from {p_}")
                     yield from stream_jsonl(p_)
           
             

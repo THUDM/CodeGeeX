@@ -1,6 +1,6 @@
 import os
 from typing import *
-from codegeex.data.utils import stream_jsonl, LANGUAGE_TAG
+from codegeex.data.data_utils import stream_jsonl, LANGUAGE_TAG
 
 
 IMPORT_HELPER = {
