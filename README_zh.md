@@ -41,6 +41,8 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
+* **2022-12-04**: 我们开源了量化代码（需要更少的显存：27GB -> 15GB）以及模型并行代码（可以运行在多个显存至少8GB的GPUs上）。
+
 * **2022-09-30**: 我们开源了跨平台代码和模型权重，同时支持昇腾和英伟达平台。
 ## 使用指南
 
@@ -70,7 +72,15 @@ tar xvf codegeex_13b.tar.gz
 
 尝试使用CodeGeeX模型生成第一个程序吧！首先，在配置文件``configs/codegeex_13b.sh``中写明存放权重的路径。其次，将提示（可以是任意描述或代码片段）写入文件``tests/test_prompt.txt``，运行以下脚本即可开始推理（需指定GPU序号）：
 ```bash
+# On a single GPU (with more than 27GB RAM)
 bash ./scripts/test_inference.sh <GPU_ID> ./tests/test_prompt.txt
+
+# With quantization (with more than 15GB RAM)
+bash ./scripts/test_inference_quantized.sh <GPU_ID> ./tests/test_prompt.txt
+
+# On multiple GPUs (with more than 6GB RAM, need to first convert ckpt to MP_SIZE partitions)
+bash ./scripts/convert_ckpt_parallel.sh <LOAD_CKPT_PATH> <SAVE_CKPT_PATH> <MP_SIZE>
+bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 ```
 
 ### VS Code插件使用指南

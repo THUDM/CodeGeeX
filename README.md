@@ -42,6 +42,8 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 
 ## News
 
+* **2022-12-04**: We release source code of quantization (requires less GPU RAM: 27GB -> 15GB) and model parallelism (possible to run on multiple GPUs with <8G RAM).
+ 
 * **2022-09-30**: We release the cross-platform source code and models weights for both Ascend and NVIDIA platforms. 
 
 ## Getting Started
@@ -61,7 +63,7 @@ pip install -e .
 Apply and download model weights through this [link](https://models.aminer.cn/codegeex/download/request). You'll receive by mail ```urls.txt``` that contains temporary download links. We recommend you to use [aria2](https://aria2.github.io/) to download it via the following command (Please make sure you have enough disk space to download the checkpoint (~26GB)):
 ```bash
 aria2c -x 16 -s 16 -j 4 --continue=true -i urls.txt 
-``` 
+```
 Run the following command to get the full model weights:
 ```bash
 cat codegeex_13b.tar.gz.* > codegeex_13b.tar.gz
@@ -72,7 +74,15 @@ tar xvf codegeex_13b.tar.gz
 
 Have a try on generating the first program with CodeGeeX. First, specify the path of the model weights in ``configs/codegeex_13b.sh``. Second, write the prompt (natural language description or code snippet) into a file, e.g., ``tests/test_prompt.txt``, then run the following script:
 ```bash
+# On a single GPU (with more than 27GB RAM)
 bash ./scripts/test_inference.sh <GPU_ID> ./tests/test_prompt.txt
+
+# With quantization (with more than 15GB RAM)
+bash ./scripts/test_inference_quantized.sh <GPU_ID> ./tests/test_prompt.txt
+
+# On multiple GPUs (with more than 6GB RAM, need to first convert ckpt to MP_SIZE partitions)
+bash ./scripts/convert_ckpt_parallel.sh <LOAD_CKPT_PATH> <SAVE_CKPT_PATH> <MP_SIZE>
+bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 ```
 
 ### VS Code Extension Guidance
