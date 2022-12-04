@@ -2,6 +2,7 @@ import os
 import sys
 import fire
 import json
+import gzip
 import regex
 import numpy as np
 
@@ -27,7 +28,7 @@ def process_humaneval_test(sample, problems, example_test=False):
     task_id = sample["task_id"]
     language = task_id.split("/")[0].lower()
 
-    prompt = problems[task_id]["prompt"]
+    prompt = sample["prompt"]
     if example_test and "example_test" in problems[task_id] and problems[task_id]["example_test"] != "":
         test = problems[task_id]["example_test"]
     else:
@@ -43,17 +44,17 @@ def process_humaneval_test(sample, problems, example_test=False):
             code_.append(line)
         code = "\n".join(code_)
         test_setup = "\n".join(IMPORT_HELPER["python"]) + "\n"
-        test_string = test_setup + prompt + "\n" + code + "\n" + test + "\n"
+        test_string = test_setup + prompt + code + "\n" + test + "\n"
     elif language == "cpp":
         test_set_up = ""
         for s in IMPORT_HELPER["cpp"]:
             if s not in prompt:
                 test_set_up += s + "\n"
-        test_string = test_set_up + "\n" + prompt + "\n" + code + "\n" + test
+        test_string = test_set_up + "\n" + prompt + code + "\n" + test
     elif language == "java":
-        test_string = prompt + "\n" + code + "\n" + test
+        test_string = prompt + code + "\n" + test
     elif language == "js" or language == "javascript":
-        test_string = prompt + "\n" + code + "\n" + test
+        test_string = prompt + code + "\n" + test
     elif language == "go":
         import_string = problems[task_id]["import"]
         prompt = prompt.replace(import_string, "")
@@ -70,19 +71,23 @@ def process_humaneval_test(sample, problems, example_test=False):
                     other_pkgs.append(f"\"{pkg}\"")
         if other_pkgs:
             import_other_pkgs = "import (\n" + "    ".join([p + "\n" for p in other_pkgs]) + ")"
-            test_string = test_setup + "\n" + import_other_pkgs + "\n" + prompt + "\n" + code + "\n" + test
+            test_string = test_setup + "\n" + import_other_pkgs + "\n" + prompt + code + "\n" + test
         else:
-            test_string = test_setup + "\n" + prompt + "\n" + code + "\n" + test
+            test_string = test_setup + "\n" + prompt + code + "\n" + test
 
     return test_string
 
 
 def stream_jsonl_all(filename: str) -> Iterable[Dict]:
     results = []
-    with open(filename, "r") as fp:
-        for line in fp:
-            if any(not x.isspace() for x in line):
-                results.append(json.loads(line))
+    if filename.endswith(".gz"):
+        fp = gzip.open(open(filename, "rb"), "rt")
+    else:
+        fp = open(filename, "r")
+    for line in fp:
+        if any(not x.isspace() for x in line):
+            results.append(json.loads(line))
+    fp.close()
 
     return results
 
@@ -116,7 +121,7 @@ def evaluate_functional_correctness(
     else:
         out_file = os.path.join(input_file.replace(".jsonl", suffix))
 
-    if "humaneval_" in input_file:
+    if "/codegeex/benchmark/humaneval-x/" in input_file:
         test_groundtruth = True
 
     if "-to-" in input_file:
@@ -206,11 +211,18 @@ def evaluate_functional_correctness(
         print("Total:", np.sum(total))
         print("Correct:", np.sum(correct))
 
-    with open(out_file, 'w') as fp:
-        print("Writing to: ", out_file)
+    print("Writing to: ", out_file)
+    if out_file.endswith(".gz"):
+        fp = gzip.GzipFile(fileobj=open(out_file, "wb"), mode="wb")
+        for res in results.values():
+            for r in res:
+                fp.write((json.dumps(r[1]) + "\n").encode("utf-8"))
+    else:
+        fp = open(out_file, 'w')
         for res in results.values():
             for r in res:
                 fp.write(json.dumps(r[1]) + "\n")
+    fp.close()
 
     print("Evaluation finished.")
 

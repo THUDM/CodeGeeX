@@ -125,7 +125,10 @@ def _vocab_size_with_padding(orig_vocab_size, args):
     still having GPU friendly size."""
 
     after = orig_vocab_size
-    multiple = args.make_vocab_size_divisible_by * args.tensor_model_parallel_size
+    if args.make_vocab_size_divisible_by > orig_vocab_size:
+        multiple = args.make_vocab_size_divisible_by
+    else:
+        multiple = args.make_vocab_size_divisible_by * args.tensor_model_parallel_size
     while (after % multiple) != 0:
         after += 1
     if args.rank == 0:

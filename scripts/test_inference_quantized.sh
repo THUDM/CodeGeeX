@@ -29,10 +29,10 @@ CMD="python $MAIN_DIR/tests/test_inference.py \
         --tokenizer-path $TOKENIZER_PATH \
         --micro-batch-size 1 \
         --out-seq-length 1024 \
-        --temperature 0.8 \
+        --temperature 0.2 \
         --top-p 0.95 \
         --top-k 0 \
-        --greedy \
+        --quantize \
         $MODEL_ARGS"
 
 echo "$CMD"

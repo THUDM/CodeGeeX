@@ -13,6 +13,7 @@ from codegeex.benchmark.utils import read_dataset, process_extra_prompt
 from codegeex.megatron import get_args
 from codegeex.megatron.inference import run_generation_distributed, model_provider
 from codegeex.megatron.initialize import initialize_megatron
+from codegeex.quantization import quantize
 
 logging.getLogger("torch").setLevel(logging.WARNING)
 
@@ -190,7 +191,11 @@ def add_code_generation_args(parser):
         default=None,
         help='Identify the type of programming language to generate',
     )
-
+    group.add_argument(
+        "--quantize",
+        action="store_true",
+    )
+    
     return parser
 
 
@@ -231,6 +236,8 @@ def main(node_rank: int, local_rank: int, master_port: int, num_devices: int):
     model.eval()
     if args.fp16 and args.ln_fp16:
         model.half()
+    if args.quantize:
+        model = quantize(model, weight_bit_width=8, backend="megatron")
     model.cuda()
 
     # Generate samples.

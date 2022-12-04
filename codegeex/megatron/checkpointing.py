@@ -23,7 +23,7 @@ from glob import glob
 
 import torch
 
-from megatron import get_args, mpu, print_rank_0, update_num_microbatches, utils
+from codegeex.megatron import get_args, mpu, print_rank_0, update_num_microbatches, utils
 
 _CHECKPOINT_VERSION = None
 
@@ -82,7 +82,7 @@ def ensure_directory_exists(filename):
 def get_checkpoint_name(checkpoints_path, iteration, release=False):
     """A unified checkpoint name."""
     if release:
-        directory = "release"
+        directory = ""
     else:
         directory = "iter_{:07d}".format(iteration)
     # Use both the tensor and pipeline MP rank.
@@ -90,16 +90,14 @@ def get_checkpoint_name(checkpoints_path, iteration, release=False):
         return os.path.join(
             checkpoints_path,
             directory,
-            "mp_rank_{:02d}".format(mpu.get_tensor_model_parallel_rank()),
-            "model_optim_rng.pt",
+            "mp_rank_{:02d}_model_states.pt".format(mpu.get_tensor_model_parallel_rank()),
         )
     return os.path.join(
         checkpoints_path,
         directory,
-        "mp_rank_{:02d}_{:03d}".format(
+        "mp_rank_{:02d}_{:03d}_model_states.pt".format(
             mpu.get_tensor_model_parallel_rank(), mpu.get_pipeline_model_parallel_rank()
         ),
-        "model_optim_rng.pt",
     )
 
 
@@ -300,7 +298,13 @@ def load_deepspeed_state(model):
     model[0].load_state_dict(state_dict, strict=True)
 
 
-def load_checkpoint(model, optimizer, lr_scheduler, load_arg="load", strict=True):
+def load_checkpoint(
+    model, 
+    optimizer, 
+    lr_scheduler, 
+    load_arg="load", 
+    strict=True,
+):
     """Load a model checkpoint and return the iteration.
     strict (bool): whether to strictly enforce that the keys in
         :attr:`state_dict` of the checkpoint match the names of
@@ -323,44 +327,53 @@ def load_checkpoint(model, optimizer, lr_scheduler, load_arg="load", strict=True
     else:
         model = utils.unwrap_model(model)
 
-        # Read the tracker file and set the iteration.
-        tracker_filename = get_checkpoint_tracker_filename(load_dir)
+        if load_dir.endswith(".pt"):
+            checkpoint_name = load_dir
+            release = True
+        else:
+            # Read the tracker file and set the iteration.
+            tracker_filename = get_checkpoint_tracker_filename(load_dir)
 
-        # If no tracker file, return iretation zero.
-        if not os.path.isfile(tracker_filename):
-            print_rank_0(
-                "WARNING: could not find the metadata file {} ".format(tracker_filename)
-            )
-            print_rank_0(
-                "    will not load any checkpoints and will start from " "random"
-            )
-            return 0
-
-        # Otherwise, read the tracker file and either set the iteration or
-        # mark it as a release checkpoint.
-        iteration = 0
-        release = False
-        with open(tracker_filename, "r") as f:
-            metastring = f.read().strip()
-            try:
-                iteration = int(metastring)
-            except ValueError:
-                release = metastring == "release"
-                if not release:
+            # If no tracker file, return iretation zero.
+            if not os.path.isfile(tracker_filename):
+                print_rank_0(
+                    "WARNING: could not find the metadata file {} ".format(tracker_filename)
+                )
+                iteration = 0
+                release = True
+                checkpoint_name = get_checkpoint_name(load_dir, iteration, release)
+                if not os.path.isfile(checkpoint_name):
                     print_rank_0(
-                        "ERROR: Invalid metadata file {}. Exiting".format(
-                            tracker_filename
-                        )
+                        "    will not load any checkpoints and will start from random"
                     )
-                    sys.exit()
+                    return 0
+            else:
+                # Otherwise, read the tracker file and either set the iteration or
+                # mark it as a release checkpoint.
+                iteration = 0
+                release = False
+                with open(tracker_filename, "r") as f:
+                    metastring = f.read().strip()
+                    try:
+                        iteration = int(metastring)
+                    except ValueError:
+                        release = metastring == "release"
+                        if not release:
+                            print_rank_0(
+                                "ERROR: Invalid metadata file {}. Exiting".format(
+                                    tracker_filename
+                                )
+                            )
+                            sys.exit()
 
-        assert iteration > 0 or release, "error parsing metadata file {}".format(
-            tracker_filename
-        )
+                assert iteration > 0 or release, "error parsing metadata file {}".format(
+                    tracker_filename
+                )
 
-        # Checkpoint.
-        checkpoint_name = get_checkpoint_name(load_dir, iteration, release)
-        print_rank_0(f" loading checkpoint from {args.load} at iteration {iteration}")
+                # Checkpoint.
+                checkpoint_name = get_checkpoint_name(load_dir, iteration, release)
+                print_rank_0(f" loading checkpoint from {args.load} at iteration {iteration}")
+                
 
         # Load the checkpoint.
         try:
@@ -423,12 +436,20 @@ def load_checkpoint(model, optimizer, lr_scheduler, load_arg="load", strict=True
 
     # Model.
     if not args.deepspeed:
-        if len(model) == 1:
-            model[0].load_state_dict(state_dict["model"], strict=strict)
+        if release:
+            if len(model) == 1:
+                model[0].load_state_dict(state_dict["module"], strict=strict)
+            else:
+                for i in range(len(model)):
+                    mpu.set_virtual_pipeline_model_parallel_rank(i)
+                    model[i].load_state_dict(state_dict["model%d" % i], strict=strict)
         else:
-            for i in range(len(model)):
-                mpu.set_virtual_pipeline_model_parallel_rank(i)
-                model[i].load_state_dict(state_dict["model%d" % i], strict=strict)
+            if len(model) == 1:
+                model[0].load_state_dict(state_dict["module"], strict=strict)
+            else:
+                for i in range(len(model)):
+                    mpu.set_virtual_pipeline_model_parallel_rank(i)
+                    model[i].load_state_dict(state_dict["model%d" % i], strict=strict)
 
     # Fix up query/key/value matrix ordering if needed
     checkpoint_version = get_checkpoint_version()
