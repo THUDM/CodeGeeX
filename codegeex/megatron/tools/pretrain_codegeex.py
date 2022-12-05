@@ -70,7 +70,7 @@ def model_provider(pre_process=True, post_process=True):
                 mp_rank = mpu.get_tensor_model_parallel_rank()
                 if os.path.isdir(args.load_state):
                     model_path = os.path.join(
-                        args.load_state, f"model_mp_rank_{mp_rank}.pt"
+                        args.load_state, "mp_rank_{:02d}_model_states.pt".format(mp_rank)
                     )
                 else:
                     model_path = args.load_state
