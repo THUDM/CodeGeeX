@@ -1,6 +1,7 @@
 # This script is used to test the inference of CodeGeeX.
 
 MP_SIZE=$1
+PROMPT_FILE=$2
 
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")

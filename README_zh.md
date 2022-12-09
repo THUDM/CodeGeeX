@@ -4,7 +4,7 @@
     🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📃 论文（即将推出！）
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://models.aminer.cn/codegeex/static/xdaivscodegeex.b65f1404.png"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> 或 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 
 
@@ -41,6 +41,8 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
+* **2022-12-04**: 我们开源了量化代码（需要更少的显存：27GB -> 15GB）以及模型并行代码（可以运行在多个显存至少8GB的GPUs上）。
+
 * **2022-09-30**: 我们开源了跨平台代码和模型权重，同时支持昇腾和英伟达平台。
 ## 使用指南
 
@@ -70,7 +72,15 @@ tar xvf codegeex_13b.tar.gz
 
 尝试使用CodeGeeX模型生成第一个程序吧！首先，在配置文件``configs/codegeex_13b.sh``中写明存放权重的路径。其次，将提示（可以是任意描述或代码片段）写入文件``tests/test_prompt.txt``，运行以下脚本即可开始推理（需指定GPU序号）：
 ```bash
+# On a single GPU (with more than 27GB RAM)
 bash ./scripts/test_inference.sh <GPU_ID> ./tests/test_prompt.txt
+
+# With quantization (with more than 15GB RAM)
+bash ./scripts/test_inference_quantized.sh <GPU_ID> ./tests/test_prompt.txt
+
+# On multiple GPUs (with more than 6GB RAM, need to first convert ckpt to MP_SIZE partitions)
+bash ./scripts/convert_ckpt_parallel.sh <LOAD_CKPT_PATH> <SAVE_CKPT_PATH> <MP_SIZE>
+bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 ```
 
 ### VS Code插件使用指南
