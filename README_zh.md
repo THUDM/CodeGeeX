@@ -1,10 +1,10 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📃 论文（即将推出！）
+    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 📃 论文（即将推出！）
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code插件</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> 或 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a> 或 <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a> 插件 | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> 或 <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> 或 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 
 
@@ -18,7 +18,7 @@
     - [安装](#安装)
     - [模型权重](#模型权重)
     - [用GPU进行推理](#用gpu进行推理)
-    - [VS Code插件使用指南](#vs-code插件使用指南)
+    - [插件使用指南](#插件使用指南)
   - [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型-1)
     - [国产平台实现与训练](#国产平台实现与训练)
   - [HumanEval-X: 多语言代码生成基准](#humaneval-x-多语言代码生成基准)
@@ -41,6 +41,10 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
+* **2022-12-13**: 我们开源了VS Code插件源码：[codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension)，参考 [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) 开始开发吧！
+
+* **2022-12-11**: CodeGeeX for Jetbrains IDEs已上线，支持IntelliJ IDEA, PyCharm, GoLand, CLion等，[点击下载](https://plugins.jetbrains.com/plugin/20587-codegeex)。
+  
 * **2022-12-04**: 我们开源了量化代码（需要更少的显存：27GB -> 15GB）以及模型并行代码（可以运行在多个显存至少8GB的GPUs上）。
 
 * **2022-09-30**: 我们开源了跨平台代码和模型权重，同时支持昇腾和英伟达平台。
@@ -83,10 +87,14 @@ bash ./scripts/convert_ckpt_parallel.sh <LOAD_CKPT_PATH> <SAVE_CKPT_PATH> <MP_SI
 bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 ```
 
-### VS Code插件使用指南
+### 插件使用指南
 
-基于CodeGeeX，我们开发了一款免费的VS Code插件，在应用市场搜索“codegeex”或通过[该链接](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex)安装。详细的使用指南在[CodeGeeX插件使用指南](vscode-extension/README_zh.md).
+基于CodeGeeX，我们开发了免费的插件，支持 VS Code 与 Jetbrains IDEs，未来会支持更多平台。
 
+VS Code版本，在应用市场搜索“codegeex”或通过[该链接](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex)安装。详细的使用指南在[CodeGeeX VS Code插件使用指南](vscode-extension/README_zh.md)。我们也开源了VS Code插件源码：[codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension)，参考[QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart_zh.md) 开始开发吧！
+
+Jetbrains版本，在Plugins市场搜索“codegeex”或通过[该链接](https://plugins.jetbrains.com/plugin/20587-codegeex)安装。
+请确保IDE版本在2021.1或更高。CodeGeeX目前支持 IntelliJ IDEA, PyCharm, GoLand, CLion, Android Studio, AppCode, Aqua, DataSpell, DataGrip, Rider, RubyMine, WebStorm。 
 
 ## CodeGeeX: 多语言代码生成模型
 
