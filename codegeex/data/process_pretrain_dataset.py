@@ -58,7 +58,7 @@ def process_sample(
     
     try:
         if language is not None and language in LANGUAGE_TAG.keys():
-            code = LANGUAGE_TAG[language] + sample["code"]
+            code = LANGUAGE_TAG[language] + "\n" + sample["code"]
         else:
             code = sample["code"]
     except Exception as e:
