@@ -176,8 +176,7 @@ def main():
                 for j in range(micro_batch_size):
                     if is_finished[j]:
                         continue
-                    if generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id or len(
-                            generated_tokens[j]) >= out_seq_length:
+                    if generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id or len(generated_tokens[j]) >= out_seq_length:
                         is_finished[j] = True
                         generated_tokens_ = generated_tokens[j].cpu().numpy().tolist()
                         generated_code = tokenizer.decode_code(generated_tokens_[n_token_prompt:])

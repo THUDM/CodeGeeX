@@ -19,10 +19,11 @@ import torch
 import torch.nn.functional as F
 
 from codegeex.megatron import get_args
-from codegeex.megatron import mpu
+from codegeex.megatron import mpu, print_rank_0
 from codegeex.megatron.model.module import MegatronModule
 from codegeex.megatron.model.transformer import ParallelTransformer
 from codegeex.megatron.model.utils import init_method_normal, scaled_init_method_normal
+from codegeex.megatron.mpu.initialize import get_tensor_model_parallel_world_size
 
 
 def parallel_lm_logits(input_, word_embeddings_weight, parallel_output, bias=None):
@@ -92,22 +93,33 @@ class Embedding(MegatronModule):
         num_tokentypes=0,
     ):
         super(Embedding, self).__init__()
-
+        
+        args = get_args()
+        
         self.hidden_size = hidden_size
         self.init_method = init_method
         self.num_tokentypes = num_tokentypes
-
+        self.max_sequence_length = max_sequence_length
+        
         # Word embeddings (parallel).
         self.word_embeddings = mpu.VocabParallelEmbedding(
             vocab_size, self.hidden_size, init_method=self.init_method)
-        self._word_embeddings_key = 'word_embeddings'
+        if args.compress:
+            self._word_embeddings_key = 'word_embedding'
+        else:
+            self._word_embeddings_key = 'word_embeddings'
+            
         self.vocab_size = vocab_size
 
         # Position embedding (serial).
         self.position_embeddings = torch.nn.Embedding(
             max_sequence_length, self.hidden_size)
         self.position_embeddings = self.position_embeddings.half()
-        self._position_embeddings_key = 'position_embeddings'
+        if args.compress:
+            self._position_embeddings_key = 'position_embedding'
+        else:
+            self._position_embeddings_key = 'position_embeddings'
+            
         # Initialize the position embeddings.
         self.init_method(self.position_embeddings.weight)
 
@@ -190,7 +202,8 @@ class Embedding(MegatronModule):
                 if 'word_embeddings' in key:
                     state_dict_[key.split('word_embeddings.')[1]] \
                         = state_dict[key]
-        state_dict_["weight"] = state_dict_["weight"][:self.vocab_size]
+        vocab_len = state_dict_['weight'].shape[0]
+        state_dict_["weight"] = state_dict_["weight"][:self.vocab_size // get_tensor_model_parallel_world_size()]
         self.word_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Position embedding.
@@ -203,6 +216,17 @@ class Embedding(MegatronModule):
                 if 'position_embeddings' in key:
                     state_dict_[key.split('position_embeddings.')[1]] \
                         = state_dict[key]
+        
+        pos_len = state_dict_['weight'].shape[0]
+        max_seq_len = self.max_sequence_length
+        if pos_len < max_seq_len:
+            print_rank_0(f"Position embedding padded {pos_len} -> {max_seq_len}.")
+            position_embeddings_padded = torch.nn.Embedding(
+            max_seq_len - pos_len, self.hidden_size).half()
+            self.init_method(position_embeddings_padded.weight)
+            state_dict_['weight'] = torch.cat([state_dict_['weight'], position_embeddings_padded.weight], dim=0)
+
+        # self.position_embeddings = self.position_embeddings.half()
         self.position_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Tokentype embedding.
@@ -284,12 +308,14 @@ class QueryEmbedding(MegatronModule):
         self.hidden_size = hidden_size
         self.init_method = init_method
         self.num_tokentypes = num_tokentypes
-
+        self.max_sequence_length = max_sequence_length
+        
         # Top query position embedding (serial).
         self.top_query_embeddings = mpu.VocabParallelEmbedding(
             max_sequence_length, self.hidden_size, init_method=self.init_method)
         self.top_query_embeddings = self.top_query_embeddings.half()
         self._top_query_embeddings_key = 'top_query_embeddings'
+            
         # Initialize the top query position embeddings.
         self.init_method(self.top_query_embeddings.weight)
 
@@ -368,6 +394,16 @@ class QueryEmbedding(MegatronModule):
                 if 'top_query_embeddings' in key:
                     state_dict_[key.split('top_query_embeddings.')[1]] \
                         = state_dict[key]
+        pos_len = state_dict_['weight'].shape[0]
+        max_seq_len = self.max_sequence_length // get_tensor_model_parallel_world_size()
+        print_rank_0(f"pos_len: {pos_len}")
+        print_rank_0(f"max_seq_len: {max_seq_len}")
+        if pos_len < max_seq_len:
+            print_rank_0(f"Top query embedding padded {pos_len} -> {max_seq_len}.")
+            top_query_embeddings_padded = torch.nn.Embedding(
+            max_seq_len - pos_len, self.hidden_size).half()
+            self.init_method(top_query_embeddings_padded.weight)
+            state_dict_['weight'] = torch.cat([state_dict_['weight'], top_query_embeddings_padded.weight], dim=0)
         self.top_query_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Tokentype embedding.

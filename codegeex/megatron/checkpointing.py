@@ -84,7 +84,7 @@ def get_checkpoint_name(checkpoints_path, iteration, release=False):
     if release:
         directory = ""
     else:
-        directory = "iter_{:07d}".format(iteration)
+        directory = f"global_step{iteration}"
     # Use both the tensor and pipeline MP rank.
     if mpu.get_pipeline_model_parallel_world_size() == 1:
         return os.path.join(
@@ -174,7 +174,7 @@ def save_checkpoint(iteration, model, optimizer, lr_scheduler):
         # Saving is a collective communication
         checkpoint_name = get_checkpoint_name(args.save, iteration)
         # Trim off the filename and mp_rank_* directory.
-        for _ in range(3):
+        for _ in range(2):
             checkpoint_name = os.path.dirname(checkpoint_name)
         model[0].save_checkpoint(checkpoint_name, client_state=state_dict)
 
