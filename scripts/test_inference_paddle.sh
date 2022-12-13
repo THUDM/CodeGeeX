@@ -1,6 +1,6 @@
 # This script is used to test the inference of CodeGeeX.
 
-MP_SIZE=$1
+GPU=$1
 PROMPT_FILE=$2
 
 SCRIPT_PATH=$(realpath "$0")
@@ -8,29 +8,23 @@ SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 MAIN_DIR=$(dirname "$SCRIPT_DIR")
 TOKENIZER_PATH="$MAIN_DIR/codegeex/tokenizer/"
 
-if [ -z "$MP_SIZE" ]; then
-  MP_SIZE=1
-fi
-
-if [ "$MP_SIZE" -eq 1 ]; then
-  source "$MAIN_DIR/configs/codegeex_13b.sh"
-  echo "Load config from $MAIN_DIR/configs/codegeex_13b.sh"
-else
-  source "$MAIN_DIR/configs/codegeex_13b_parallel.sh"
-  echo "Load config from $MAIN_DIR/configs/codegeex_13b_parallel.sh"
-fi
+# import model configuration
+source "$MAIN_DIR/configs/codegeex_13b_paddle.sh"
 
 # export CUDA settings
+if [ -z "$GPU" ]; then
+  GPU=0
+fi
+
 export CUDA_HOME=/usr/local/cuda-11.1/
-# export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=$GPU
 
 if [ -z "$PROMPT_FILE" ]; then
   PROMPT_FILE=$MAIN_DIR/tests/test_prompt.txt
 fi
 
 # remove --greedy if using sampling
-CMD="torchrun --nproc_per_node $MP_SIZE $MAIN_DIR/tests/test_inference_megatron.py \
-        --tensor-model-parallel-size $MP_SIZE \
+CMD="python $MAIN_DIR/tests/test_inference_paddle.py \
         --prompt-file $PROMPT_FILE \
         --tokenizer-path $TOKENIZER_PATH \
         --micro-batch-size 1 \
@@ -39,8 +33,6 @@ CMD="torchrun --nproc_per_node $MP_SIZE $MAIN_DIR/tests/test_inference_megatron.
         --top-p 0.95 \
         --top-k 0 \
         --greedy \
-        --use-cpu-initialization \
-        --ln-fp16 \
         $MODEL_ARGS"
 
 echo "$CMD"

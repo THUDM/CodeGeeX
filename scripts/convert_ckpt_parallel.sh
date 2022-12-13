@@ -1,4 +1,4 @@
-# This script is used to convert mindspore checkpoint to the megatron format.
+# This script is used to convert checkpoint model parallel partitions.
 
 LOAD_CKPT_PATH=$1  # Path to weights in .pt format.
 SAVE_CKPT_PATH=$2  # Path to save the output MP checkpoints.
