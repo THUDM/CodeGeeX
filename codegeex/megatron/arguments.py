@@ -415,6 +415,10 @@ def _add_network_size_args(parser):
         help="Disable BERT binary head.",
         dest="bert_binary_head",
     )
+    group.add_argument(
+        "--compress",
+        action="store_true",
+    )
 
     return parser
 

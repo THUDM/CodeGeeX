@@ -65,12 +65,6 @@ except ImportError:
 from filelock import FileLock
 import pathlib
 
-try:
-    import bmcook
-    from bmcook import Config
-except ImportError:
-    print("bmcook not imported.")
-    bmcook = None
 
 
 def print_datetime(string):
@@ -79,11 +73,6 @@ def print_datetime(string):
     time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print_rank_0("[" + string + "] datetime: {} ".format(time_str))
 
-
-def compress_setup(args, model, optimizer):
-    teacher = get_model(args)
-    cook_config = ConfigParser(args.cook_config)
-    CPMAntTrainer.set_compression(cook_config, model, optimizer, teacher=teacher, remove_ckptblock=False, target_linear=Linear)
 
 def pretrain(
     train_valid_test_dataset_provider,
