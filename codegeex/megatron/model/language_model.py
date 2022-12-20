@@ -104,10 +104,7 @@ class Embedding(MegatronModule):
         # Word embeddings (parallel).
         self.word_embeddings = mpu.VocabParallelEmbedding(
             vocab_size, self.hidden_size, init_method=self.init_method)
-        if args.compress:
-            self._word_embeddings_key = 'word_embedding'
-        else:
-            self._word_embeddings_key = 'word_embeddings'
+        self._word_embeddings_key = 'word_embeddings'
             
         self.vocab_size = vocab_size
 
@@ -115,10 +112,7 @@ class Embedding(MegatronModule):
         self.position_embeddings = torch.nn.Embedding(
             max_sequence_length, self.hidden_size)
         self.position_embeddings = self.position_embeddings.half()
-        if args.compress:
-            self._position_embeddings_key = 'position_embedding'
-        else:
-            self._position_embeddings_key = 'position_embeddings'
+        self._position_embeddings_key = 'position_embeddings'
             
         # Initialize the position embeddings.
         self.init_method(self.position_embeddings.weight)
