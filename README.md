@@ -4,7 +4,7 @@
     🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a> or <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a> Extensions | 👋 Join our <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> or <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> or <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a> or <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a> Extensions | 👋 Join our <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1m76zecsi-~JW59Jmvx09lX4Pqv9oE_w"target="_blank">Slack</a> or <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> or <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 
 
