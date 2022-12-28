@@ -174,7 +174,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
 
     def zero_grad_buffer(self):
         """Set the grad buffer data to zero. Needs to be called at the
-        begining of each iteration."""
+        beginning of each iteration."""
         assert self._grad_buffers is not None, "buffers are not initialized."
         for _, buffer_ in self._grad_buffers.items():
             buffer_.zero()
