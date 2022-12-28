@@ -102,7 +102,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
         self.accumulate_allreduce_grads_in_fp32 = accumulate_allreduce_grads_in_fp32
         self.use_contiguous_buffers = use_contiguous_buffers
         # If we are using fp32-accumulate-allreduce explicitly
-        # this means we need main grads in a continous buffer.
+        # this means we need main grads in a continuous buffer.
         if self.accumulate_allreduce_grads_in_fp32:
             assert self.use_contiguous_buffers
 
