@@ -274,7 +274,7 @@ def fix_query_key_value_ordering(model, checkpoint_version):
                     sys.exit()
                 param.data.copy_(fixed_param)
         print_rank_0(
-            " succesfully fixed query-key-values ordering for"
+            " successfully fixed query-key-values ordering for"
             " checkpoint version {}".format(checkpoint_version)
         )
 
