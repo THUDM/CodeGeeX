@@ -15,7 +15,7 @@ setup(
         "pyzmq>=23.2.1",
         "regex>=2022.3.15",
         "setuptools>=58.0.4",
-        "transformers>=4.22.0",
+        "transformers>=4.22.0,<=4.24.0",
         "pytorch>=1.10.0",
         "tqdm>=4.63.0",
     ],
