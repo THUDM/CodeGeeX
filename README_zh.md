@@ -41,6 +41,10 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
+* 🌟 **2022-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
+
+* **2022-12-31**: 我们在 [codegeex-fastertransformer](https://github.com/CodeGeeX/codegeex-fastertransformer) 中发布了 CodeGeeX 的 FasterTransformer 版本。INT8加速版本达到 <15ms/token 的平均速度。祝大家新年快乐！
+
 * **2022-12-13**: 我们开源了VS Code插件源码：[codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension)，参考 [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) 开始开发吧！
 
 * **2022-12-11**: CodeGeeX for Jetbrains IDEs已上线，支持IntelliJ IDEA, PyCharm, GoLand, CLion等，[点击下载](https://plugins.jetbrains.com/plugin/20587-codegeex)。
