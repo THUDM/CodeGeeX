@@ -1,16 +1,17 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://codegeex.ai" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
+    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" **target**="_blank">VS Code</a> or <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a> Extensions | 👋 Join our <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1m76zecsi-~JW59Jmvx09lX4Pqv9oE_w"target="_blank">Slack</a> or <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> or <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1m76zecsi-~JW59Jmvx09lX4Pqv9oE_w" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a>
 </p>
 
+<div align="center">
 
-![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
+  <a href="">[![Cloud Studio Template](https://cs-res.codehub.cn/common/assets/icon-badge.svg)](https://cloudstudio.net/templates/h0kvkZvoO0U)</a>
+
+</div>
 
 - [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
   - [News](#news)
@@ -41,6 +42,10 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 <p align="center"><i>CodeGeeX achieves the highest average performance compared with other open-sourced multilingual baselines.</i> </p>
 
 ## News
+
+* **2022-02-14**: CodeGeeX now supports [Cloud Studio](https://cloudstudio.net/), a fantastic web IDE from Tencent. Click on the badge on top of this page to quickly launch an environment to test CodeGeeX.
+
+* **2022-02-13**: Thanks a lot to [OneFlow](https://github.com/Oneflow-Inc/oneflow) team for adding oneflow backend for CodeGeeX's inference (Even faster than FasterTransformer under FP16!). Check more details [here](https://github.com/THUDM/CodeGeeX/pull/65).
 
 * 🌟 **2022-02**: We are hosting [CodeGeeX "Coding With AI" Hackathon](https://dorahacks.io/hackathon/codegeex/), design cool applications based on CodeGeeX and win prizes (RTX 4090, DJI drone, etc)!
 
@@ -195,3 +200,4 @@ Ruijie Cheng (Tsinghua), Peinan Yu (Tsinghua), Jingyao Zhang (Zhipu\.AI), Bowen 
 ## License
 
 Our code is licensed under the [Apache-2.0 license](LICENSE).
+Our model is licensed under the [license](MODEL_LICENSE).

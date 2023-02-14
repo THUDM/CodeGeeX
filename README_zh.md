@@ -1,16 +1,17 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 📃 论文（即将推出！）
+    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a> 或 <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a> 插件 | 👋 欢迎加入 <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1m76zecsi-~JW59Jmvx09lX4Pqv9oE_w"target="_blank">Slack</a> 或 <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> 或 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> 插件 | 👋 欢迎加入 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> 
 </p>
 
+<div align="center">
 
-![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
+  <a href="">[![Cloud Studio Template](https://cs-res.codehub.cn/common/assets/icon-badge.svg)](https://cloudstudio.net/templates/h0kvkZvoO0U)</a>
+
+</div>
 
 - [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型)
   - [新闻](#新闻)
@@ -40,6 +41,10 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 <p align="center"><i>在HumanEval-X代码生成任务上，与其它开源基线模型相比，CodeGeeX取得了最佳的平均性能。</i> </p>
 
 ## 新闻
+
+* **2022-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
+
+* **2022-02-13**: 感谢 [OneFlow](https://github.com/Oneflow-Inc/oneflow) 加入了oneflow版推理支持，在FP16下比FasterTransformer还要快！更多优化细节请点击[这里](https://github.com/THUDM/CodeGeeX/pull/65).
 
 * 🌟 **2022-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
 
@@ -196,3 +201,4 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 ### 许可证
 
 代码使用[Apache-2.0许可证](LICENSE)
+模型使用[许可证](MODEL_LICENSE)
