@@ -786,7 +786,7 @@ class ParallelTopQueryLayer(MegatronModule):
         # hidden_states: [b, s, h]
         assert query_hidden_state != None
 
-        # Layer norm at the begining of the transformer layer.
+        # Layer norm at the beginning of the transformer layer.
         if self.ln_fp16:
             layernorm_output = self.input_layernorm(hidden_states)
         else:

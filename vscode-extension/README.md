@@ -10,7 +10,7 @@
 
 We introduce CodeGeeX, a large-scale multilingual code generation model with 13 billion parameters, pretrained on a large code corpus of more than 20 programming languages. With CodeGeeX, we can generate codes by only providing natural language descriptions, complete any code snippet, or translate codes to other programming languages, etc. CodeGeeX also provides customizable features (**Prompt Mode**) to help you configure your own programming assistant. Happy coding!
 
-Please search "codegeeex" in VS Code Marketplace to download it for free (minimum version requirement of VS Code is 1.68.0). For more information, please check out our [Homepage](https://models.aminer.cn/codegeex/) and [GitHub repo](https://github.com/THUDM/CodeGeeX).
+Please search "codegeex" in VS Code Marketplace to download it for free (minimum version requirement of VS Code is 1.68.0). For more information, please check out our [Homepage](https://models.aminer.cn/codegeex/) and [GitHub repo](https://github.com/THUDM/CodeGeeX).
 
 Please kindly let us know if you encounter any problem or have any suggestion, via [codegeex@aminer.cn](mailto:codegeex@aminer.cn).
 
