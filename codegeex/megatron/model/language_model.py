@@ -26,11 +26,39 @@ from codegeex.megatron.model.utils import init_method_normal, scaled_init_method
 from codegeex.megatron.mpu.initialize import get_tensor_model_parallel_world_size
 
 
+def get_shrink_embedding_gradient_alpha(iteration):
+    args = get_args()
+
+    alpha = args.shrink_embedding_gradient_alpha
+    if args.shrink_embedding_gradient_steps is None:
+        return alpha
+    else:
+        x1 = int(args.shrink_embedding_gradient_steps[0])
+        x2 = int(args.shrink_embedding_gradient_steps[1])
+        if iteration <= x1:
+            return alpha
+        elif iteration >= x1 + x2:
+            return 1.0
+        else:
+            return alpha + (1 - alpha) * (args.iteration - x1) / x2
+        
+
 def parallel_lm_logits(input_, word_embeddings_weight, parallel_output, bias=None):
     """LM logits using word embedding weights."""
     # Parallel logits.
     input_parallel = mpu.copy_to_tensor_model_parallel_region(input_)
     # Matrix multiply.
+    args = get_args()
+    if args.shrink_logit_embedding_gradient:
+        if hasattr(args, 'iteration'):
+            alpha = get_shrink_embedding_gradient_alpha(args.iteration + 1)
+        else:
+            alpha = args.shrink_embedding_gradient_alpha
+        word_embeddings_weight = word_embeddings_weight if alpha == 1.0 \
+            else (
+                word_embeddings_weight * alpha +
+                word_embeddings_weight.detach() * (1 - alpha)
+        )
     if bias is None:
         logits_parallel = F.linear(input_parallel, word_embeddings_weight.half())
     else:

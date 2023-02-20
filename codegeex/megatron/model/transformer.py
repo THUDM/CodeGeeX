@@ -117,10 +117,11 @@ class ParallelSelfAttention(MegatronModule):
 
         # Per attention head and per partition values.
         world_size = mpu.get_model_parallel_world_size()
-        self.hidden_size_per_partition = mpu.divide(args.hidden_size,
-                                                    world_size)
+        self.hidden_size_per_partition = mpu.divide(
+            args.hidden_size // 2 if args.compress else args.hidden_size,
+            world_size)
         self.hidden_size_per_attention_head = mpu.divide(
-            args.hidden_size, args.num_attention_heads)
+            args.hidden_size // 2 if args.compress else args.hidden_size, args.num_attention_heads)
         self.num_attention_heads_per_partition = mpu.divide(
             args.num_attention_heads, world_size)
         if hasattr(args, 'attention_upweight'):
@@ -130,17 +131,17 @@ class ParallelSelfAttention(MegatronModule):
         # Strided linear layer.
         self.query = mpu.ColumnParallelLinear(
             args.hidden_size,
-            args.hidden_size,
+            args.hidden_size // 2 if args.compress else args.hidden_size,
             gather_output=False,
             init_method=init_method)
         self.key = mpu.ColumnParallelLinear(
             args.hidden_size,
-            args.hidden_size,
+            args.hidden_size // 2 if args.compress else args.hidden_size,
             gather_output=False,
             init_method=init_method)
         self.value = mpu.ColumnParallelLinear(
             args.hidden_size,
-            args.hidden_size,
+            args.hidden_size // 2 if args.compress else args.hidden_size,
             gather_output=False,
             init_method=init_method)
 
@@ -154,7 +155,7 @@ class ParallelSelfAttention(MegatronModule):
 
         # Output.
         self.dense = mpu.RowParallelLinear(
-            args.hidden_size,
+            args.hidden_size // 2 if args.compress else args.hidden_size,
             args.hidden_size,
             input_is_parallel=True if args.tensor_model_parallel_size > 1 else False,
             init_method=output_layer_init_method,
