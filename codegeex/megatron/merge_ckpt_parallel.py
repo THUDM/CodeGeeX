@@ -26,6 +26,11 @@ def get_change_ckpt_args(parser):
         help='path to save ".pt" checkpoint.',
     )
     group.add_argument(
+        '--save-name',
+        type=str,
+        help='name of checkpoint.',
+    )
+    group.add_argument(
         '--source-tensor-model-parallel-size',
         type=int,
         default=2,
@@ -123,7 +128,10 @@ def main():
         save_ckpt_path = args.save_ckpt_path
     else:
         os.makedirs(args.save_ckpt_path, exist_ok=True)
-        save_ckpt_path = os.path.join(args.save_ckpt_path, "mp_rank_00_model_states.pt")
+        if args.save_name:
+            save_ckpt_path = os.path.join(args.save_ckpt_path, args.save_name)
+        else:
+            save_ckpt_path = os.path.join(args.save_ckpt_path, "mp_rank_00_model_states.pt")
     
     torch.save(sd, save_ckpt_path)
     print(f"Converted checkpoint saved in {save_ckpt_path}.")
