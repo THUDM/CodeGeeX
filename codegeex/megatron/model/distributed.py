@@ -102,7 +102,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
         self.accumulate_allreduce_grads_in_fp32 = accumulate_allreduce_grads_in_fp32
         self.use_contiguous_buffers = use_contiguous_buffers
         # If we are using fp32-accumulate-allreduce explicitly
-        # this means we need main grads in a continous buffer.
+        # this means we need main grads in a continuous buffer.
         if self.accumulate_allreduce_grads_in_fp32:
             assert self.use_contiguous_buffers
 
@@ -174,7 +174,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
 
     def zero_grad_buffer(self):
         """Set the grad buffer data to zero. Needs to be called at the
-        begining of each iteration."""
+        beginning of each iteration."""
         assert self._grad_buffers is not None, "buffers are not initialized."
         for _, buffer_ in self._grad_buffers.items():
             buffer_.zero()

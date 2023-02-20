@@ -1,16 +1,17 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📃 Paper(Coming soon!) |
+    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code Extension</a> | 👋 Join our <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1jxpygozo-GuB40XQPiyfrCflupyLKKw"target="_blank">Slack</a> or <a href="https://t.me/+IipIayJ32B1jOTg1"target="_blank">Telegram</a> or <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1m76zecsi-~JW59Jmvx09lX4Pqv9oE_w" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a>
 </p>
 
+<div align="center">
 
-![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
-![CodeGeeX download](https://img.shields.io/visual-studio-marketplace/d/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
+  <a href="">[![Cloud Studio Template](https://cs-res.codehub.cn/common/assets/icon-badge.svg)](https://cloudstudio.net/templates/h0kvkZvoO0U)</a>
+
+</div>
 
 - [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
   - [News](#news)
@@ -18,7 +19,7 @@
     - [Installation](#installation)
     - [Model Weights](#model-weights)
     - [Inference on GPUs](#inference-on-gpus)
-    - [VS Code Extension Guidance](#vs-code-extension-guidance)
+    - [VS Code and Jetbrains Extension Guidance](#vs-code-and-jetbrains-extension-guidance)
   - [CodeGeeX: Architecture, Code Corpus, and Implementation](#codegeex-architecture-code-corpus-and-implementation)
   - [HumanEval-X: A new benchmark for Multilingual Program Synthesis](#humaneval-x-a-new-benchmark-for-multilingual-program-synthesis)
     - [Multilingual Code Generation](#multilingual-code-generation)
@@ -42,9 +43,21 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 
 ## News
 
+* **2022-02-14**: CodeGeeX now supports [Cloud Studio](https://cloudstudio.net/), a fantastic web IDE from Tencent. Click on the badge on top of this page to quickly launch an environment to test CodeGeeX.
+
+* **2022-02-13**: Thanks a lot to [OneFlow](https://github.com/Oneflow-Inc/oneflow) team for adding oneflow backend for CodeGeeX's inference (Even faster than FasterTransformer under FP16!). Check more details [here](https://github.com/THUDM/CodeGeeX/pull/65).
+
+* 🌟 **2022-02**: We are hosting [CodeGeeX "Coding With AI" Hackathon](https://dorahacks.io/hackathon/codegeex/), design cool applications based on CodeGeeX and win prizes (RTX 4090, DJI drone, etc)!
+
+* **2022-12-31**: We release the FasterTransformer version of CodeGeeX in [codegeex-fastertransformer](https://github.com/CodeGeeX/codegeex-fastertransformer). The INT8 accelerated version reaches an a verage speed of <15ms/token. Happy new year to everyone!
+
+* **2022-12-13**: We release the source code of CodeGeeX VS Code extension in [codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension). Follow [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) to start development.
+
+* **2022-12-11**: CodeGeeX is now available for Jetbrains IDEs (IntelliJ IDEA, PyCharm, GoLand, CLion, etc), download it [here](https://plugins.jetbrains.com/plugin/20587-codegeex).
+
 * **2022-12-04**: We release source code of quantization (requires less GPU RAM: 27GB -> 15GB) and model parallelism (possible to run on multiple GPUs with <8G RAM).
  
-* **2022-09-30**: We release the cross-platform source code and models weights for both Ascend and NVIDIA platforms. 
+* **2022-09-30**: We release the cross-platform source code and models weights for both Ascend and NVIDIA platforms.
 
 ## Getting Started
 
@@ -85,10 +98,15 @@ bash ./scripts/convert_ckpt_parallel.sh <LOAD_CKPT_PATH> <SAVE_CKPT_PATH> <MP_SI
 bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 ```
 
-### VS Code Extension Guidance
+### VS Code and Jetbrains Extension Guidance
 
-Based on CodeGeeX, we also develop a free VS Code extention, search "codegeex" in Marketplace or install it [here](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex). Detailed instructions can be found in 
-[CodeGeeX Extension Guidance](vscode-extension/README.md).
+Based on CodeGeeX, we also develop free extentions for VS Code and Jetbrains IDEs, and more in the future. 
+
+For VS Code, search "codegeex" in Marketplace or install it [here](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex). Detailed instructions can be found in 
+[VS Code Extension Guidance](vscode-extension/README.md). For developpers, we have also released the source code in [codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension), please follow [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) to start development.
+
+For Jetbrains IDEs, search "codegeex" in Plugins or intall it [here](https://plugins.jetbrains.com/plugin/20587-codegeex). 
+Make sure your IDE version is 2021.1 or later. CodeGeeX now supports IntelliJ IDEA, PyCharm, GoLand, CLion, Android Studio, AppCode, Aqua, DataSpell, DataGrip, Rider, RubyMine, and WebStorm. 
 
 ## CodeGeeX: Architecture, Code Corpus, and Implementation
 
@@ -182,3 +200,4 @@ Ruijie Cheng (Tsinghua), Peinan Yu (Tsinghua), Jingyao Zhang (Zhipu\.AI), Bowen 
 ## License
 
 Our code is licensed under the [Apache-2.0 license](LICENSE).
+Our model is licensed under the [license](MODEL_LICENSE).

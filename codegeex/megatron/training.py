@@ -1228,12 +1228,12 @@ def build_train_valid_test_data_iterators(build_train_valid_test_datasets_provid
     if args.iteration > 0 and args.consumed_train_samples == 0:
         assert (
             args.train_samples is None
-        ), "only backward compatiblity support for iteration-based training"
+        ), "only backward compatibility support for iteration-based training"
         args.consumed_train_samples = args.iteration * args.global_batch_size
     if args.iteration > 0 and args.consumed_valid_samples == 0:
         assert (
             args.train_samples is None
-        ), "only backward compatiblity support for iteration-based training"
+        ), "only backward compatibility support for iteration-based training"
         args.consumed_valid_samples = (
             (args.iteration // args.eval_interval)
             * args.eval_iters

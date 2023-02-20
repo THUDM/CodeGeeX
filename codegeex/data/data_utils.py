@@ -4,7 +4,6 @@ import json
 
 from typing import *
 
-
 LANGUAGE_TAG = {
     "c"            : "// language: C",
     "c++"          : "// language: C++",
