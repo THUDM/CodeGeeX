@@ -1,20 +1,8 @@
 """Get model parallel partitions."""
 
 import os
-import re
-import random
-import sys
-
-import numpy as np
 import torch
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir)))
-
-from codegeex.megatron import get_args
-from codegeex.megatron.model import CodeGeeXModel
-from codegeex.megatron.initialize import initialize_megatron
-from codegeex.megatron.checkpointing import ensure_directory_exists
+import argparse
 
 
 def get_change_ckpt_args(parser):
@@ -58,19 +46,10 @@ def get_element_from_dict_by_path(d, path):
 
 
 def main():
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = str(random.randint(10000, 20000))
-
-    initialize_megatron(
-        extra_args_provider=get_change_ckpt_args,
-        args_defaults={
-            "tokenizer_type": "GPT2BPETokenizer",
-            "no_load_rng"   : True,
-            "no_load_optim" : True,
-        },
-    )
-
-    args = get_args()
+    parser = argparse.ArgumentParser()
+    parser = get_change_ckpt_args(parser)
+    args, _ = parser.parse_known_args()
+    
     print(f"Load ckpt from {args.load_ckpt_path}...")
     state_dict = torch.load(args.load_ckpt_path, map_location="cpu")
 

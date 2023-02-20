@@ -189,7 +189,7 @@ def add_code_generation_args(parser):
         nargs="*",
         type=int,
         default=None,
-        help='Identify the type of programming language to generate',
+        help='Specify bad ids that will not be used',
     )
     group.add_argument(
         "--quantize",

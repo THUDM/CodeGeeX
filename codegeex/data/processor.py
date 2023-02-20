@@ -67,6 +67,9 @@ class PromptDatasetProcessor(object):
         """
         Instead of processing lazily, we turn the iterable into a list.
         """
+        if sample is None:
+            return None
+        
         return list(self.process_sample(sample))
 
     def process_sample_(self, sample) -> List[Dict[str, List[int]]]:
@@ -141,6 +144,9 @@ class LabelDatasetProcessor(object):
         """
         Instead of processing lazily, we turn the iterable into a list.
         """
+        if sample is None:
+            return None
+        
         return list(self.process_sample(sample))
 
     def process_sample_(self, sample) -> List[Dict[str, List[int]]]:

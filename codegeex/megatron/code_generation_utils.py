@@ -25,10 +25,11 @@ import torch
 import torch.nn.functional as F
 from dataclasses import dataclass
 
-from codegeex.megatron import get_args
+from codegeex.megatron import get_args, print_rank_0
 from codegeex.megatron import get_tokenizer
 from codegeex.megatron import mpu
 from codegeex.megatron.utils import get_ltor_masks_and_position_ids
+from codegeex.benchmark.utils import is_code_generation_finished
 
 
 def get_batch(context_tokens, micro_batch_size=None):
@@ -682,12 +683,17 @@ def beam_search(model, context_tokens, num_beams: int):
         expanded_beams = expand_beams(beams, num_beams, model)
         next_beams = []
         for beam in expanded_beams:
-            if args.beam_warmup_length > 0:
+            if args.beam_warmup:
                 if len(beam.tokens) >= org_context_len + args.beam_warmup_length or beam.tokens[-1] == tokenizer.eod:
                     finished_beams.append(beam)
                 else:
                     next_beams.append(beam)
             else:
+                if args.evaluation:
+                    generated_code = tokenizer.detokenize(beam.tokens[org_context_len:])
+                    if is_code_generation_finished(generated_code):
+                        finished_beams.append(beam)
+                        continue
                 if beam.tokens[-1] == tokenizer.eod:
                     finished_beams.append(beam)
                 else:
@@ -842,7 +848,6 @@ def get_token_stream(
         temperature: float = None,
         topp: float = None,
         topk: int = None,
-        beam_warmup: bool = False,
 ):
     args = get_args()
     tokenizer = get_tokenizer()
@@ -866,42 +871,30 @@ def get_token_stream(
     context_length = context_length_tensor.min().item()
     tokens, attention_mask, position_ids = get_batch(context_tokens_tensor, micro_batch_size)
 
-    if beam_warmup:
-        batch_token_iterator = sample_sequence_batch_beam(
-            model,
-            context_tokens_tensor,
-            context_length_tensor,
-            attention_mask,
-            position_ids,
-            return_scores=return_scores,
-            prompt_length=prompt_length,
-            bad_ids=bad_ids,
-            temperature=temperature,
-            topp=topp,
-            topk=topk,
-            beam_warmup=True,
-        )
-    else:
-        batch_token_iterator = sample_sequence_batch(
-            model,
-            context_tokens_tensor,
-            context_length_tensor,
-            attention_mask,
-            position_ids,
-            return_scores=return_scores,
-            prompt_length=prompt_length,
-            bad_ids=bad_ids,
-            temperature=temperature,
-            topp=topp,
-            topk=topk,
-        )
+    batch_token_iterator = sample_sequence_batch(
+        model,
+        context_tokens_tensor,
+        context_length_tensor,
+        attention_mask,
+        position_ids,
+        return_scores=return_scores,
+        prompt_length=prompt_length,
+        bad_ids=bad_ids,
+        temperature=temperature,
+        topp=topp,
+        topk=topk,
+    )
 
-    for tokens, lengths in batch_token_iterator:
-        context_length += 1
-        if tokens is not None:
-            yield tokens[:, :context_length], lengths
-        else:
-            yield None, None
+    if args.beam_search:
+        for beams in batch_token_iterator:
+            yield beams
+    else:
+        for tokens, lengths in batch_token_iterator:
+            context_length += 1
+            if tokens is not None:
+                yield tokens[:, :context_length], lengths
+            else:
+                yield None, None
 
 
 def switch(val1, val2, boolean):
@@ -957,284 +950,131 @@ def sample_sequence_batch(
         if return_scores:
             scores = torch.zeros([batch_size]).float().cuda()
 
-        while context_length <= (maxlen):
-
-            if args.recompute:
-                logits = model(tokens,
-                               position_ids,
-                               attention_mask,
-                               tokentype_ids=type_ids,
-                               forward_method_parallel_output=False,
-                               prompt_length=prompt_length,
-                               context_length=context_length,
-                               )
-                logits = logits[:, context_length - 1, :]
-            else:
-                types2use = None
-                if counter == 0:
-                    tokens2use = tokens[:, :context_length]
-                    positions2use = position_ids[:, :context_length]
-                    if type_ids is not None:
-                        types2use = type_ids[:, :context_length]
-                else:
-                    tokens2use = tokens[:, context_length - 1].view(
-                        batch_size, -1)
-                    positions2use = position_ids[:, context_length - 1].view(
-                        batch_size, -1)
-                    if type_ids is not None:
-                        types2use = type_ids[:, context_length - 1].view(
-                            batch_size, -1)
-                logits, layer_past = model(tokens2use,
-                                           positions2use,
-                                           attention_mask,
-                                           layer_past=layer_past,
-                                           get_key_value=True,
-                                           tokentype_ids=types2use,
-                                           forward_method_parallel_output=False,
-                                           prompt_length=prompt_length,
-                                           context_length=context_length,
-                                           )
-                logits = logits[:, -1].view(batch_size, -1).contiguous()
-
-            if mpu.is_pipeline_last_stage():
-                if bad_ids is not None:
-                    for bad_id in bad_ids:
-                        logits[:, bad_id] = -10000
-                if args.greedy:
-                    prev = torch.argmax(logits, dim=-1).view(-1)
-                else:
-                    logits = logits.float()
-                    if return_scores:
-                        orig_log_probs = torch.log_softmax(logits, dim=-1)
-                    logits /= temperature
-                    logits = top_k_logits(logits, top_k=topk, top_p=topp)
-                    log_probs = F.softmax(logits, dim=-1)
-                    prev = torch.multinomial(log_probs, num_samples=1).view(-1)
-
-                started = context_lengths <= context_length
-
-                new_tokens = switch(tokens[:, context_length].view(-1), prev, started)
-
-                if not args.greedy and return_scores:
-                    indices = prev.view(-1, 1)
-                    new_scores = orig_log_probs.gather(1, indices).view(-1)
-                    new_scores = new_scores * started
-                    new_scores = new_scores * is_done.bool().logical_not()
-                    scores += new_scores
-
-                tokens[:, context_length] = new_tokens
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_embedding_group()
-                torch.distributed.broadcast(new_tokens, src, group)
-
-                done_token = (prev == eos_id).byte() & started.byte()
-                just_finished = (done_token & ~is_done).bool()
-                lengths[just_finished.view(-1)] = context_length
-                is_done = is_done | done_token
-
-                done = torch.all(is_done)
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_pipeline_model_parallel_group()
-                torch.distributed.broadcast(done, src, group)
-
-                if return_scores:
-                    yield tokens, (lengths, scores)
-                else:
-                    yield tokens, lengths
-
-            else:
-                if mpu.is_pipeline_first_stage():
-                    src = mpu.get_pipeline_model_parallel_last_rank()
-                    group = mpu.get_embedding_group()
-                    new_tokens = torch.empty_like(tokens[:, context_length])
-                    torch.distributed.broadcast(new_tokens, src, group)
-                    tokens[:, context_length] = new_tokens
-                    yield tokens, None
-                else:
-                    yield None, None
-
-                done = torch.cuda.ByteTensor([0])
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_pipeline_model_parallel_group()
-                torch.distributed.broadcast(done, src, group)
-
-            context_length += 1
-            counter += 1
-            if done:
-                break
-
-
-def sample_sequence_batch_beam(
-        model,
-        context_tokens,
-        context_lengths,
-        attention_mask,
-        position_ids,
-        maxlen=None,
-        type_ids=None,
-        return_scores: bool = False,
-        prompt_length: int = None,
-        bad_ids: List = None,
-        temperature: float = None,
-        topp: float = None,
-        topk: int = None,
-        beam_warmup: bool = False,
-):
-    args = get_args()
-    tokenizer = get_tokenizer()
-    temperature = temperature if temperature is not None else args.temperature
-    topp = topp if topp is not None else args.top_p
-    topk = topk if topk is not None else args.top_k
-
-    model.eval()
-    with torch.no_grad():
-        context_length = context_lengths.min().item()
-
-        # added eos_id to support the function generate_samples_eval that passes
-        # eos_id as an argument and needs termination when that id id found.
-        if hasattr(args, "eos_id"):
-            eos_id = args.eos_id
-        else:
-            eos_id = tokenizer.eod
-
-        counter = 0
-        org_context_length = context_length
-
-        layer_past = None
-        batch_size = context_tokens.size(0)
-        is_done = torch.zeros([batch_size]).byte().cuda()
-        tokens = context_tokens
-        if maxlen is None:
-            maxlen = args.seq_length - 1
-            if maxlen > (org_context_length + args.out_seq_length):
-                maxlen = org_context_length + args.out_seq_length
-
-        lengths = torch.ones([batch_size]).long().cuda() * maxlen
-        if return_scores:
-            scores = torch.zeros([batch_size]).float().cuda()
-
-        if beam_warmup:
+        if args.beam_search:
             beams = beam_search(model, context_tokens=tokens.cpu().numpy().tolist()[0][:context_length],
                                 num_beams=args.num_beams)
-            beam = beams[0]
-            tokens_ = beam.tokens
-            tokens_ = (tokens_ if tokens_[-1] != tokenizer.eod else tokens_[:-1])
-            tokens_warmup = []
-            for i in range(batch_size):
-                tokens_warmup.append(tokens_.copy())
-            tokens, context_lengths = pad_batch(tokens_warmup, tokenizer.eod, args)
-            tokens = torch.cuda.LongTensor(tokens)
-            context_lengths = torch.cuda.LongTensor(context_lengths)
-            context_length = len(tokens_)
-            org_context_length = context_length
-            if maxlen is None:
-                maxlen = args.seq_length - 1
-                if maxlen > (org_context_length + args.out_seq_length):
-                    maxlen = org_context_length + args.out_seq_length
-            lengths = torch.ones([batch_size]).long().cuda() * maxlen
-            tokens, attention_mask, position_ids = get_batch(tokens, batch_size)
-
-        while context_length <= (maxlen):
-            if args.recompute:
-                logits = model(tokens,
-                               position_ids,
-                               attention_mask,
-                               tokentype_ids=type_ids,
-                               forward_method_parallel_output=False,
-                               prompt_length=prompt_length,
-                               context_length=context_length,
-                               )
-                logits = logits[:, context_length - 1, :]
+            if args.beam_warmup:
+                beam = beams[0]
+                tokens_ = beam.tokens
+                tokens_ = (tokens_ if tokens_[-1] != tokenizer.eod else tokens_[:-1])
+                tokens_warmup = []
+                for i in range(batch_size):
+                    tokens_warmup.append(tokens_.copy())
+                tokens, context_lengths = pad_batch(tokens_warmup, tokenizer.eod, args)
+                tokens = torch.cuda.LongTensor(tokens)
+                context_lengths = torch.cuda.LongTensor(context_lengths)
+                context_length = len(tokens_)
+                org_context_length = context_length
+                if maxlen is None:
+                    maxlen = args.seq_length - 1
+                    if maxlen > (org_context_length + args.out_seq_length):
+                        maxlen = org_context_length + args.out_seq_length
+                lengths = torch.ones([batch_size]).long().cuda() * maxlen
+                tokens, attention_mask, position_ids = get_batch(tokens, batch_size)
             else:
-                types2use = None
-                if counter == 0:
-                    tokens2use = tokens[:, :context_length]
-                    positions2use = position_ids[:, :context_length]
-                    if type_ids is not None:
-                        types2use = type_ids[:, :context_length]
+                yield beams
+        else:
+            while context_length <= (maxlen):
+                if args.recompute:
+                    logits = model(tokens,
+                                position_ids,
+                                attention_mask,
+                                tokentype_ids=type_ids,
+                                forward_method_parallel_output=False,
+                                prompt_length=prompt_length,
+                                context_length=context_length,
+                                )
+                    logits = logits[:, context_length - 1, :]
                 else:
-                    tokens2use = tokens[:, context_length - 1].view(
-                        batch_size, -1)
-                    positions2use = position_ids[:, context_length - 1].view(
-                        batch_size, -1)
-                    if type_ids is not None:
-                        types2use = type_ids[:, context_length - 1].view(
+                    types2use = None
+                    if counter == 0:
+                        tokens2use = tokens[:, :context_length]
+                        positions2use = position_ids[:, :context_length]
+                        if type_ids is not None:
+                            types2use = type_ids[:, :context_length]
+                    else:
+                        tokens2use = tokens[:, context_length - 1].view(
                             batch_size, -1)
-                logits, layer_past = model(tokens2use,
-                                           positions2use,
-                                           attention_mask,
-                                           layer_past=layer_past,
-                                           get_key_value=True,
-                                           tokentype_ids=types2use,
-                                           forward_method_parallel_output=False,
-                                           prompt_length=prompt_length,
-                                           context_length=context_length,
-                                           )
-                logits = logits[:, -1].view(batch_size, -1).contiguous()
+                        positions2use = position_ids[:, context_length - 1].view(
+                            batch_size, -1)
+                        if type_ids is not None:
+                            types2use = type_ids[:, context_length - 1].view(
+                                batch_size, -1)
+                    logits, layer_past = model(tokens2use,
+                                            positions2use,
+                                            attention_mask,
+                                            layer_past=layer_past,
+                                            get_key_value=True,
+                                            tokentype_ids=types2use,
+                                            forward_method_parallel_output=False,
+                                            prompt_length=prompt_length,
+                                            context_length=context_length,
+                                            )
+                    logits = logits[:, -1].view(batch_size, -1).contiguous()
 
-            if mpu.is_pipeline_last_stage():
-                if bad_ids is not None:
-                    for bad_id in bad_ids:
-                        logits[:, bad_id] = -10000
-                if args.greedy:
-                    prev = torch.argmax(logits, dim=-1).view(-1)
-                else:
-                    logits = logits.float()
-                    if return_scores:
-                        orig_log_probs = torch.log_softmax(logits, dim=-1)
-                    logits /= temperature
-                    logits = top_k_logits(logits, top_k=topk, top_p=topp)
-                    log_probs = F.softmax(logits, dim=-1)
-                    prev = torch.multinomial(log_probs, num_samples=1).view(-1)
+                if mpu.is_pipeline_last_stage():
+                    if bad_ids is not None:
+                        for bad_id in bad_ids:
+                            logits[:, bad_id] = -10000
+                    if args.greedy:
+                        prev = torch.argmax(logits, dim=-1).view(-1)
+                    else:
+                        logits = logits.float()
+                        if return_scores:
+                            orig_log_probs = torch.log_softmax(logits, dim=-1)
+                        logits /= temperature
+                        logits = top_k_logits(logits, top_k=topk, top_p=topp)
+                        log_probs = F.softmax(logits, dim=-1)
+                        prev = torch.multinomial(log_probs, num_samples=1).view(-1)
 
-                started = context_lengths <= context_length
+                    started = context_lengths <= context_length
 
-                new_tokens = switch(tokens[:, context_length].view(-1), prev, started)
+                    new_tokens = switch(tokens[:, context_length].view(-1), prev, started)
 
-                if not args.greedy and return_scores:
-                    indices = prev.view(-1, 1)
-                    new_scores = orig_log_probs.gather(1, indices).view(-1)
-                    new_scores = new_scores * started
-                    new_scores = new_scores * is_done.bool().logical_not()
-                    scores += new_scores
+                    if not args.greedy and return_scores:
+                        indices = prev.view(-1, 1)
+                        new_scores = orig_log_probs.gather(1, indices).view(-1)
+                        new_scores = new_scores * started
+                        new_scores = new_scores * is_done.bool().logical_not()
+                        scores += new_scores
 
-                tokens[:, context_length] = new_tokens
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_embedding_group()
-                torch.distributed.broadcast(new_tokens, src, group)
-
-                done_token = (prev == eos_id).byte() & started.byte()
-                just_finished = (done_token & ~is_done).bool()
-                lengths[just_finished.view(-1)] = context_length
-                is_done = is_done | done_token
-
-                done = torch.all(is_done)
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_pipeline_model_parallel_group()
-                torch.distributed.broadcast(done, src, group)
-
-                if return_scores:
-                    yield tokens, (lengths, scores)
-                else:
-                    yield tokens, lengths
-
-            else:
-                if mpu.is_pipeline_first_stage():
+                    tokens[:, context_length] = new_tokens
                     src = mpu.get_pipeline_model_parallel_last_rank()
                     group = mpu.get_embedding_group()
-                    new_tokens = torch.empty_like(tokens[:, context_length])
                     torch.distributed.broadcast(new_tokens, src, group)
-                    tokens[:, context_length] = new_tokens
-                    yield tokens, None
+
+                    done_token = (prev == eos_id).byte() & started.byte()
+                    just_finished = (done_token & ~is_done).bool()
+                    lengths[just_finished.view(-1)] = context_length
+                    is_done = is_done | done_token
+
+                    done = torch.all(is_done)
+                    src = mpu.get_pipeline_model_parallel_last_rank()
+                    group = mpu.get_pipeline_model_parallel_group()
+                    torch.distributed.broadcast(done, src, group)
+
+                    if return_scores:
+                        yield tokens, (lengths, scores)
+                    else:
+                        yield tokens, lengths
+
                 else:
-                    yield None, None
+                    if mpu.is_pipeline_first_stage():
+                        src = mpu.get_pipeline_model_parallel_last_rank()
+                        group = mpu.get_embedding_group()
+                        new_tokens = torch.empty_like(tokens[:, context_length])
+                        torch.distributed.broadcast(new_tokens, src, group)
+                        tokens[:, context_length] = new_tokens
+                        yield tokens, None
+                    else:
+                        yield None, None
 
-                done = torch.cuda.ByteTensor([0])
-                src = mpu.get_pipeline_model_parallel_last_rank()
-                group = mpu.get_pipeline_model_parallel_group()
-                torch.distributed.broadcast(done, src, group)
+                    done = torch.cuda.ByteTensor([0])
+                    src = mpu.get_pipeline_model_parallel_last_rank()
+                    group = mpu.get_pipeline_model_parallel_group()
+                    torch.distributed.broadcast(done, src, group)
 
-            context_length += 1
-            counter += 1
-            if done:
-                break
+                context_length += 1
+                counter += 1
+                if done:
+                    break

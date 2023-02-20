@@ -65,12 +65,6 @@ except ImportError:
 from filelock import FileLock
 import pathlib
 
-try:
-    import bmcook
-    from bmcook import Config
-except ImportError:
-    print("bmcook not imported.")
-    bmcook = None
 
 
 def print_datetime(string):
@@ -80,15 +74,11 @@ def print_datetime(string):
     print_rank_0("[" + string + "] datetime: {} ".format(time_str))
 
 
-def compress_setup(args, model, optimizer):
-    teacher = get_model(args)
-    cook_config = ConfigParser(args.cook_config)
-    CPMAntTrainer.set_compression(cook_config, model, optimizer, teacher=teacher, remove_ckptblock=False, target_linear=Linear)
-
 def pretrain(
     train_valid_test_dataset_provider,
     model_provider,
     forward_step_func,
+    valid_forward_step_func=None,
     extra_args_provider=None,
     args_defaults={},
 ):
@@ -187,6 +177,7 @@ def pretrain(
     if args.do_train and args.train_iters > 0:
         iteration = train(
             forward_step_func,
+            valid_forward_step_func,
             model,
             optimizer,
             lr_scheduler,
@@ -200,11 +191,11 @@ def pretrain(
         if args.co_evaluation:
             for key, value in valid_data_iterator.items():
                 evaluate_and_print_results(
-                    prefix, forward_step_func, value, model, iteration, False, tag=key
+                    prefix, valid_forward_step_func, value, model, iteration, False, tag=key
                 )
         else:
             evaluate_and_print_results(
-                prefix, forward_step_func, valid_data_iterator, model, iteration, False
+                prefix, valid_forward_step_func, valid_data_iterator, model, iteration, False
             )
 
     if args.save and iteration != 0:
@@ -890,6 +881,7 @@ def save_checkpoint_and_time(iteration, model, optimizer, lr_scheduler):
 
 def train(
     forward_step_func,
+    valid_forward_step_func,
     model,
     optimizer,
     lr_scheduler,
@@ -987,11 +979,15 @@ def train(
             if args.co_evaluation:
                 for key, value in valid_data_iterator.items():
                     evaluate_and_print_results(
-                        prefix, forward_step_func, value, model, iteration, False, tag=key
+                        prefix, valid_forward_step_func, value, model, iteration, False, tag=key
                     )
             else:
+                if args.gold:
+                    evaluate_and_print_results_gold(
+                        prefix, forward_step_func, valid_data_iterator, model, iteration, False
+                    )
                 evaluate_and_print_results(
-                    prefix, forward_step_func, valid_data_iterator, model, iteration, False
+                    prefix, valid_forward_step_func, valid_data_iterator, model, iteration, False
                 )
 
         # Checkpointing
@@ -1194,16 +1190,6 @@ def evaluate_and_print_results_gold(
                 total_loss_dict[key].item(),
                 iteration,
             )
-            # writer.add_scalar(
-            #     f"lm-loss-validation/{display_key} validation vs samples",
-            #     total_loss_dict[key].item(),
-            #     args.consumed_train_samples,
-            # )
-            # writer.add_scalar(
-            #     f"lm-loss-validation/{display_key} validation vs tokens",
-            #     total_loss_dict[key].item(),
-            #     args.consumed_train_tokens,
-            # )
             if args.log_validation_ppl_to_tensorboard:
                 writer.add_scalar(
                     f"lm-loss-validation/{display_key} validation ppl", ppl, iteration
