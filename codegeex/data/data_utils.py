@@ -1,3 +1,4 @@
+import os
 import gzip
 import json
 
@@ -5,17 +6,28 @@ from typing import *
 
 
 LANGUAGE_TAG = {
+    "c"            : "// language: C",
     "c++"          : "// language: C++",
     "cpp"          : "// language: C++",
-    "c"            : "// language: C",
     "c#"           : "// language: C#",
+    "csharp"       : "// language: C#",
+    "css"          : "/* language: CSS */",
     "cuda"         : "// language: Cuda",
+    "dart"         : "// language: Dart",
+    "lua"          : "// language: Lua",
+    "objectivec"  : "// language: Objective-C",
     "objective-c"  : "// language: Objective-C",
     "objective-c++": "// language: Objective-C++",
     "python"       : "# language: Python",
+    "perl"         : "# language: Perl",
+    "prolog"       : f"% language: Prolog",
+    "swift"        : "// language: swift",
+    "lisp"         : "; language: Lisp",
     "java"         : "// language: Java",
     "scala"        : "// language: Scala",
     "tex"          : f"% language: TeX",
+    "vue"          : "<!--language: Vue-->",
+    "markdown"     : "<!--language: Markdown-->",
     "html"         : "<!--language: HTML-->",
     "php"          : "// language: PHP",
     "js"           : "// language: JavaScript",
@@ -24,13 +36,32 @@ LANGUAGE_TAG = {
     "go"           : "// language: Go",
     "shell"        : "# language: Shell",
     "rust"         : "// language: Rust",
-    "css"          : "/* language: CSS */",
     "sql"          : "-- language: SQL",
     "kotlin"       : "// language: Kotlin",
+    "vb"           : "' language: Visual Basic",
+    "ruby"         : "# language: Ruby",
     "pascal"       : "// language: Pascal",
     "r"            : "# language: R",
     "fortran"      : "!language: Fortran",
     "lean"         : "-- language: Lean",
+    "matlab"       : f"% language: Matlab",
+    "delphi"       : "{language: Delphi}",
+    "scheme"       : "; language: Scheme",
+    "basic"        : "' language: Basic",
+    "assembly"     : "; language: Assembly",
+    "groovy"       : "// language: Groovy",
+    "abap"         : "* language: Abap",
+    "gdscript"     : "# language: GDScript",
+    "haskell"      : "-- language: Haskell",
+    "julia"        : "# language: Julia",
+    "elixir"       : "# language: Elixir",
+    "excel"        : "' language: Excel",
+    "clojure"      : "; language: Clojure",
+    "actionscript" : "// language: ActionScript",
+    "solidity"     : "// language: Solidity",
+    "powershell"   : "# language: PowerShell",
+    "erlang"       : f"% language: Erlang",
+    "cobol"        : "// language: Cobol",
 }
 
 
