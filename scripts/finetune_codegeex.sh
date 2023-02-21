@@ -91,11 +91,11 @@ deepspeed \
     --micro-batch-size $MICRO_BATCH \
     --global-batch-size $GLOBAL_BATCH \
     --train-iters $NTRAIN_ITERS \
-    --lr 2e-4 \
+    --lr 1e-6 \
     --min-lr 1e-7 \
     --lr-decay-iters 100000 \
     --lr-decay-style cosine \
-    --lr-warmup-iters 1500 \
+    --lr-warmup-iters 1000 \
     --log-interval 1 \
     --eval-iters 10 \
     --eval-interval $EVAL_INT \
@@ -118,4 +118,3 @@ deepspeed \
     --override-lr-scheduler \
     --tensorboard-dir $TB_DIR \
     $ds_args |& tee ${OUTPUT_DIR}/$NOW.log
-
