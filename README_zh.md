@@ -42,11 +42,11 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
-* **2022-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
+* **2023-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
 
-* **2022-02-13**: 感谢 [OneFlow](https://github.com/Oneflow-Inc/oneflow) 加入了oneflow版推理支持，在FP16下比FasterTransformer还要快！更多优化细节请点击[这里](https://github.com/THUDM/CodeGeeX/pull/65).
+* **2023-02-13**: 感谢 [OneFlow](https://github.com/Oneflow-Inc/oneflow) 加入了oneflow版推理支持，在FP16下比FasterTransformer还要快！更多优化细节请点击[这里](https://github.com/THUDM/CodeGeeX/pull/65).
 
-* 🌟 **2022-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
+* 🌟 **2023-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
 
 * **2022-12-31**: 我们在 [codegeex-fastertransformer](https://github.com/CodeGeeX/codegeex-fastertransformer) 中发布了 CodeGeeX 的 FasterTransformer 版本。INT8加速版本达到 <15ms/token 的平均速度。祝大家新年快乐！
 
