@@ -103,7 +103,7 @@ bash ./scripts/test_inference_parallel.sh <MP_SIZE> ./tests/test_prompt.txt
 Based on CodeGeeX, we also develop free extentions for VS Code and Jetbrains IDEs, and more in the future. 
 
 For VS Code, search "codegeex" in Marketplace or install it [here](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex). Detailed instructions can be found in 
-[VS Code Extension Guidance](vscode-extension/README.md). For developpers, we have also released the source code in [codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension), please follow [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) to start development.
+[VS Code Extension Guidance](vscode-extension/README.md). For developers, we have also released the source code in [codegeex-vscode-extension](https://github.com/CodeGeeX/codegeex-vscode-extension), please follow [QuickStart](https://github.com/CodeGeeX/codegeex-vscode-extension/blob/main/doc/quickstart.md) to start development.
 
 For Jetbrains IDEs, search "codegeex" in Plugins or intall it [here](https://plugins.jetbrains.com/plugin/20587-codegeex). 
 Make sure your IDE version is 2021.1 or later. CodeGeeX now supports IntelliJ IDEA, PyCharm, GoLand, CLion, Android Studio, AppCode, Aqua, DataSpell, DataGrip, Rider, RubyMine, and WebStorm. 
