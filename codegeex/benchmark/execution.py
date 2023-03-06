@@ -8,7 +8,37 @@ import signal
 import random
 import subprocess
 import tempfile
+import gzip
+import json
 from typing import *
+
+def dicts_to_jsonl(data_list: list, filename: str, compress: bool = True) -> None:
+    """
+    Method saves list of dicts into jsonl file.
+    :param data: (list) list of dicts to be stored,
+    :param filename: (str) path to the output file. If suffix .jsonl is not given then methods appends
+        .jsonl suffix into the file.
+    :param compress: (bool) should file be compressed into a gzip archive?
+    """
+    sjsonl = '.jsonl'
+    sgz = '.gz'
+    # Check filename
+    if not filename.endswith(sjsonl):
+        filename = filename + sjsonl
+    # Save data
+    
+    if compress:
+        filename = filename + sgz
+        with gzip.open(filename, 'w') as compressed:
+            for ddict in data_list:
+                jout = json.dumps(ddict) + '\n'
+                jout = jout.encode('utf-8')
+                compressed.write(jout)
+    else:
+        with open(filename, 'w') as out:
+            for ddict in data_list:
+                jout = json.dumps(ddict) + '\n'
+                out.write(jout)
 
 
 def check_correctness(
@@ -52,8 +82,8 @@ def check_correctness(
                             # does not perform destructive actions on their host or network.
                             # Once you have read this disclaimer and taken appropriate precautions,
                             # uncomment the following line and proceed at your own risk:
-                            # exec(sample["test_code"], exec_globals)
-                    result.append("passed")
+                            exec(sample["test_code"], exec_globals)
+                        result.append("passed")
                 except TimeoutException:
                     result.append("timed out")
                 except AssertionError as e:
@@ -92,7 +122,7 @@ def check_correctness(
                     # does not perform destructive actions on their host or network.
                     # Once you have read this disclaimer and taken appropriate precautions,
                     # uncomment the following line and proceed at your own risk:
-                    # exec_result = subprocess.run(["go", "test", f"-timeout={timeout}s", "main_test.go"], timeout=timeout, capture_output=True)
+                     exec_result = subprocess.run(["go", "test", f"-timeout={timeout}s", "main_test.go"], timeout=timeout, capture_output=True)
 
                 if exec_result.returncode == 0:
                     result.append("passed")
@@ -137,7 +167,7 @@ def check_correctness(
                     # does not perform destructive actions on their host or network.
                     # Once you have read this disclaimer and taken appropriate precautions,
                     # uncomment the following line and proceed at your own risk:
-                    # exec_result = subprocess.run(["node", "test.js"], timeout=timeout, capture_output=True)
+                     exec_result = subprocess.run(["node", "test.js"], timeout=timeout, capture_output=True)
 
                 if exec_result.stderr.decode():
                     err = exec_result.stderr.decode()
@@ -190,7 +220,7 @@ def check_correctness(
                         # does not perform destructive actions on their host or network.
                         # Once you have read this disclaimer and taken appropriate precautions,
                         # uncomment the following line and proceed at your own risk:
-                        # exec_result = subprocess.run(["./a.out"], timeout=timeout, capture_output=True)
+                         exec_result = subprocess.run(["./a.out"], timeout=timeout, capture_output=True)
 
                     if exec_result.returncode == 0:
                         result.append("passed")
@@ -210,6 +240,71 @@ def check_correctness(
                     result.append("timed out")
 
             shutil.rmtree(tmp_dir)
+        elif "rust" in language_type.lower():  
+            import os         
+            
+            WD: str = os.path.dirname(os.path.abspath(__file__))
+            RUST_DIR: str = os.path.join(WD, "rust")
+            RUST_SRC: str = os.path.join(RUST_DIR, "src")
+            RUST_BIN: str = os.path.join(RUST_SRC, "bin")
+            RUST_TMP_DIR: str = os.path.join(RUST_DIR, "tmp")
+            RUST_LOGS: str = os.path.join(RUST_TMP_DIR, "logs")
+            RUST_EXT: str = ".rs" 
+
+            # Create mandatory tmp directories
+            os.makedirs(RUST_TMP_DIR, exist_ok=True)
+            os.makedirs(RUST_LOGS, exist_ok=True)
+            os.makedirs(RUST_SRC, exist_ok=True)
+            os.makedirs(RUST_BIN, exist_ok=True)
+
+            with tempfile.NamedTemporaryFile(dir = RUST_BIN, delete=False) as f:
+                #temporal file name
+                file_prefix = sample["task_id"].lower().replace("/", "_")
+                file_name:str =  file_prefix +RUST_EXT
+                
+                os.rename(f.name, os.path.join(RUST_BIN, file_name))
+                
+                # Sample to pure Rust function
+                rust_code: str = sample["test_code"]
+
+                # dump the rust source code in the target temporal file
+                f.write(rust_code.encode('utf-8'))
+
+            # Proceed towards Rust binaries compilation. Therefore move to Rust module root dir.
+            os.chdir(RUST_DIR)
+
+            # Two possible outcomes
+            # Pass OR Fail compilation
+            log_filename: str = file_prefix + ".jsonl"
+            log_path: str = os.path.join(RUST_LOGS, log_filename)
+            cargo_check: str = "cargo check --bin " + file_prefix + " --message-format json >> " + log_path
+            # Compilation build status
+            returned_val_compilation: int
+            
+            # Overwrite file content
+            if os.path.exists(log_path):
+                if(file_size := os.path.getsize(log_path)) >= 0: 
+                    os.remove(log_path)
+                    returned_val_compilation = os.system(cargo_check)
+
+            else: 
+                returned_val_compilation = os.system(cargo_check)
+
+            # 0 means success   
+            if returned_val_compilation == 0:
+
+                #Execution pipeline
+                cargo_test: str = "cargo test --bin " +file_prefix+ " --message-format json >> " + log_path
+                returned_val_execution = os.system(cargo_test)
+                
+                if returned_val_execution == 0:
+                    result.append("passed")
+                else:
+                   result.append(f"failed: execution error") 
+
+            else:
+                result.append(f"failed: compilation error")
+
 
         elif "java" in language_type.lower():
             assert tmp_dir is not None, "Java should be evaluated in a temporary dir."
@@ -264,7 +359,7 @@ def check_correctness(
             result.append(res)
 
             shutil.rmtree(tmp_dir)
-
+        
     manager = multiprocessing.Manager()
     result = manager.list()
 
