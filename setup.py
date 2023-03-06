@@ -17,7 +17,7 @@ setup(
         "setuptools>=58.0.4",
         "transformers>=4.22.0,<=4.24.0",
         "tokenizers>=0.11.0,<=0.11.4",
-        "pytorch>=1.10.0",
+        "torch>=1.10.0",
         "tqdm>=4.63.0",
     ],
     entry_points={}
