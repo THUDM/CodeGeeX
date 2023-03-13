@@ -9,4 +9,4 @@ transformers>=4.22.0
 torch>=1.10.0
 tqdm>=4.63.0
 cpm_kernels
-deepspeed
+deepspeed>0.6.1

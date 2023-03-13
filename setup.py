@@ -19,6 +19,8 @@ setup(
         "tokenizers>=0.11.0,<=0.11.4",
         "torch>=1.10.0",
         "tqdm>=4.63.0",
+        "cpm_kernels",
+        "deepspeed>0.6.1",
     ],
     entry_points={}
 )
