@@ -1,7 +1,6 @@
 import copy
 
 from typing import *
-from codegeex.megatron.model import CodeGeeXModel
 from codegeex.tokenizer import CodeGeeXTokenizer
 from codegeex.torch.inference import get_token_stream
 
@@ -14,7 +13,7 @@ def get_model(
 
 
 def generate(
-    model: CodeGeeXModel, 
+    model, 
     tokenizer: CodeGeeXTokenizer, 
     prompt: str, 
     out_seq_length: int,

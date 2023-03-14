@@ -4,8 +4,8 @@ from transformers import AutoTokenizer
 from transformers.models.gpt2 import GPT2TokenizerFast
 
 
-def encode_whitespaces(text, start_extra_id: int, max_len: int):
-    """ Encode whitespaces to extra tokens in GPT-J.
+def encode_whitespaces(text: str, start_extra_id: int, max_len: int):
+    """ Encode whitespaces to extra tokens.
 
     >>> encode_whitespaces('a\\n  b\\n   c', 10, 10)
     'a\\n<|extratoken_10|>b\\n<|extratoken_11|>c'
