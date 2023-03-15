@@ -42,8 +42,6 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
-* **2023-03-14**: KEG实验室开源了名为[ChatGLM-6B](https://github.com/THUDM/ChatGLM-6B)的双语对话模型，仅需6GB显存即可运行，已经能生成相当符合人类偏好的回答。
-
 * **2023-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
 
 * **2023-02-13**: 感谢 [OneFlow](https://github.com/Oneflow-Inc/oneflow) 加入了oneflow版推理支持，在FP16下比FasterTransformer还要快！更多优化细节请点击[这里](https://github.com/THUDM/CodeGeeX/pull/65).
