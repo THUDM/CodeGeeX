@@ -43,7 +43,6 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 
 ## News
 
-* **2023-03-14**: Our lab open-sourced a bilingual dialogue model named [ChatGLM-6B](https://github.com/THUDM/ChatGLM-6B), which only requires **6GB GPU RAM** and has great ability in generating answers that are quite in line with human preferences.
 * **2023-02-14**: CodeGeeX now supports [Cloud Studio](https://cloudstudio.net/), a fantastic web IDE from Tencent. Click on the badge on top of this page to quickly launch an environment to test CodeGeeX.
 
 * **2023-02-13**: Thanks a lot to [OneFlow](https://github.com/Oneflow-Inc/oneflow) team for adding oneflow backend for CodeGeeX's inference (Even faster than FasterTransformer under FP16!). Check more details [here](https://github.com/THUDM/CodeGeeX/pull/65).
