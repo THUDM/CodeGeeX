@@ -113,9 +113,9 @@ deepspeed \
     --adam-beta2 0.95 \
     --fp16 \
     --ln-fp16 \
+    --eod-mask-loss \
     --attention-softmax-in-fp32 \
     --checkpoint-activations \
     --override-lr-scheduler \
     --tensorboard-dir $TB_DIR \
     $ds_args |& tee ${OUTPUT_DIR}/$NOW.log
-
