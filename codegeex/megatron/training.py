@@ -308,16 +308,16 @@ def get_model(model_provider_func):
         return model
 
     # GPU allocation.
-    print(f" > moving model to GPU ...", flush=True)
+    print_rank_0(f" > moving model to GPU ...")
     for model_module in model:
         model_module.cuda(torch.cuda.current_device())
-    print(f" > moving to GPU done", flush=True)
+    print_rank_0(f" > moving to GPU done")
 
     # Fp16 conversion.
     if args.fp16 or args.bf16:
-        print(f" > converting model to fp16 ...", flush=True)
+        print_rank_0(f" > converting model to fp16 ...")
         model = [Float16Module(model_module, args) for model_module in model]
-        print(f" > converting to fp16 done", flush=True)
+        print_rank_0(f" > converting to fp16 done")
 
     if args.DDP_impl == "torch":
         i = torch.cuda.current_device()

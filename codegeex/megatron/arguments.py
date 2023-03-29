@@ -737,6 +737,11 @@ def _add_training_args(parser):
         help="Disable pipeline parallelism",
     )
     group.add_argument(
+        "--train-embedding-only",
+        action="store_true",
+        help="Train embedding only",
+    )
+    group.add_argument(
         "--ms-model",
         action="store_true",
         help="use model converted from Mindspore",
