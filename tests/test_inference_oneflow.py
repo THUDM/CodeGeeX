@@ -10,8 +10,9 @@ import numpy as np
 from codegeex.oneflow.inference import get_token_stream
 from codegeex.oneflow import CodeGeeXModel
 from codegeex.tokenizer import CodeGeeXTokenizer
-from codegeex.quantization import quantize
+from codegeex.quantization import quantize_oneflow
 os.environ["ONEFLOW_KERNEL_ENABLE_FUSED_LINEAR"] = "1"
+os.environ["ONEFLOW_LINEAR_EMBEDDING_SKIP_INIT"] = "1"
 
 def model_provider(args):
     """Build the model."""
@@ -135,7 +136,7 @@ def main():
     model.eval()
     model.half()
     if args.quantize:
-        model = quantize(model, weight_bit_width=8, backend="torch")
+        model = quantize_oneflow(model, weight_bit_width=8)
     model.cuda()
     torch.cuda.synchronize()
     with open(args.prompt_file, "r") as f:
