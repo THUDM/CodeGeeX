@@ -139,7 +139,6 @@ class Embedding(MegatronModule):
         # Position embedding (serial).
         self.position_embeddings = torch.nn.Embedding(
             max_sequence_length, self.hidden_size)
-        self.position_embeddings = self.position_embeddings.half()
         self._position_embeddings_key = 'position_embeddings'
             
         # Initialize the position embeddings.
@@ -244,11 +243,10 @@ class Embedding(MegatronModule):
         if pos_len < max_seq_len:
             print_rank_0(f"Position embedding padded {pos_len} -> {max_seq_len}.")
             position_embeddings_padded = torch.nn.Embedding(
-            max_seq_len - pos_len, self.hidden_size).half()
+            max_seq_len - pos_len, self.hidden_size)
             self.init_method(position_embeddings_padded.weight)
             state_dict_['weight'] = torch.cat([state_dict_['weight'], position_embeddings_padded.weight], dim=0)
 
-        # self.position_embeddings = self.position_embeddings.half()
         self.position_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Tokentype embedding.
@@ -305,7 +303,7 @@ class EmbeddingPipe(Embedding):
 
 
 class QueryEmbedding(MegatronModule):
-    """Language model embeddings.
+    """Query embeddings.
 
     Arguments:
         hidden_size: hidden size
@@ -320,7 +318,6 @@ class QueryEmbedding(MegatronModule):
 
     def __init__(self,
                  hidden_size,
-                 vocab_size,
                  max_sequence_length,
                  embedding_dropout_prob,
                  init_method,
@@ -335,7 +332,6 @@ class QueryEmbedding(MegatronModule):
         # Top query position embedding (serial).
         self.top_query_embeddings = mpu.VocabParallelEmbedding(
             max_sequence_length, self.hidden_size, init_method=self.init_method)
-        self.top_query_embeddings = self.top_query_embeddings.half()
         self._top_query_embeddings_key = 'top_query_embeddings'
             
         # Initialize the top query position embeddings.
@@ -421,7 +417,7 @@ class QueryEmbedding(MegatronModule):
         if pos_len < max_seq_len:
             print_rank_0(f"Top query embedding padded {pos_len} -> {max_seq_len}.")
             top_query_embeddings_padded = torch.nn.Embedding(
-            max_seq_len - pos_len, self.hidden_size).half()
+            max_seq_len - pos_len, self.hidden_size)
             self.init_method(top_query_embeddings_padded.weight)
             state_dict_['weight'] = torch.cat([state_dict_['weight'], top_query_embeddings_padded.weight], dim=0)
         self.top_query_embeddings.load_state_dict(state_dict_, strict=strict)
@@ -521,7 +517,6 @@ class TransformerLanguageModel(MegatronModule):
 
         # Query embeddings
         self.topQueryEmbedding = QueryEmbedding(self.hidden_size,
-                                                args.padded_vocab_size,
                                                 args.max_position_embeddings,
                                                 args.hidden_dropout,
                                                 self.init_method,
@@ -617,12 +612,18 @@ class TransformerLanguageModel(MegatronModule):
         # Transformer.
         if self._transformer_key in state_dict:
             state_dict_ = state_dict[self._transformer_key]
+            for key in state_dict_.keys():
+                if 'layernorm' in key:
+                    state_dict_[key] = state_dict_[key].float()
         else:
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
                 if 'transformer.' in key:
-                    state_dict_[key.split('transformer.')[1]] = state_dict[key]
+                    if 'layernorm' in key:
+                        state_dict_[key.split('transformer.')[1]] = state_dict[key].float()
+                    else:
+                        state_dict_[key.split('transformer.')[1]] = state_dict[key]
         self.transformer.load_state_dict(state_dict_, strict=strict)
 
         # Pooler.
