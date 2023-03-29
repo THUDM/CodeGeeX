@@ -57,7 +57,7 @@ class CodeGeeXTokenizer(object):
     
     def decode_code(self, input_ids):
         if self.mode == 'codegeex-13b':
-            text = self.tokenizer.decode(input_ids, skip_special_tokens=False, verbose=False)
+            text = self.tokenizer.decode(input_ids, skip_special_tokens=False, verbose=False, clean_up_tokenization_spaces=False)
             output_code = decode_whitespaces(text, self.start_extra_id, self.max_len)
         
         return output_code
