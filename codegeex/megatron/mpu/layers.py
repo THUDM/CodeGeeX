@@ -183,7 +183,6 @@ class VocabParallelEmbedding(torch.nn.Module):
                     self.num_embeddings_per_partition,
                     self.embedding_dim,
                     dtype=args.params_dtype,
-                    # dtype=torch.float32,
                 )
             )
             _initialize_affine_weight_cpu(
@@ -201,7 +200,6 @@ class VocabParallelEmbedding(torch.nn.Module):
                     self.embedding_dim,
                     device=torch.cuda.current_device(),
                     dtype=args.params_dtype,
-                    # dtype=torch.float32,
                 )
             )
             _initialize_affine_weight_gpu(
