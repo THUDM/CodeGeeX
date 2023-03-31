@@ -1,7 +1,7 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">Paper</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 <p align="center">
     🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1s118ffrp-mpKKhQD0tKBmzNZVCyEZLw" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a>
@@ -26,6 +26,7 @@
     - [Crosslingual Code Translation](#crosslingual-code-translation)
     - [How to use HumanEval-X and contribute to it?](#how-to-use-humaneval-x-and-contribute-to-it)
   - [License](#license)
+  - [Citation](#citation)
 
 # CodeGeeX: A Multilingual Code Generation Model
 
@@ -42,6 +43,8 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 <p align="center"><i>CodeGeeX achieves the highest average performance compared with other open-sourced multilingual baselines.</i> </p>
 
 ## News
+
+* **2023-03-30**: CodeGeeX paper is now available at [arxiv](https://arxiv.org/abs/2303.17568).
 
 * **2023-02-14**: CodeGeeX now supports [Cloud Studio](https://cloudstudio.net/), a fantastic web IDE from Tencent. Click on the badge on top of this page to quickly launch an environment to test CodeGeeX.
 
@@ -201,3 +204,18 @@ Ruijie Cheng (Tsinghua), Peinan Yu (Tsinghua), Jingyao Zhang (Zhipu\.AI), Bowen 
 
 Our code is licensed under the [Apache-2.0 license](LICENSE).
 Our model is licensed under the [license](MODEL_LICENSE).
+
+## Citation
+
+If you find our work useful, please cite:
+
+```
+@misc{zheng2023codegeex,
+      title={CodeGeeX: A Pre-Trained Model for Code Generation with Multilingual Evaluations on HumanEval-X}, 
+      author={Qinkai Zheng and Xiao Xia and Xu Zou and Yuxiao Dong and Shan Wang and Yufei Xue and Zihan Wang and Lei Shen and Andi Wang and Yang Li and Teng Su and Zhilin Yang and Jie Tang},
+      year={2023},
+      eprint={2303.17568},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+```

@@ -1,7 +1,7 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📒 <a href="https://github.com/THUDM/CodeGeeX/blob/main/api/README_zh.md" target="_blank">API申请</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">论文</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 <p align="center">
     🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> 插件 | 👋 欢迎加入 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> 
@@ -26,6 +26,7 @@
     - [多语言代码生成](#多语言代码生成)
     - [跨语言代码翻译](#跨语言代码翻译)
   - [许可证](#许可证)
+  - [引用](#引用)
 # CodeGeeX: 多语言代码生成模型
 
 CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型。CodeGeeX采用华为MindSpore框架实现，在鹏城实验室“鹏城云脑II”中的192个节点（共1536个国产[昇腾910 AI处理器](https://e.huawei.com/cn/products/servers/ascend)）上训练而成。截至2022年6月22日，CodeGeeX历时两个月在20多种编程语言的代码语料库（>8500亿Token）上预训练得到。CodeGeeX有以下特点：
@@ -41,6 +42,8 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 <p align="center"><i>在HumanEval-X代码生成任务上，与其它开源基线模型相比，CodeGeeX取得了最佳的平均性能。</i> </p>
 
 ## 新闻
+
+* **2023-03-30**: CodeGeeX 已论文发表在[arxiv](https://arxiv.org/abs/2303.17568)。
 
 * **2023-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
 
@@ -198,7 +201,22 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 
 如果遇到问题或有任何建议，欢迎通过邮件与我们联系[codegeex@aminer.cn](mailto:codegeex@aminer.cn).
 
-### 许可证
+## 许可证
 
 代码使用[Apache-2.0许可证](LICENSE)
 模型使用[许可证](MODEL_LICENSE)
+
+## 引用
+
+如果觉得我们的工作有帮助，欢迎引用以下论文：
+
+```
+@misc{zheng2023codegeex,
+      title={CodeGeeX: A Pre-Trained Model for Code Generation with Multilingual Evaluations on HumanEval-X}, 
+      author={Qinkai Zheng and Xiao Xia and Xu Zou and Yuxiao Dong and Shan Wang and Yufei Xue and Zihan Wang and Lei Shen and Andi Wang and Yang Li and Teng Su and Zhilin Yang and Jie Tang},
+      year={2023},
+      eprint={2303.17568},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+```
