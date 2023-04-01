@@ -32,7 +32,7 @@ def try_format_code(code: str):
 def load_pretrain_dataset(dataset_path: Union[str, List[str]]) -> Dict:
     if type(dataset_path) is str:
         dataset_path = [dataset_path]
-    
+
     for p in dataset_path:
         if not os.path.isdir(p):
             if p.endswith(".gz") or p.endswith(".jsonl"):
@@ -44,18 +44,18 @@ def load_pretrain_dataset(dataset_path: Union[str, List[str]]) -> Dict:
                 if p_.endswith(".gz") or p_.endswith(".jsonl"):
                     print(f"loading from {p_}")
                     yield from stream_jsonl(p_)
-          
-            
+
+
 def process_sample(
-    sample: Dict, 
-    language: str=None, 
-    mode: str="pretrain",
+    sample: Dict,
+    language: str = None,
+    mode: str = "pretrain",
 ) -> Iterable[PromptSample]:
     if mode == "pretrain":
         prompt = ""
     else:
         prompt = sample["prompt"]
-    
+
     try:
         if language is not None and language in LANGUAGE_TAG.keys():
             code = LANGUAGE_TAG[language] + "\n" + sample["code"]
@@ -65,12 +65,12 @@ def process_sample(
         print(e)
         print("The key 'code' is missing in data. Aborted")
         exit(0)
-        
+
     yield PromptSample(prompt, code)
 
 
 def generate_prompt_samples(
-    dataset: Iterable[Dict], 
+    dataset: Iterable[Dict],
     language: str = None,
     mode: str = "pretrain",
 ) -> PromptDataset:
@@ -90,7 +90,7 @@ def main(
     seq_len: int = 2048,
 ):
     DATA_KEYS = ["input_ids", "attention_mask", "labels"]
-    
+
     # create output dir
     os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
 
@@ -117,17 +117,18 @@ def main(
 
     # NOTE that we use seq_len + 1 instead of seq_len, since the input tokens will be shifted by one.
     processor = PromptDatasetProcessor(
-        tokenize=tokenizer.encode_code, 
+        tokenize=tokenizer.encode_code,
         pad_token=pad_token_id,
-        max_seq_len=seq_len + 1, 
+        max_seq_len=seq_len + 1,
         discard_overlong=discard_overlong,
         sliding_stride=sliding_stride,
-        eod_token=pad_token_id)
-    
+        eod_token=pad_token_id,
+    )
+
     processor.start_time = perf_counter()
-    doc_iter = pool.imap_unordered(processor.process_sample_strict,
-                                   prompt_dataset, 
-                                   chunksize=20)
+    doc_iter = pool.imap_unordered(
+        processor.process_sample_strict, prompt_dataset, chunksize=20
+    )
 
     for doc_idx, docs in tqdm(enumerate(doc_iter, start=1)):
         processor.doc_processed += 1

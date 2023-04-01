@@ -57,9 +57,7 @@ def _clip_grad(clip_type, clip_value, grad):
             F.cast(F.tuple_to_array((clip_value,)), dt),
         )
     else:
-        new_grad = nn.ClipByNorm()(
-            grad, F.cast(F.tuple_to_array((clip_value,)), dt)
-        )
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
 
@@ -105,14 +103,16 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
     """
 
     def __init__(
-            self,
-            network,
-            optimizer,
-            scale_update_cell=None,
-            enable_global_norm=False,
-            config=None,
+        self,
+        network,
+        optimizer,
+        scale_update_cell=None,
+        enable_global_norm=False,
+        config=None,
     ):
-        super(PanguAlphaTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
+        super(PanguAlphaTrainOneStepWithLossScaleCell, self).__init__(
+            network, optimizer, scale_update_cell
+        )
         self.network = network
         self.config = config
         self.weights = optimizer.parameters
@@ -139,8 +139,8 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
         # Backward process using loss scale
         grads = self.grad(self.network, weights)(
-            input_ids, loss_mask, input_position, attention_mask,
-            scaling_sens_filled)
+            input_ids, loss_mask, input_position, attention_mask, scaling_sens_filled
+        )
 
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
@@ -150,8 +150,8 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
             grads, clip_value = self.clip(grads)
         else:
             grads = self.hyper_map(
-                F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE),
-                grads)
+                F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads
+            )
         # Check whether overflow
         cond = self.get_overflow_status(status, grads)
         overflow = self.process_loss_scale(cond)
@@ -178,8 +178,17 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
 
-    def __init__(self, network, optimizer, config, scale_update_cell=None, enable_global_norm=True):
-        super(PanguAlphaTrainPipelineWithLossScaleCell, self).__init__(auto_prefix=False)
+    def __init__(
+        self,
+        network,
+        optimizer,
+        config,
+        scale_update_cell=None,
+        enable_global_norm=True,
+    ):
+        super(PanguAlphaTrainPipelineWithLossScaleCell, self).__init__(
+            auto_prefix=False
+        )
         self.config = config
         self.network = network
         self.network.add_flags(defer_inline=True)
@@ -191,14 +200,19 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         self.reducer_flag = False
         self.allreduce = P.AllReduce()
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+        if self.parallel_mode in [
+            ParallelMode.DATA_PARALLEL,
+            ParallelMode.HYBRID_PARALLEL,
+        ]:
             self.reducer_flag = True
         self.grad_reducer = F.identity
         self.degree = 1
         if self.reducer_flag:
             self.degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+            self.grad_reducer = DistributedGradReducer(
+                optimizer.parameters, False, self.degree
+            )
+        self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
@@ -211,21 +225,23 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         self.reshape = P.Reshape()
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(
+                Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
+                name="loss_scale",
+            )
         self.clip = ClipByGlobalNorm(self.weights, self.config)
         self.micro_size = config.parallel_config.micro_batch_num
         self.opt_shard = _get_enable_parallel_optimizer()
 
     @C.add_flags(has_effect=True)
     def construct(
-            self,
-            input_ids,
-            loss_mask,
-            input_position,
-            attention_mask,
-            past=None,
-            sens=None,
+        self,
+        input_ids,
+        loss_mask,
+        input_position,
+        attention_mask,
+        past=None,
+        sens=None,
     ):
         """Defines the computation performed."""
         weights = self.weights
@@ -253,16 +269,22 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         # apply grad reducer on grads
         if self.opt_shard:
             grads = self.grad_reducer(grads)
-            grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)
+            grads = self.hyper_map(
+                F.partial(shard_grad_scale, scaling_sens * self.degree),
+                grads,
+                self.accu_grads,
+            )
         else:
             accu_grads = self.grad_reducer(self.accu_grads)
-            grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
+            grads = self.hyper_map(
+                F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads
+            )
         if self.enable_global_norm:
             grads, _ = self.clip(grads)
         else:
             grads = self.hyper_map(
-                F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE),
-                grads)
+                F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads
+            )
         if self.is_distributed:
             # sum overflow flag over devices
             flag_reduce = self.allreduce(flag_sum)

@@ -10,10 +10,10 @@ from dataclasses import dataclass
 
 
 def get_ltor_masks_and_position_ids(
-    data, 
-    eod_token, 
-    reset_position_ids, 
-    reset_attention_mask, 
+    data,
+    eod_token,
+    reset_position_ids,
+    reset_attention_mask,
 ):
     """Build masks and position id for left to right model."""
 
@@ -65,9 +65,9 @@ def get_ltor_masks_and_position_ids(
 
 
 def get_batch(
-    context_tokens, 
-    micro_batch_size, 
-    eod_token, 
+    context_tokens,
+    micro_batch_size,
+    eod_token,
     reset_position_ids=False,
     reset_attention_mask=False,
 ):
@@ -125,15 +125,15 @@ def pad_batch(batch, pad_id, seq_length):
 
 
 def forward_step(
-        model,
-        tokens,
-        seq_length,
-        position_ids,
-        attention_mask,
-        layer_past=None,
-        get_key_value=None,
-        prompt_length=None,
-        context_length=None,
+    model,
+    tokens,
+    seq_length,
+    position_ids,
+    attention_mask,
+    layer_past=None,
+    get_key_value=None,
+    prompt_length=None,
+    context_length=None,
 ):
     # Forward pass through the model.
     output_tensor = model(
@@ -156,28 +156,30 @@ def forward_step(
 
 
 def get_token_stream(
-        model,
-        tokenizer,
-        seq_length,
-        out_seq_length,
-        context_tokens,
-        return_scores: bool = False,
-        prompt_length: int = None,
-        micro_batch_size: int = None,
-        bad_ids: List = None,
-        temperature: float = 1.0,
-        topp: float = 1.0,
-        topk: int = 0.0,
-        greedy: bool = False,
-        recompute: bool = False,
+    model,
+    tokenizer,
+    seq_length,
+    out_seq_length,
+    context_tokens,
+    return_scores: bool = False,
+    prompt_length: int = None,
+    micro_batch_size: int = None,
+    bad_ids: List = None,
+    temperature: float = 1.0,
+    topp: float = 1.0,
+    topk: int = 0.0,
+    greedy: bool = False,
+    recompute: bool = False,
 ):
-    context_tokens, context_lengths = pad_batch(context_tokens, tokenizer.eos_token_id, seq_length)
+    context_tokens, context_lengths = pad_batch(
+        context_tokens, tokenizer.eos_token_id, seq_length
+    )
 
     context_tokens_tensor = paddle.to_tensor(context_tokens, dtype="int64")
     context_length_tensor = paddle.to_tensor(context_lengths, dtype="int64")
     context_length = context_length_tensor.min().item()
     tokens, attention_mask, position_ids = get_batch(
-        context_tokens_tensor, 
+        context_tokens_tensor,
         micro_batch_size,
         tokenizer.eos_token_id,
     )
@@ -215,23 +217,23 @@ def switch(val1, val2, boolean):
 
 
 def sample_sequence_batch(
-        model,
-        tokenizer,
-        context_tokens,
-        context_lengths,
-        attention_mask,
-        position_ids,
-        seq_length,
-        out_seq_length,
-        maxlen=None,
-        return_scores: bool = False,
-        prompt_length: int = None,
-        bad_ids: List = None,
-        temperature: float = 1.0,
-        topp: float = 1.0,
-        topk: int = 0.0,
-        recompute: bool = False,
-        greedy: bool = False,
+    model,
+    tokenizer,
+    context_tokens,
+    context_lengths,
+    attention_mask,
+    position_ids,
+    seq_length,
+    out_seq_length,
+    maxlen=None,
+    return_scores: bool = False,
+    prompt_length: int = None,
+    bad_ids: List = None,
+    temperature: float = 1.0,
+    topp: float = 1.0,
+    topk: int = 0.0,
+    recompute: bool = False,
+    greedy: bool = False,
 ):
     model.eval()
     with paddle.no_grad():
@@ -257,30 +259,32 @@ def sample_sequence_batch(
         while context_length <= (maxlen):
 
             if recompute:
-                logits = model(tokens,
-                               position_ids,
-                               attention_mask,
-                               prompt_length=prompt_length,
-                               context_length=context_length,
-                               )
+                logits = model(
+                    tokens,
+                    position_ids,
+                    attention_mask,
+                    prompt_length=prompt_length,
+                    context_length=context_length,
+                )
                 logits = logits[:, context_length - 1, :]
             else:
                 if counter == 0:
                     tokens2use = tokens[:, :context_length]
                     positions2use = position_ids[:, :context_length]
                 else:
-                    tokens2use = tokens[:, context_length - 1].reshape([
-                        batch_size, -1])
-                    positions2use = position_ids[:, context_length - 1].reshape([
-                        batch_size, -1])
-                logits, layer_past = model(tokens2use,
-                                           positions2use,
-                                           attention_mask,
-                                           layer_past=layer_past,
-                                           get_key_value=True,
-                                           prompt_length=prompt_length,
-                                           context_length=context_length,
-                                           )
+                    tokens2use = tokens[:, context_length - 1].reshape([batch_size, -1])
+                    positions2use = position_ids[:, context_length - 1].reshape(
+                        [batch_size, -1]
+                    )
+                logits, layer_past = model(
+                    tokens2use,
+                    positions2use,
+                    attention_mask,
+                    layer_past=layer_past,
+                    get_key_value=True,
+                    prompt_length=prompt_length,
+                    context_length=context_length,
+                )
                 logits = logits[:, -1].reshape([batch_size, -1])
 
             if bad_ids is not None:
@@ -314,12 +318,12 @@ def sample_sequence_batch(
             lengths[just_finished.reshape([-1])] = context_length
             is_done = is_done | done_token
             done = paddle.all(is_done.cast("bool"))
-            
+
             if return_scores:
                 yield tokens, (lengths, scores)
             else:
                 yield tokens, lengths
-                
+
             context_length += 1
             counter += 1
             if done:

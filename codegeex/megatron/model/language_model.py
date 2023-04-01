@@ -41,7 +41,7 @@ def get_shrink_embedding_gradient_alpha(iteration):
             return 1.0
         else:
             return alpha + (1 - alpha) * (args.iteration - x1) / x2
-        
+
 
 def parallel_lm_logits(input_, word_embeddings_weight, parallel_output, bias=None):
     """LM logits using word embedding weights."""
@@ -50,14 +50,17 @@ def parallel_lm_logits(input_, word_embeddings_weight, parallel_output, bias=Non
     # Matrix multiply.
     args = get_args()
     if args.shrink_logit_embedding_gradient:
-        if hasattr(args, 'iteration'):
+        if hasattr(args, "iteration"):
             alpha = get_shrink_embedding_gradient_alpha(args.iteration + 1)
         else:
             alpha = args.shrink_embedding_gradient_alpha
-        word_embeddings_weight = word_embeddings_weight if alpha == 1.0 \
+        word_embeddings_weight = (
+            word_embeddings_weight
+            if alpha == 1.0
             else (
-                word_embeddings_weight * alpha +
-                word_embeddings_weight.detach() * (1 - alpha)
+                word_embeddings_weight * alpha
+                + word_embeddings_weight.detach() * (1 - alpha)
+            )
         )
     if bias is None:
         logits_parallel = F.linear(input_parallel, word_embeddings_weight.half())
@@ -71,10 +74,10 @@ def parallel_lm_logits(input_, word_embeddings_weight, parallel_output, bias=Non
 
 
 def get_language_model(
-        num_tokentypes,
-        add_pooler,
-        init_method=None,
-        scaled_init_method=None,
+    num_tokentypes,
+    add_pooler,
+    init_method=None,
+    scaled_init_method=None,
 ):
     """Build language model and return along with the key to save."""
     args = get_args()
@@ -83,16 +86,19 @@ def get_language_model(
         init_method = init_method_normal(args.init_method_std)
 
     if scaled_init_method is None:
-        scaled_init_method = scaled_init_method_normal(args.init_method_std, args.num_layers)
+        scaled_init_method = scaled_init_method_normal(
+            args.init_method_std, args.num_layers
+        )
 
     # Language model.
     language_model = TransformerLanguageModel(
         init_method=init_method,
         output_layer_init_method=scaled_init_method,
         num_tokentypes=num_tokentypes,
-        add_pooler=add_pooler)
+        add_pooler=add_pooler,
+    )
     # key used for checkpoints.
-    language_model_key = 'language_model'
+    language_model_key = "language_model"
 
     return language_model, language_model_key
 
@@ -121,27 +127,29 @@ class Embedding(MegatronModule):
         num_tokentypes=0,
     ):
         super(Embedding, self).__init__()
-        
+
         args = get_args()
-        
+
         self.hidden_size = hidden_size
         self.init_method = init_method
         self.num_tokentypes = num_tokentypes
         self.max_sequence_length = max_sequence_length
-        
+
         # Word embeddings (parallel).
         self.word_embeddings = mpu.VocabParallelEmbedding(
-            vocab_size, self.hidden_size, init_method=self.init_method)
-        self._word_embeddings_key = 'word_embeddings'
-            
+            vocab_size, self.hidden_size, init_method=self.init_method
+        )
+        self._word_embeddings_key = "word_embeddings"
+
         self.vocab_size = vocab_size
 
         # Position embedding (serial).
         self.position_embeddings = torch.nn.Embedding(
-            max_sequence_length, self.hidden_size)
+            max_sequence_length, self.hidden_size
+        )
         self.position_embeddings = self.position_embeddings.half()
-        self._position_embeddings_key = 'position_embeddings'
-            
+        self._position_embeddings_key = "position_embeddings"
+
         # Initialize the position embeddings.
         self.init_method(self.position_embeddings.weight)
 
@@ -149,10 +157,11 @@ class Embedding(MegatronModule):
         # Add this as an optional field that can be added through
         # method call so we can load a pretrain model without
         # token types and add them as needed.
-        self._tokentype_embeddings_key = 'tokentype_embeddings'
+        self._tokentype_embeddings_key = "tokentype_embeddings"
         if self.num_tokentypes > 0:
-            self.tokentype_embeddings = torch.nn.Embedding(self.num_tokentypes,
-                                                           self.hidden_size)
+            self.tokentype_embeddings = torch.nn.Embedding(
+                self.num_tokentypes, self.hidden_size
+            )
             # Initialize the token-type embeddings.
             self.init_method(self.tokentype_embeddings.weight)
         else:
@@ -167,13 +176,13 @@ class Embedding(MegatronModule):
         This allows us to load the model normally and then add this embedding.
         """
         if self.tokentype_embeddings is not None:
-            raise Exception('tokentype embeddings is already initialized')
+            raise Exception("tokentype embeddings is already initialized")
         if torch.distributed.get_rank() == 0:
-            print('adding embedding for {} tokentypes'.format(num_tokentypes),
-                  flush=True)
+            print(
+                "adding embedding for {} tokentypes".format(num_tokentypes), flush=True
+            )
         self.num_tokentypes = num_tokentypes
-        self.tokentype_embeddings = torch.nn.Embedding(num_tokentypes,
-                                                       self.hidden_size)
+        self.tokentype_embeddings = torch.nn.Embedding(num_tokentypes, self.hidden_size)
         # Initialize the token-type embeddings.
         self.init_method(self.tokentype_embeddings.weight)
 
@@ -194,20 +203,24 @@ class Embedding(MegatronModule):
         return embeddings
 
     def state_dict_for_save_checkpoint(
-        self, destination=None, prefix='', keep_vars=False,
+        self,
+        destination=None,
+        prefix="",
+        keep_vars=False,
     ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._word_embeddings_key] \
-            = self.word_embeddings.state_dict(destination, prefix, keep_vars)
-        state_dict_[self._position_embeddings_key] \
-            = self.position_embeddings.state_dict(
-            destination, prefix, keep_vars)
+        state_dict_[self._word_embeddings_key] = self.word_embeddings.state_dict(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._position_embeddings_key
+        ] = self.position_embeddings.state_dict(destination, prefix, keep_vars)
         if self.num_tokentypes > 0:
-            state_dict_[self._tokentype_embeddings_key] \
-                = self.tokentype_embeddings.state_dict(
-                destination, prefix, keep_vars)
+            state_dict_[
+                self._tokentype_embeddings_key
+            ] = self.tokentype_embeddings.state_dict(destination, prefix, keep_vars)
 
         return state_dict_
 
@@ -221,11 +234,12 @@ class Embedding(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'word_embeddings' in key:
-                    state_dict_[key.split('word_embeddings.')[1]] \
-                        = state_dict[key]
-        vocab_len = state_dict_['weight'].shape[0]
-        state_dict_["weight"] = state_dict_["weight"][:self.vocab_size // get_tensor_model_parallel_world_size()]
+                if "word_embeddings" in key:
+                    state_dict_[key.split("word_embeddings.")[1]] = state_dict[key]
+        vocab_len = state_dict_["weight"].shape[0]
+        state_dict_["weight"] = state_dict_["weight"][
+            : self.vocab_size // get_tensor_model_parallel_world_size()
+        ]
         self.word_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Position embedding.
@@ -235,18 +249,20 @@ class Embedding(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'position_embeddings' in key:
-                    state_dict_[key.split('position_embeddings.')[1]] \
-                        = state_dict[key]
-        
-        pos_len = state_dict_['weight'].shape[0]
+                if "position_embeddings" in key:
+                    state_dict_[key.split("position_embeddings.")[1]] = state_dict[key]
+
+        pos_len = state_dict_["weight"].shape[0]
         max_seq_len = self.max_sequence_length
         if pos_len < max_seq_len:
             print_rank_0(f"Position embedding padded {pos_len} -> {max_seq_len}.")
             position_embeddings_padded = torch.nn.Embedding(
-            max_seq_len - pos_len, self.hidden_size).half()
+                max_seq_len - pos_len, self.hidden_size
+            ).half()
             self.init_method(position_embeddings_padded.weight)
-            state_dict_['weight'] = torch.cat([state_dict_['weight'], position_embeddings_padded.weight], dim=0)
+            state_dict_["weight"] = torch.cat(
+                [state_dict_["weight"], position_embeddings_padded.weight], dim=0
+            )
 
         # self.position_embeddings = self.position_embeddings.half()
         self.position_embeddings.load_state_dict(state_dict_, strict=strict)
@@ -259,15 +275,18 @@ class Embedding(MegatronModule):
             else:
                 # for backward compatibility.
                 for key in state_dict.keys():
-                    if 'tokentype_embeddings' in key:
-                        state_dict_[key.split('tokentype_embeddings.')[1]] \
-                            = state_dict[key]
+                    if "tokentype_embeddings" in key:
+                        state_dict_[key.split("tokentype_embeddings.")[1]] = state_dict[
+                            key
+                        ]
             if len(state_dict_.keys()) > 0:
-                self.tokentype_embeddings.load_state_dict(state_dict_,
-                                                          strict=strict)
+                self.tokentype_embeddings.load_state_dict(state_dict_, strict=strict)
             else:
-                print('***WARNING*** expected tokentype embeddings in the '
-                      'checkpoint but could not find it', flush=True)
+                print(
+                    "***WARNING*** expected tokentype embeddings in the "
+                    "checkpoint but could not find it",
+                    flush=True,
+                )
 
 
 class EmbeddingPipe(Embedding):
@@ -318,26 +337,29 @@ class QueryEmbedding(MegatronModule):
                         will ignore this embedding
     """
 
-    def __init__(self,
-                 hidden_size,
-                 vocab_size,
-                 max_sequence_length,
-                 embedding_dropout_prob,
-                 init_method,
-                 num_tokentypes=0):
+    def __init__(
+        self,
+        hidden_size,
+        vocab_size,
+        max_sequence_length,
+        embedding_dropout_prob,
+        init_method,
+        num_tokentypes=0,
+    ):
         super(QueryEmbedding, self).__init__()
 
         self.hidden_size = hidden_size
         self.init_method = init_method
         self.num_tokentypes = num_tokentypes
         self.max_sequence_length = max_sequence_length
-        
+
         # Top query position embedding (serial).
         self.top_query_embeddings = mpu.VocabParallelEmbedding(
-            max_sequence_length, self.hidden_size, init_method=self.init_method)
+            max_sequence_length, self.hidden_size, init_method=self.init_method
+        )
         self.top_query_embeddings = self.top_query_embeddings.half()
-        self._top_query_embeddings_key = 'top_query_embeddings'
-            
+        self._top_query_embeddings_key = "top_query_embeddings"
+
         # Initialize the top query position embeddings.
         self.init_method(self.top_query_embeddings.weight)
 
@@ -345,10 +367,11 @@ class QueryEmbedding(MegatronModule):
         # Add this as an optional field that can be added through
         # method call so we can load a pretrain model without
         # token types and add them as needed.
-        self._tokentype_embeddings_key = 'tokentype_embeddings'
+        self._tokentype_embeddings_key = "tokentype_embeddings"
         if self.num_tokentypes > 0:
-            self.tokentype_embeddings = torch.nn.Embedding(self.num_tokentypes,
-                                                           self.hidden_size)
+            self.tokentype_embeddings = torch.nn.Embedding(
+                self.num_tokentypes, self.hidden_size
+            )
             # Initialize the token-type embeddings.
             self.init_method(self.tokentype_embeddings.weight)
         else:
@@ -363,13 +386,13 @@ class QueryEmbedding(MegatronModule):
         This allows us to load the model normally and then add this embedding.
         """
         if self.tokentype_embeddings is not None:
-            raise Exception('tokentype embeddings is already initialized')
+            raise Exception("tokentype embeddings is already initialized")
         if torch.distributed.get_rank() == 0:
-            print('adding embedding for {} tokentypes'.format(num_tokentypes),
-                  flush=True)
+            print(
+                "adding embedding for {} tokentypes".format(num_tokentypes), flush=True
+            )
         self.num_tokentypes = num_tokentypes
-        self.tokentype_embeddings = torch.nn.Embedding(num_tokentypes,
-                                                       self.hidden_size)
+        self.tokentype_embeddings = torch.nn.Embedding(num_tokentypes, self.hidden_size)
         # Initialize the token-type embeddings.
         self.init_method(self.tokentype_embeddings.weight)
 
@@ -388,18 +411,19 @@ class QueryEmbedding(MegatronModule):
 
         return embeddings
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._top_query_embeddings_key] \
-            = self.top_query_embeddings.state_dict(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._top_query_embeddings_key
+        ] = self.top_query_embeddings.state_dict(destination, prefix, keep_vars)
         if self.num_tokentypes > 0:
-            state_dict_[self._tokentype_embeddings_key] \
-                = self.tokentype_embeddings.state_dict(
-                destination, prefix, keep_vars)
+            state_dict_[
+                self._tokentype_embeddings_key
+            ] = self.tokentype_embeddings.state_dict(destination, prefix, keep_vars)
 
         return state_dict_
 
@@ -413,17 +437,19 @@ class QueryEmbedding(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'top_query_embeddings' in key:
-                    state_dict_[key.split('top_query_embeddings.')[1]] \
-                        = state_dict[key]
-        pos_len = state_dict_['weight'].shape[0]
+                if "top_query_embeddings" in key:
+                    state_dict_[key.split("top_query_embeddings.")[1]] = state_dict[key]
+        pos_len = state_dict_["weight"].shape[0]
         max_seq_len = self.max_sequence_length // get_tensor_model_parallel_world_size()
         if pos_len < max_seq_len:
             print_rank_0(f"Top query embedding padded {pos_len} -> {max_seq_len}.")
             top_query_embeddings_padded = torch.nn.Embedding(
-            max_seq_len - pos_len, self.hidden_size).half()
+                max_seq_len - pos_len, self.hidden_size
+            ).half()
             self.init_method(top_query_embeddings_padded.weight)
-            state_dict_['weight'] = torch.cat([state_dict_['weight'], top_query_embeddings_padded.weight], dim=0)
+            state_dict_["weight"] = torch.cat(
+                [state_dict_["weight"], top_query_embeddings_padded.weight], dim=0
+            )
         self.top_query_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Tokentype embedding.
@@ -434,15 +460,18 @@ class QueryEmbedding(MegatronModule):
             else:
                 # for backward compatibility.
                 for key in state_dict.keys():
-                    if 'tokentype_embeddings' in key:
-                        state_dict_[key.split('tokentype_embeddings.')[1]] \
-                            = state_dict[key]
+                    if "tokentype_embeddings" in key:
+                        state_dict_[key.split("tokentype_embeddings.")[1]] = state_dict[
+                            key
+                        ]
             if len(state_dict_.keys()) > 0:
-                self.tokentype_embeddings.load_state_dict(state_dict_,
-                                                          strict=strict)
+                self.tokentype_embeddings.load_state_dict(state_dict_, strict=strict)
             else:
-                print('***WARNING*** expected tokentype embeddings in the '
-                      'checkpoint but could not find it', flush=True)
+                print(
+                    "***WARNING*** expected tokentype embeddings in the "
+                    "checkpoint but could not find it",
+                    flush=True,
+                )
 
 
 class QueryEmbeddingPipe(QueryEmbedding):
@@ -462,7 +491,8 @@ class QueryEmbeddingPipe(QueryEmbedding):
             tokentype_ids = None
 
         embeddings = super().forward(
-            position_ids, tokentype_ids=tokentype_ids,
+            position_ids,
+            tokentype_ids=tokentype_ids,
         )
 
         # If cmd args has attn_mask, we don't forward it as an activation.
@@ -476,8 +506,8 @@ class QueryEmbeddingPipe(QueryEmbedding):
     def word_embeddings_weight(self):
         """Easy accessory for the DeepSpeed pipeline engine to tie embeddings across stages."""
         return self.top_query_embeddings.weight
-    
-    
+
+
 class TransformerLanguageModel(MegatronModule):
     """Transformer language model.
 
@@ -497,11 +527,9 @@ class TransformerLanguageModel(MegatronModule):
                         will ignore this embedding
     """
 
-    def __init__(self,
-                 init_method,
-                 output_layer_init_method,
-                 num_tokentypes=0,
-                 add_pooler=False):
+    def __init__(
+        self, init_method, output_layer_init_method, num_tokentypes=0, add_pooler=False
+    ):
         super(TransformerLanguageModel, self).__init__()
         args = get_args()
 
@@ -511,82 +539,97 @@ class TransformerLanguageModel(MegatronModule):
         self.add_pooler = add_pooler
 
         # Embeddings
-        self.embedding = Embedding(self.hidden_size,
-                                   args.padded_vocab_size,
-                                   args.max_position_embeddings,
-                                   args.hidden_dropout,
-                                   self.init_method,
-                                   self.num_tokentypes)
-        self._embedding_key = 'embedding'
+        self.embedding = Embedding(
+            self.hidden_size,
+            args.padded_vocab_size,
+            args.max_position_embeddings,
+            args.hidden_dropout,
+            self.init_method,
+            self.num_tokentypes,
+        )
+        self._embedding_key = "embedding"
 
         # Query embeddings
-        self.topQueryEmbedding = QueryEmbedding(self.hidden_size,
-                                                args.padded_vocab_size,
-                                                args.max_position_embeddings,
-                                                args.hidden_dropout,
-                                                self.init_method,
-                                                self.num_tokentypes)
-        self._topQueryEmbedding_key = 'topQueryEmbedding'
+        self.topQueryEmbedding = QueryEmbedding(
+            self.hidden_size,
+            args.padded_vocab_size,
+            args.max_position_embeddings,
+            args.hidden_dropout,
+            self.init_method,
+            self.num_tokentypes,
+        )
+        self._topQueryEmbedding_key = "topQueryEmbedding"
 
         # Transformer
         self.transformer = ParallelTransformer(
-            self.init_method,
-            output_layer_init_method)
-        self._transformer_key = 'transformer'
+            self.init_method, output_layer_init_method
+        )
+        self._transformer_key = "transformer"
 
     def set_input_tensor(self, input_tensor):
         """See megatron.model.transformer.set_input_tensor()"""
         self.transformer.set_input_tensor(input_tensor)
-        
+
     def forward(
-            self,
-            input_ids,
-            position_ids,
-            attention_mask,
-            tokentype_ids=None,
-            layer_past=None,
-            get_key_value=False,
-            pooling_sequence_index=0,
-            prompt_length=None,
-            context_length=None,
+        self,
+        input_ids,
+        position_ids,
+        attention_mask,
+        tokentype_ids=None,
+        layer_past=None,
+        get_key_value=False,
+        pooling_sequence_index=0,
+        prompt_length=None,
+        context_length=None,
     ):
 
         # Embeddings.
-        embedding_output = self.embedding(input_ids, position_ids,
-                                          tokentype_ids=tokentype_ids)
+        embedding_output = self.embedding(
+            input_ids, position_ids, tokentype_ids=tokentype_ids
+        )
         query_position_ids = position_ids
-        queryEmbedding_out = self.topQueryEmbedding(query_position_ids,
-                                                    tokentype_ids=tokentype_ids)
+        queryEmbedding_out = self.topQueryEmbedding(
+            query_position_ids, tokentype_ids=tokentype_ids
+        )
 
         # Transformer.
-        transformer_output = self.transformer(embedding_output,
-                                              queryEmbedding_out,
-                                              attention_mask,
-                                              layer_past=layer_past,
-                                              get_key_value=get_key_value,
-                                              prompt_length=prompt_length,
-                                              context_length=context_length, )
+        transformer_output = self.transformer(
+            embedding_output,
+            queryEmbedding_out,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         return transformer_output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._embedding_key] \
-            = self.embedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._topQueryEmbedding_key] \
-            = self.topQueryEmbedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._transformer_key] \
-            = self.transformer.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._embedding_key
+        ] = self.embedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._topQueryEmbedding_key
+        ] = self.topQueryEmbedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._transformer_key
+        ] = self.transformer.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
         if self.add_pooler:
-            state_dict_[self._pooler_key] \
-                = self.pooler.state_dict_for_save_checkpoint(
-                destination, prefix, keep_vars)
+            state_dict_[self._pooler_key] = self.pooler.state_dict_for_save_checkpoint(
+                destination, prefix, keep_vars
+            )
 
         return state_dict_
 
@@ -600,7 +643,7 @@ class TransformerLanguageModel(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
         self.embedding.load_state_dict(state_dict_, strict=strict)
 
@@ -610,7 +653,7 @@ class TransformerLanguageModel(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
         self.topQueryEmbedding.load_state_dict(state_dict_, strict=strict)
 
@@ -621,13 +664,13 @@ class TransformerLanguageModel(MegatronModule):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'transformer.' in key:
-                    state_dict_[key.split('transformer.')[1]] = state_dict[key]
+                if "transformer." in key:
+                    state_dict_[key.split("transformer.")[1]] = state_dict[key]
         self.transformer.load_state_dict(state_dict_, strict=strict)
 
         # Pooler.
         if self.add_pooler:
-            assert 'pooler' in state_dict, \
-                'could not find data for pooler in the checkpoint'
-            self.pooler.load_state_dict(state_dict[self._pooler_key],
-                                        strict=strict)
+            assert (
+                "pooler" in state_dict
+            ), "could not find data for pooler in the checkpoint"
+            self.pooler.load_state_dict(state_dict[self._pooler_key], strict=strict)

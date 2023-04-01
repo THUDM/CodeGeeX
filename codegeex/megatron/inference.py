@@ -18,8 +18,7 @@ from codegeex.megatron.model import CodeGeeXModel
 def model_provider():
     """Build the model."""
 
-    model = CodeGeeXModel(num_tokentypes=0,
-                          parallel_output=False)
+    model = CodeGeeXModel(num_tokentypes=0, parallel_output=False)
 
     return model
 
@@ -43,7 +42,9 @@ def run_generation_distributed(model):
     socket = context.socket(zmq.REQ)
     socket.connect(f"tcp://{args.channel_ip}:{args.channel_port}")
     output_file_path = args.output_prefix + f"_finished_rank{args.gen_rank}.jsonl"
-    unfinished_output_file_path = args.output_prefix + f"_unfinished_rank{args.gen_rank}.jsonl"
+    unfinished_output_file_path = (
+        args.output_prefix + f"_unfinished_rank{args.gen_rank}.jsonl"
+    )
     problems = {}
     print("Building tokenizer...")
     tokenizer = get_tokenizer()
@@ -67,7 +68,9 @@ def run_generation_distributed(model):
                         current_spec = resp["task_id"]
                         prompt = current_spec["prompt"]
 
-                    temperature = None if "temperature" not in resp else resp["temperature"]
+                    temperature = (
+                        None if "temperature" not in resp else resp["temperature"]
+                    )
                     topp = None if "topp" not in resp else resp["topp"]
 
                     f.flush()
@@ -83,10 +86,7 @@ def run_generation_distributed(model):
                     if args.beam_search:
                         beams = get_token_stream(
                             model,
-                            [
-                                copy.deepcopy(tokens)
-                                for _ in range(micro_batch_size)
-                            ],
+                            [copy.deepcopy(tokens) for _ in range(micro_batch_size)],
                             return_scores=args.return_scores,
                             prompt_length=n_token_prompt,
                             micro_batch_size=micro_batch_size,
@@ -102,29 +102,35 @@ def run_generation_distributed(model):
                                 if generated_tokens_[-1] != tokenizer.eod
                                 else generated_tokens_[:-1]
                             )
-                            generated_code = tokenizer.detokenize(generated_tokens_[n_token_prompt:])
-                            generated_code = cleanup_code(generated_code,
-                                                          language_type=language_type,
-                                                          dataset=args.dataset)
+                            generated_code = tokenizer.detokenize(
+                                generated_tokens_[n_token_prompt:]
+                            )
+                            generated_code = cleanup_code(
+                                generated_code,
+                                language_type=language_type,
+                                dataset=args.dataset,
+                            )
                             f.write(
                                 json.dumps(
                                     {
-                                        "task_id"   : current_spec['task_id'],
-                                        "prompt"    : prompt,
+                                        "task_id": current_spec["task_id"],
+                                        "prompt": prompt,
                                         "generation": generated_code,
-                                        "scores"    : beam.score,
-                                        "finish"    : 2 if generated_tokens[i].cpu().numpy()[
-                                                               -1] == tokenizer.eod else 1,
-                                        "output"    : beam.tokens,
+                                        "scores": beam.score,
+                                        "finish": 2
+                                        if generated_tokens[i].cpu().numpy()[-1]
+                                        == tokenizer.eod
+                                        else 1,
+                                        "output": beam.tokens,
                                     }
                                 )
                                 + "\n"
                             )
                         socket.send_json(
                             {
-                                "rank"   : args.gen_rank,
-                                "action" : "success",
-                                "task_id": current_spec['task_id']
+                                "rank": args.gen_rank,
+                                "action": "success",
+                                "task_id": current_spec["task_id"],
                             }
                         )
                         socket.recv()
@@ -132,10 +138,7 @@ def run_generation_distributed(model):
 
                     token_stream = get_token_stream(
                         model,
-                        [
-                            copy.deepcopy(tokens)
-                            for _ in range(micro_batch_size)
-                        ],
+                        [copy.deepcopy(tokens) for _ in range(micro_batch_size)],
                         return_scores=args.return_scores,
                         prompt_length=n_token_prompt,
                         micro_batch_size=micro_batch_size,
@@ -156,33 +159,47 @@ def run_generation_distributed(model):
                             if is_finished[i]:
                                 continue
 
-                            generated_tokens_ = generated_tokens[i].cpu().numpy().tolist()
+                            generated_tokens_ = (
+                                generated_tokens[i].cpu().numpy().tolist()
+                            )
                             generated_tokens_ = (
                                 generated_tokens_
                                 if generated_tokens_[-1] != tokenizer.eod
                                 else generated_tokens_[:-1]
                             )
-                            generated_code = tokenizer.detokenize(generated_tokens_[n_token_prompt:])
-                            if generated_tokens[i].cpu().numpy()[-1] == tokenizer.eod or \
-                                    is_code_generation_finished(
-                                        generated_code,
-                                        language_type=language_type,
-                                        dataset=args.dataset,
-                                    ):
+                            generated_code = tokenizer.detokenize(
+                                generated_tokens_[n_token_prompt:]
+                            )
+                            if generated_tokens[i].cpu().numpy()[
+                                -1
+                            ] == tokenizer.eod or is_code_generation_finished(
+                                generated_code,
+                                language_type=language_type,
+                                dataset=args.dataset,
+                            ):
                                 is_finished[i] = True
-                                generated_code = cleanup_code(generated_code,
-                                                              language_type=language_type,
-                                                              dataset=args.dataset)
+                                generated_code = cleanup_code(
+                                    generated_code,
+                                    language_type=language_type,
+                                    dataset=args.dataset,
+                                )
                                 f.write(
                                     json.dumps(
                                         {
-                                            "task_id"   : current_spec['task_id'],
-                                            "prompt"    : prompt,
+                                            "task_id": current_spec["task_id"],
+                                            "prompt": prompt,
                                             "generation": generated_code,
-                                            "scores"    : 0.0 if scores is None else scores[i].detach().cpu().item(),
-                                            "finish"    : 2 if generated_tokens[i].cpu().numpy()[
-                                                                   -1] == tokenizer.eod else 1,
-                                            "output"    : generated_tokens[i].cpu().numpy().tolist(),
+                                            "scores": 0.0
+                                            if scores is None
+                                            else scores[i].detach().cpu().item(),
+                                            "finish": 2
+                                            if generated_tokens[i].cpu().numpy()[-1]
+                                            == tokenizer.eod
+                                            else 1,
+                                            "output": generated_tokens[i]
+                                            .cpu()
+                                            .numpy()
+                                            .tolist(),
                                         }
                                     )
                                     + "\n"
@@ -196,17 +213,23 @@ def run_generation_distributed(model):
 
                     for i in range(micro_batch_size):
                         if not is_finished[i]:
-                            generated_tokens_ = generated_tokens[i].cpu().numpy().tolist()
-                            generated_code = tokenizer.detokenize(generated_tokens_[n_token_prompt:])
+                            generated_tokens_ = (
+                                generated_tokens[i].cpu().numpy().tolist()
+                            )
+                            generated_code = tokenizer.detokenize(
+                                generated_tokens_[n_token_prompt:]
+                            )
                             unfinished_f.write(
                                 json.dumps(
                                     {
-                                        "task_id"   : current_spec['task_id'],
-                                        "prompt"    : prompt,
+                                        "task_id": current_spec["task_id"],
+                                        "prompt": prompt,
                                         "generation": generated_code,
-                                        "scores"    : 0.0 if scores is None else scores[i].detach().cpu().item(),
-                                        "finish"    : 0,
-                                        "output"    : generated_tokens_,
+                                        "scores": 0.0
+                                        if scores is None
+                                        else scores[i].detach().cpu().item(),
+                                        "finish": 0,
+                                        "output": generated_tokens_,
                                     }
                                 )
                                 + "\n"
@@ -214,9 +237,9 @@ def run_generation_distributed(model):
 
                     socket.send_json(
                         {
-                            "rank"   : args.gen_rank,
-                            "action" : "success",
-                            "task_id": current_spec['task_id']
+                            "rank": args.gen_rank,
+                            "action": "success",
+                            "task_id": current_spec["task_id"],
                         }
                     )
                     socket.recv()
@@ -226,18 +249,20 @@ def run_generation_distributed(model):
                     print(f"    error: {repr(e)}")
                     traceback.print_exc()
                     if args.dataset.lower() == "codecontest":
-                        socket.send_json({
-                            "rank"            : args.gen_rank,
-                            "action"          : "fail",
-                            "contest_name"    : current_spec.name,
-                            "micro_batch_size": micro_batch_size
-                        })
+                        socket.send_json(
+                            {
+                                "rank": args.gen_rank,
+                                "action": "fail",
+                                "contest_name": current_spec.name,
+                                "micro_batch_size": micro_batch_size,
+                            }
+                        )
                     else:
                         socket.send_json(
                             {
-                                "rank"   : args.gen_rank,
-                                "action" : "fail",
-                                "task_id": current_spec['task_id']
+                                "rank": args.gen_rank,
+                                "action": "fail",
+                                "task_id": current_spec["task_id"],
                             }
                         )
                     socket.recv()

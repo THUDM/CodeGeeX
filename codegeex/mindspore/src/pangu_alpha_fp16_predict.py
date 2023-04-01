@@ -86,9 +86,7 @@ class EmbeddingLayer(nn.Cell):
         self.use_past = config.use_past
         self.batch_size = config.batch_size
 
-    def construct(
-            self, input_ids, input_position, init_reset, batch_valid_length
-    ):
+    def construct(self, input_ids, input_position, init_reset, batch_valid_length):
         word_embedding, word_table = self.word_embedding(input_ids)
         if self.use_past and not self.is_first_iteration:
             _, seq_length = F.shape(input_ids)
@@ -106,20 +104,20 @@ class QueryLayer(TransformerEncoderLayer):
     r"""Query Layer at the final layer."""
 
     def __init__(
-            self,
-            batch_size,
-            hidden_size,
-            ffn_hidden_size,
-            num_heads,
-            seq_length,
-            attention_dropout_rate=0.1,
-            hidden_dropout_rate=0.1,
-            post_layernorm_residual=False,
-            param_init_type=mstype.float32,
-            hidden_act="fast_gelu",
-            use_past=False,
-            parallel_config=None,
-            softmax_compute_type=mstype.float32,
+        self,
+        batch_size,
+        hidden_size,
+        ffn_hidden_size,
+        num_heads,
+        seq_length,
+        attention_dropout_rate=0.1,
+        hidden_dropout_rate=0.1,
+        post_layernorm_residual=False,
+        param_init_type=mstype.float32,
+        hidden_act="fast_gelu",
+        use_past=False,
+        parallel_config=None,
+        softmax_compute_type=mstype.float32,
     ):
         super(QueryLayer, self).__init__(
             batch_size=batch_size,
@@ -138,12 +136,12 @@ class QueryLayer(TransformerEncoderLayer):
         )
 
     def construct(
-            self,
-            x,
-            query_vector,
-            input_mask,
-            init_reset=True,
-            batch_valid_length=None,
+        self,
+        x,
+        query_vector,
+        input_mask,
+        init_reset=True,
+        batch_valid_length=None,
     ):
         r"""
         The forward process of the block.
@@ -225,9 +223,7 @@ class PanGuHead(Cell):
         logits: Tensor, the logits of the corresponding inputs
     """
 
-    def __init__(
-            self, hidden_size, compute_type=mstype.float16, parallel_config=None
-    ):
+    def __init__(self, hidden_size, compute_type=mstype.float16, parallel_config=None):
         super(PanGuHead, self).__init__()
         if parallel_config.vocab_emb_dp:
             self.matmul = P.MatMul(transpose_b=True).shard(
@@ -248,24 +244,22 @@ class PanGuHead(Cell):
     def construct(self, state, embed):
         state = P.Reshape()(state, (-1, self.hidden_size))
         # output logits over vocabulary [bs*seq_length, vocab_size]
-        logits = self.matmul(
-            self.cast(state, self.dtype), self.cast(embed, self.dtype)
-        )
+        logits = self.matmul(self.cast(state, self.dtype), self.cast(embed, self.dtype))
         return logits
 
 
 def set_parallel_configure_for_layer(
-        network, layer_id, offset, parallel_config, layers
+    network, layer_id, offset, parallel_config, layers
 ):
     r"""
-        Default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
+    Default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
 
 
-        Args:
-            network(Cell) - Represents the transformer block
-            layer_id(int) - Means the layer index for the current module, counts from zero.
-            offset(int) - Means the layer_index needs a offset, if there are other modules in the net.
-            layers(int) - The total layers used for the model.
+    Args:
+        network(Cell) - Represents the transformer block
+        layer_id(int) - Means the layer index for the current module, counts from zero.
+        offset(int) - Means the layer_index needs a offset, if there are other modules in the net.
+        layers(int) - The total layers used for the model.
     """
     # Used for the pipeline's stages setting
     # As the final layer is not included here, so we need to manually add here.
@@ -297,9 +291,7 @@ class PanguAlpha_Model(Cell):
         self.is_pipeline = config.parallel_config.pipeline_stage > 1
         self.embedding = EmbeddingLayer(config)
         self.config = config
-        self.layernorm = _LayerNorm((config.hidden_size,)).to_float(
-            mstype.float32
-        )
+        self.layernorm = _LayerNorm((config.hidden_size,)).to_float(mstype.float32)
         if config.parallel_config.pipeline_stage > 1:
             self.layernorm.set_comm_fusion(2)
         else:
@@ -307,35 +299,35 @@ class PanguAlpha_Model(Cell):
                 config.parallel_config.gradient_aggregation_group
             )
         self.layernorm.shard(((config.parallel_config.data_parallel, 1),))
-        self.layernorm.pipeline_stage = (
-                config.parallel_config.pipeline_stage - 1
-        )
+        self.layernorm.pipeline_stage = config.parallel_config.pipeline_stage - 1
         # Configure the shard configure of the Embedding layer
         self.embedding.pipeline_stage = 0
         self.num_layers = config.num_layers
         if config.use_moe:
             moe_config = MoEConfig(
                 expert_num=config.parallel_config.data_parallel
-                           * config.per_dp_dim_expert_num
+                * config.per_dp_dim_expert_num
             )
         else:
             moe_config = MoEConfig(expert_num=1)
         # The shard setting of Transformer is set within the class StackedTransformer
-        self.blocks = TransformerEncoder(num_layers=config.num_layers - 1,
-                                         batch_size=config.batch_size,
-                                         hidden_size=config.hidden_size,
-                                         ffn_hidden_size=config.ffn_hidden_size,
-                                         num_heads=config.num_heads,
-                                         seq_length=config.seq_length,
-                                         attention_dropout_rate=config.dropout_rate,
-                                         hidden_dropout_rate=config.dropout_rate,
-                                         lambda_func=set_parallel_configure_for_layer,
-                                         hidden_act="fast_gelu",
-                                         param_init_type=config.param_init_type,
-                                         use_past=config.use_past,
-                                         parallel_config=config.parallel_config,
-                                         moe_config=moe_config,
-                                         softmax_compute_type=config.softmax_compute_type).blocks
+        self.blocks = TransformerEncoder(
+            num_layers=config.num_layers - 1,
+            batch_size=config.batch_size,
+            hidden_size=config.hidden_size,
+            ffn_hidden_size=config.ffn_hidden_size,
+            num_heads=config.num_heads,
+            seq_length=config.seq_length,
+            attention_dropout_rate=config.dropout_rate,
+            hidden_dropout_rate=config.dropout_rate,
+            lambda_func=set_parallel_configure_for_layer,
+            hidden_act="fast_gelu",
+            param_init_type=config.param_init_type,
+            use_past=config.use_past,
+            parallel_config=config.parallel_config,
+            moe_config=moe_config,
+            softmax_compute_type=config.softmax_compute_type,
+        ).blocks
         for block in self.blocks:
             block.attention.dense1.bias.parallel_optimizer = False
             block.attention.dense2.bias.parallel_optimizer = False
@@ -343,36 +335,48 @@ class PanguAlpha_Model(Cell):
             block.output.mapping.bias.parallel_optimizer = False
         copied_parallel_config = copy.deepcopy(config.parallel_config)
         copied_parallel_config.vocab_emb_dp = True
-        self.top_query_embedding = VocabEmbedding(vocab_size=config.seq_length,
-                                                  embedding_size=config.hidden_size,
-                                                  param_init=initializer("normal",
-                                                                         [config.seq_length, config.hidden_size],
-                                                                         dtype=config.param_init_type),
-                                                  parallel_config=copied_parallel_config.embedding_dp_mp_config)
-        self.top_query_embedding.pipeline_stage = config.parallel_config.pipeline_stage - 1
+        self.top_query_embedding = VocabEmbedding(
+            vocab_size=config.seq_length,
+            embedding_size=config.hidden_size,
+            param_init=initializer(
+                "normal",
+                [config.seq_length, config.hidden_size],
+                dtype=config.param_init_type,
+            ),
+            parallel_config=copied_parallel_config.embedding_dp_mp_config,
+        )
+        self.top_query_embedding.pipeline_stage = (
+            config.parallel_config.pipeline_stage - 1
+        )
         if config.parallel_config.pipeline_stage > 1:
             self.top_query_embedding.set_comm_fusion(2)
         else:
-            self.top_query_embedding.set_comm_fusion(config.parallel_config.gradient_aggregation_group)
+            self.top_query_embedding.set_comm_fusion(
+                config.parallel_config.gradient_aggregation_group
+            )
 
-        self.top_query_layer = QueryLayer(batch_size=config.batch_size,
-                                          hidden_size=config.hidden_size,
-                                          ffn_hidden_size=config.ffn_hidden_size,
-                                          num_heads=config.num_heads,
-                                          seq_length=config.seq_length,
-                                          attention_dropout_rate=config.dropout_rate,
-                                          hidden_dropout_rate=config.dropout_rate,
-                                          hidden_act=config.hidden_act,
-                                          param_init_type=config.param_init_type,
-                                          use_past=config.use_past,
-                                          parallel_config=config.parallel_config)
+        self.top_query_layer = QueryLayer(
+            batch_size=config.batch_size,
+            hidden_size=config.hidden_size,
+            ffn_hidden_size=config.ffn_hidden_size,
+            num_heads=config.num_heads,
+            seq_length=config.seq_length,
+            attention_dropout_rate=config.dropout_rate,
+            hidden_dropout_rate=config.dropout_rate,
+            hidden_act=config.hidden_act,
+            param_init_type=config.param_init_type,
+            use_past=config.use_past,
+            parallel_config=config.parallel_config,
+        )
         self.top_query_layer.attention.dense1.bias.parallel_optimizer = False
         self.top_query_layer.attention.dense2.bias.parallel_optimizer = False
         self.top_query_layer.attention.dense3.bias.parallel_optimizer = False
         self.top_query_layer.output.mapping.bias.parallel_optimizer = False
         if config.parallel_config.recompute:
             self.top_query_layer.recompute()
-        self.top_query_layer.set_comm_fusion(config.parallel_config.gradient_aggregation_group)
+        self.top_query_layer.set_comm_fusion(
+            config.parallel_config.gradient_aggregation_group
+        )
         self.top_query_layer.pipeline_stage = config.parallel_config.pipeline_stage - 1
 
         self.dtype = mstype.float16
@@ -380,13 +384,18 @@ class PanguAlpha_Model(Cell):
         # if config.load_ckpt_path:
         #     self.load_embedding_from_ckpt(config.load_ckpt_path)
 
-    def construct(self, input_ids,
-                  input_position,
-                  encoder_masks,
-                  init_reset=True,
-                  batch_valid_length=None):
+    def construct(
+        self,
+        input_ids,
+        input_position,
+        encoder_masks,
+        init_reset=True,
+        batch_valid_length=None,
+    ):
         r"""forward pass of the model"""
-        embed, word_table = self.embedding(input_ids, input_position, init_reset, batch_valid_length)
+        embed, word_table = self.embedding(
+            input_ids, input_position, init_reset, batch_valid_length
+        )
         self.print("PanguAlpha_Model: embed_0", embed)
         hidden_state = P.Cast()(embed, self.dtype)
         self.print("PanguAlpha_Model: hidden_state_0", embed)
@@ -396,13 +405,20 @@ class PanguAlpha_Model(Cell):
         # encoder_mask = self.create_encoder_mask(encoder_masks)
         if self.blocks is not None:
             for i in range(self.num_layers - 1):
-                hidden_state, _ = self.blocks[i](hidden_state, encoder_masks, init_reset, batch_valid_length)
+                hidden_state, _ = self.blocks[i](
+                    hidden_state, encoder_masks, init_reset, batch_valid_length
+                )
                 self.print("PanguAlpha_Model: hidden_state_", hidden_state)
         if self.is_pipeline:
             top_query_hidden_states, _ = self.top_query_embedding(input_position)
             top_query_hidden_states = self.reshape_to_2d(top_query_hidden_states)
-            encoder_output, _ = self.top_query_layer(hidden_state, top_query_hidden_states,
-                                                     encoder_masks, init_reset, batch_valid_length)
+            encoder_output, _ = self.top_query_layer(
+                hidden_state,
+                top_query_hidden_states,
+                encoder_masks,
+                init_reset,
+                batch_valid_length,
+            )
             encoder_output = self.layernorm(encoder_output)
         else:
             hidden_state = self.reshape_to_2d(hidden_state)
@@ -410,8 +426,13 @@ class PanguAlpha_Model(Cell):
             encoder_output = P.Cast()(encoder_output, self.dtype)
             top_query_hidden_states, _ = self.top_query_embedding(input_position)
             top_query_hidden_states = self.reshape_to_2d(top_query_hidden_states)
-            encoder_output, _ = self.top_query_layer(encoder_output, top_query_hidden_states,
-                                                     encoder_masks, init_reset, batch_valid_length)
+            encoder_output, _ = self.top_query_layer(
+                encoder_output,
+                top_query_hidden_states,
+                encoder_masks,
+                init_reset,
+                batch_valid_length,
+            )
         self.print("PanguAlpha_Model: input_position", input_position)
         self.print("PanguAlpha_Model: top_query_hidden_state", top_query_hidden_states)
         self.print("PanguAlpha_Model: encoder_output", encoder_output)
@@ -443,29 +464,51 @@ class PanguAlpha_Model(Cell):
 
         # three embedding needed to be loaded
         # Loading the embedding table from the ckpt path:
-        position_embedding_path = os.path.join(load_ckpt_path, 'position_embedding.npy')
-        word_embedding_path = os.path.join(load_ckpt_path, 'word_embedding.npy')
-        top_query_embedding_path = os.path.join(load_ckpt_path, 'top_query_embedding.npy')
-        self.embedding.word_embedding.embedding_table = Parameter(initializer(load_param(word_embedding_path),
-                                                                              [self.config.vocab_size,
-                                                                               self.config.hidden_size]),
-                                                                  name='word_embedding_table', parallel_optimizer=False)
+        position_embedding_path = os.path.join(load_ckpt_path, "position_embedding.npy")
+        word_embedding_path = os.path.join(load_ckpt_path, "word_embedding.npy")
+        top_query_embedding_path = os.path.join(
+            load_ckpt_path, "top_query_embedding.npy"
+        )
+        self.embedding.word_embedding.embedding_table = Parameter(
+            initializer(
+                load_param(word_embedding_path),
+                [self.config.vocab_size, self.config.hidden_size],
+            ),
+            name="word_embedding_table",
+            parallel_optimizer=False,
+        )
         # self.summary("load_word_embedding", self.embedding.word_embedding.embedding_table)
-        self.print("PanguAlpha_Model: load_word_embedding", self.embedding.word_embedding.embedding_table)
-        self.embedding.position_embedding.embedding_table = Parameter(initializer(load_param(position_embedding_path),
-                                                                                  [self.config.seq_length,
-                                                                                   self.config.hidden_size]),
-                                                                      name='position_embedding_table',
-                                                                      parallel_optimizer=False)
+        self.print(
+            "PanguAlpha_Model: load_word_embedding",
+            self.embedding.word_embedding.embedding_table,
+        )
+        self.embedding.position_embedding.embedding_table = Parameter(
+            initializer(
+                load_param(position_embedding_path),
+                [self.config.seq_length, self.config.hidden_size],
+            ),
+            name="position_embedding_table",
+            parallel_optimizer=False,
+        )
         # self.summary("load_position_embedding", self.embedding.position_embedding.embedding_table)
-        self.print("PanguAlpha_Model: load_position_embedding", self.embedding.position_embedding.embedding_table)
+        self.print(
+            "PanguAlpha_Model: load_position_embedding",
+            self.embedding.position_embedding.embedding_table,
+        )
 
-        self.top_query_embedding.embedding_table = Parameter(initializer(load_param(top_query_embedding_path),
-                                                                         [self.config.seq_length,
-                                                                          self.config.hidden_size]),
-                                                             name='query_embedding_table', parallel_optimizer=False)
+        self.top_query_embedding.embedding_table = Parameter(
+            initializer(
+                load_param(top_query_embedding_path),
+                [self.config.seq_length, self.config.hidden_size],
+            ),
+            name="query_embedding_table",
+            parallel_optimizer=False,
+        )
         # self.summary("top_query_embedding", self.embedding.top_query_embedding.embedding_table)
-        self.print("PanguAlpha_Model: top_query_embedding", self.embedding.top_query_embedding.embedding_table)
+        self.print(
+            "PanguAlpha_Model: top_query_embedding",
+            self.embedding.top_query_embedding.embedding_table,
+        )
 
 
 class PanguAlphaModel(nn.Cell):
@@ -493,13 +536,22 @@ class PanguAlphaModel(nn.Cell):
         )
         self.head.pipeline_stage = config.parallel_config.pipeline_stage - 1
         self.backbone = PanguAlpha_Model(config)
-        self.backbone.embedding.word_embedding.embedding_table.add_pipeline_stage(self.head.pipeline_stage)
+        self.backbone.embedding.word_embedding.embedding_table.add_pipeline_stage(
+            self.head.pipeline_stage
+        )
         self.print = P.Print()
 
-    def construct(self, input_ids, input_position, attention_mask,
-                  init_reset=True, batch_valid_length=None):
-        output_states, word_table = self.backbone(input_ids, input_position, attention_mask,
-                                                  init_reset, batch_valid_length)
+    def construct(
+        self,
+        input_ids,
+        input_position,
+        attention_mask,
+        init_reset=True,
+        batch_valid_length=None,
+    ):
+        output_states, word_table = self.backbone(
+            input_ids, input_position, attention_mask, init_reset, batch_valid_length
+        )
         self.print("PanguAlphaModel: output_states", output_states)
         self.print("PanguAlphaModel: word_table", word_table)
         logits = self.head(output_states, word_table)
@@ -543,9 +595,12 @@ class PanGUAlphaWithLoss(Cell):
         r"""Forward process of the pangu alpha model"""
         tokens = self.slice(input_ids, (0, 0), (self.batch_size, -1), (1, 1))
         # P.Print()("==net tokens is:", tokens)
-        input_position = self.slice(input_position, (0, 0), (self.batch_size, self.len), (1, 1))
-        decoder_attention_masks = self.slice2(attention_mask, (0, 0, 0), (self.batch_size, self.len, self.len),
-                                              (1, 1, 1))
+        input_position = self.slice(
+            input_position, (0, 0), (self.batch_size, self.len), (1, 1)
+        )
+        decoder_attention_masks = self.slice2(
+            attention_mask, (0, 0, 0), (self.batch_size, self.len, self.len), (1, 1, 1)
+        )
         input_mask = F.cast(self.not_equal(tokens, self.eod_token), mstype.float32)
         logits = self.network(tokens, input_position, decoder_attention_masks)
         # P.Print()("==logits_is:", logits, ",shape is:", logits.shape)
@@ -584,10 +639,14 @@ class EvalNet(nn.Cell):
         self.log_softmax = P.LogSoftmax().shard(((1, 1, 1),))
         self.get_attention_mask = AttentionMask(seq_length)
         self.expand = P.ExpandDims().shard(((1, 1, 1),))
-        self.all_ones_attention_mask = Tensor(np.ones((1, 1, seq_length)), mstype.float32)
+        self.all_ones_attention_mask = Tensor(
+            np.ones((1, 1, seq_length)), mstype.float32
+        )
         self.print = P.Print()
 
-    def construct(self, input_ids, current_index, init_reset=True, batch_valid_length=None):
+    def construct(
+        self, input_ids, current_index, init_reset=True, batch_valid_length=None
+    ):
         """evaluation net"""
         input_mask = F.cast(F.not_equal(input_ids, self.pad_token), mstype.float32)
         bs, seq_length = F.shape(input_ids)
@@ -600,10 +659,13 @@ class EvalNet(nn.Cell):
         self.print("EvalNet: input_position_0", input_position)
         input_position = P.Tile()(input_position, (bs, 1))
         self.print("EvalNet: input_position_1", input_position)
-        logits = self.backbone(input_ids, input_position, attention_mask,
-                               init_reset, batch_valid_length)
+        logits = self.backbone(
+            input_ids, input_position, attention_mask, init_reset, batch_valid_length
+        )
         self.print("EvalNet: logits", logits)
-        index = current_index.view(-1, )
+        index = current_index.view(
+            -1,
+        )
         self.print("EvalNet: index", index)
         logits = self.gather(logits, index, 0)
         logits = logits.view(bs, 1, -1)

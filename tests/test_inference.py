@@ -17,9 +17,9 @@ def model_provider(args):
         args.num_layers,
         args.num_attention_heads,
         args.padded_vocab_size,
-        args.max_position_embeddings
+        args.max_position_embeddings,
     )
-    
+
     return model
 
 
@@ -111,19 +111,19 @@ def add_code_generation_args(parser):
         "--interative",
         action="store_true",
     )
-    
+
     return parser
 
-    
+
 def main():
     parser = argparse.ArgumentParser()
     parser = add_code_generation_args(parser)
     args, _ = parser.parse_known_args()
-    
+
     print("Loading tokenizer ...")
     tokenizer = CodeGeeXTokenizer(
-        tokenizer_path=args.tokenizer_path, 
-        mode="codegeex-13b")
+        tokenizer_path=args.tokenizer_path, mode="codegeex-13b"
+    )
 
     print("Loading state dict ...")
     state_dict = torch.load(args.load, map_location="cpu")
@@ -138,16 +138,18 @@ def main():
         model = quantize(model, weight_bit_width=8, backend="torch")
     model.cuda()
     torch.cuda.synchronize()
-    
+
     with open(args.prompt_file, "r") as f:
         prompt = f.readlines()
         prompt = "".join(prompt)
-    
+
     out_seq_lengths = [args.out_seq_length]
-    for out_seq_length in out_seq_lengths:        
+    for out_seq_length in out_seq_lengths:
         print(f"Generating with out_seq_len {out_seq_length}...")
         while True:
-            print("\nPlease Input Query (Ctrl-D to save multiple lines, 'stop' to exit) >>> ")
+            print(
+                "\nPlease Input Query (Ctrl-D to save multiple lines, 'stop' to exit) >>> "
+            )
             prompts = []
             while True:
                 try:
@@ -158,10 +160,10 @@ def main():
             prompt = "\n".join(prompts)
             prompt = prompt.strip()
             if not prompt:
-                print('Query should not be empty!')
+                print("Query should not be empty!")
                 continue
             if prompt == "stop":
-                return 
+                return
             try:
                 t0 = time.perf_counter()
                 generated_code = codegeex.generate(
@@ -182,7 +184,7 @@ def main():
             except (ValueError, FileNotFoundError) as e:
                 print(e)
                 continue
-            
+
     print("Generation finished.")
 
 

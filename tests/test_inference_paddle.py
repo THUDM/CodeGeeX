@@ -1,4 +1,3 @@
-
 import os
 import copy
 import time
@@ -22,7 +21,7 @@ def model_provider(args):
         args.num_layers,
         args.num_attention_heads,
         args.padded_vocab_size,
-        args.max_position_embeddings
+        args.max_position_embeddings,
     )
     model.language_model.embedding.word_embeddings.to(dtype="float32")
     model.language_model.embedding.position_embeddings.to(dtype="float32")
@@ -31,10 +30,12 @@ def model_provider(args):
         i.input_layernorm.to(dtype="float32")
         i.post_attention_layernorm.to(dtype="float32")
     model.language_model.transformer.topQueryLayer.input_layernorm.to(dtype="float32")
-    model.language_model.transformer.topQueryLayer.post_attention_layernorm.to(dtype="float32")
+    model.language_model.transformer.topQueryLayer.post_attention_layernorm.to(
+        dtype="float32"
+    )
     model.language_model.transformer.final_layernorm.to(dtype="float32")
     paddle.set_default_dtype(old_dtype)
-    
+
     return model
 
 
@@ -122,19 +123,19 @@ def add_code_generation_args(parser):
         "--quantize",
         action="store_true",
     )
-    
+
     return parser
 
-    
+
 def main():
     parser = argparse.ArgumentParser()
     parser = add_code_generation_args(parser)
     args, _ = parser.parse_known_args()
-    
+
     print("Loading tokenizer ...")
     tokenizer = CodeGeeXTokenizer(
-        tokenizer_path=args.tokenizer_path, 
-        mode="codegeex-13b")
+        tokenizer_path=args.tokenizer_path, mode="codegeex-13b"
+    )
 
     print("Loading state dict ...")
     state_dict = paddle.load(args.load)
@@ -147,18 +148,18 @@ def main():
     model.to(dtype="float16")
     if args.quantize:
         raise NotImplementedError("quantize")
-    
+
     with open(args.prompt_file, "r") as f:
         prompt = f.readlines()
         prompt = "".join(prompt)
-    
+
     times = {}
     out_seq_lengths = [args.out_seq_length]
     micro_batch_size = args.micro_batch_size
     seq_length = args.max_position_embeddings
-    for out_seq_length in out_seq_lengths:        
+    for out_seq_length in out_seq_lengths:
         print(f"Generating with out_seq_len {out_seq_length}...")
-        
+
         times[out_seq_length] = []
         for prompt in [prompt]:
             t0 = time.perf_counter()
@@ -186,26 +187,37 @@ def main():
                 for j in range(micro_batch_size):
                     if is_finished[j]:
                         continue
-                    if generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id or len(
-                            generated_tokens[j]) >= out_seq_length:
+                    if (
+                        generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id
+                        or len(generated_tokens[j]) >= out_seq_length
+                    ):
                         is_finished[j] = True
                         generated_tokens_ = generated_tokens[j].cpu().numpy().tolist()
-                        generated_code = tokenizer.decode_code(generated_tokens_[n_token_prompt:])
+                        generated_code = tokenizer.decode_code(
+                            generated_tokens_[n_token_prompt:]
+                        )
                         generated_code = "".join(generated_code)
                         t1 = time.perf_counter()
-                        print("Total generation time:", t1 - t0, "# Tokens:", len(generated_tokens_) - n_token_prompt)
-                        print(f"{(t1 - t0) / (len(generated_tokens_) - n_token_prompt)}s/token")
+                        print(
+                            "Total generation time:",
+                            t1 - t0,
+                            "# Tokens:",
+                            len(generated_tokens_) - n_token_prompt,
+                        )
+                        print(
+                            f"{(t1 - t0) / (len(generated_tokens_) - n_token_prompt)}s/token"
+                        )
                         times[out_seq_length].append(t1 - t0)
                         print("================================= Generated code:")
                         print(generated_code)
-                        
+
                     if all(is_finished):
                         break
-                    
+
     print(times)
     for out_seq_length in times.keys():
         print(out_seq_length, np.mean(times[out_seq_length]))
-        
+
     print("Generation finished.")
 
 

@@ -33,7 +33,12 @@ def gather_output(
         output_list = glob.glob(os.path.join(output_dir, output_prefix + "*"))
 
     for output_file in output_list:
-        if "rank" in output_file or "_unfinished" in output_file or "all" in output_file or "_result" in output_file:
+        if (
+            "rank" in output_file
+            or "_unfinished" in output_file
+            or "all" in output_file
+            or "_result" in output_file
+        ):
             continue
         if "_finished" not in output_file:
             continue

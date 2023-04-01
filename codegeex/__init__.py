@@ -13,9 +13,9 @@ def get_model(
 
 
 def generate(
-    model, 
-    tokenizer: CodeGeeXTokenizer, 
-    prompt: str, 
+    model,
+    tokenizer: CodeGeeXTokenizer,
+    prompt: str,
     out_seq_length: int,
     seq_length: int = 2048,
     top_k: int = 0,
@@ -32,7 +32,7 @@ def generate(
     if verbose:
         print(f"Current prompt:\n{prompt}")
         print("N_token_prompt:", n_token_prompt)
-    
+
     generated_codes = []
     if backend == "megatron":
         token_stream = get_token_stream(
@@ -53,16 +53,21 @@ def generate(
             for j in range(micro_batch_size):
                 if is_finished[j]:
                     continue
-                
-                if generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id or len(generated_tokens[j]) >= out_seq_length:
+
+                if (
+                    generated_tokens[j].cpu().numpy()[-1] == tokenizer.eos_token_id
+                    or len(generated_tokens[j]) >= out_seq_length
+                ):
                     is_finished[j] = True
                     generated_tokens_ = generated_tokens[j].cpu().numpy().tolist()
-                    generated_code = tokenizer.decode_code(generated_tokens_[n_token_prompt:])
+                    generated_code = tokenizer.decode_code(
+                        generated_tokens_[n_token_prompt:]
+                    )
                     generated_code = "".join(generated_code)
                     generated_codes.append(generated_code)
                     if verbose:
                         print(f"\nGenerated code {i}:\n{generated_code}")
-                    
+
                 if all(is_finished):
                     break
 

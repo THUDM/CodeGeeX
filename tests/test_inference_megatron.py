@@ -25,10 +25,9 @@ def set_random_seed(seed):
 
 def model_provider(pre_process=True, post_process=True):
     """Build the model."""
-    
+
     print_rank_0("Building CodeGeeX model ...")
-    model = CodeGeeXModel(num_tokentypes=0,
-                          parallel_output=False)
+    model = CodeGeeXModel(num_tokentypes=0, parallel_output=False)
 
     return model
 
@@ -71,7 +70,7 @@ def add_code_generation_args(parser):
         "--recompute",
         action="store_true",
         help="During generation recompute all attention "
-             "instead of using previously computed keys/values.",
+        "instead of using previously computed keys/values.",
     )
     group.add_argument(
         "--ws-encoding-start-id",
@@ -119,11 +118,11 @@ def add_code_generation_args(parser):
         action="store_true",
     )
     group.add_argument(
-        '--bad-ids',
+        "--bad-ids",
         nargs="*",
         type=int,
         default=None,
-        help='Identify the type of programming language to generate',
+        help="Identify the type of programming language to generate",
     )
     group.add_argument(
         "--quantize",
@@ -137,9 +136,9 @@ def main():
     initialize_megatron(
         extra_args_provider=add_code_generation_args,
         args_defaults={
-            'no_load_rng': True,
-            'no_load_optim': True,
-        }
+            "no_load_rng": True,
+            "no_load_optim": True,
+        },
     )
 
     args = get_args()
@@ -153,9 +152,9 @@ def main():
     model = get_model(model_provider)
     if args.load is not None:
         _ = load_checkpoint(model, None, None)
-    
+
     assert len(model) == 1, "Above condition should have caught this"
-    
+
     model = model[0]
     model.eval()
     if args.fp16 and args.ln_fp16:
@@ -166,13 +165,13 @@ def main():
     with open(args.prompt_file, "r") as f:
         prompt = f.readlines()
         prompt = "".join(prompt)
-    
+
     times = {}
     out_seq_lengths = [args.out_seq_length]
     micro_batch_size = args.micro_batch_size
-    for out_seq_length in out_seq_lengths:        
+    for out_seq_length in out_seq_lengths:
         print_rank_0(f"Generating with out_seq_len {out_seq_length}...")
-        
+
         times[out_seq_length] = []
         for prompt in [prompt] * args.n_generation:
             t0 = time.perf_counter()
@@ -196,27 +195,38 @@ def main():
                 for j in range(micro_batch_size):
                     if is_finished[j]:
                         continue
-                    if generated_tokens[j].cpu().numpy()[-1] == tokenizer.eod or len(
-                            generated_tokens[j]) >= out_seq_length:
+                    if (
+                        generated_tokens[j].cpu().numpy()[-1] == tokenizer.eod
+                        or len(generated_tokens[j]) >= out_seq_length
+                    ):
                         is_finished[j] = True
                         generated_tokens_ = generated_tokens[j].cpu().numpy().tolist()
-                        generated_code = tokenizer.detokenize(generated_tokens_[n_token_prompt:])
+                        generated_code = tokenizer.detokenize(
+                            generated_tokens_[n_token_prompt:]
+                        )
                         t1 = time.perf_counter()
-                        print_rank_0(f"Total generation time: {t1 - t0}, # Tokens: {len(generated_tokens_) - n_token_prompt}")
-                        print_rank_0(f"{(t1 - t0) / (len(generated_tokens_) - n_token_prompt)}s/token")
+                        print_rank_0(
+                            f"Total generation time: {t1 - t0}, # Tokens: {len(generated_tokens_) - n_token_prompt}"
+                        )
+                        print_rank_0(
+                            f"{(t1 - t0) / (len(generated_tokens_) - n_token_prompt)}s/token"
+                        )
                         times[out_seq_length].append(t1 - t0)
-                        print_rank_0("================================= Generated code:")
+                        print_rank_0(
+                            "================================= Generated code:"
+                        )
                         print_rank_0(generated_code)
                         t0 = time.perf_counter()
-                    
+
                     if all(is_finished):
                         break
 
     print_rank_0(times)
     for out_seq_length in times.keys():
         print_rank_0(f"{out_seq_length}, {np.mean(times[out_seq_length])}")
-        
+
     print_rank_0("Generation finished.")
+
 
 if __name__ == "__main__":
     main()
