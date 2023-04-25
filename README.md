@@ -73,6 +73,12 @@ git clone git@github.com:THUDM/CodeGeeX.git
 cd CodeGeeX
 pip install -e .
 ```
+Or use [CodeGeeX docker](https://hub.docker.com/r/codegeex/codegeex) to quickly set up the environment (with [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker) installed):
+```bash
+docker pull codegeex/codegeex:latest
+# To enable GPU support, clarify device ids with --device
+docker run --gpus '"device=0,1"' -it --ipc=host --name=codegeex codegeex/codegeex
+```
 
 ### Model Weights
 
