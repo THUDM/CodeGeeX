@@ -1,17 +1,15 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">Download Model</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">Paper</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://codegeex.cn/download/request" target="_blank">Download Model</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">Paper</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1s118ffrp-mpKKhQD0tKBmzNZVCyEZLw" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">WeChat</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1s118ffrp-mpKKhQD0tKBmzNZVCyEZLw" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="resources/zh/wechat.md"target="_blank">WeChat</a>
 </p>
 
-<div align="center">
 
-  <a href="">[![Cloud Studio Template](https://cs-res.codehub.cn/common/assets/icon-badge.svg)](https://cloudstudio.net/templates/h0kvkZvoO0U)</a>
 
-</div>
+🌟 [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) 已推出，更强，更快，更轻量。| [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) has been released, more powerful, faster, and lightweight.
 
 - [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
   - [News](#news)
@@ -44,13 +42,17 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
 
 ## News
 
+* 🌟 **2023-07-24**: [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) has been released, more powerful, faster, and lightweight. Support 100+ languages and many new features.
+
+* **2023-5-16**: CodeGeeX paper has been accepted by [KDD 2023, Long Beach](https://kdd.org/kdd2023/) and will be represented during the conference.
+
 * **2023-03-30**: CodeGeeX paper is now available at [arxiv](https://arxiv.org/abs/2303.17568).
 
 * **2023-02-14**: CodeGeeX now supports [Cloud Studio](https://cloudstudio.net/), a fantastic web IDE from Tencent. Click on the badge on top of this page to quickly launch an environment to test CodeGeeX.
 
 * **2023-02-13**: Thanks a lot to [OneFlow](https://github.com/Oneflow-Inc/oneflow) team for adding oneflow backend for CodeGeeX's inference (Even faster than FasterTransformer under FP16!). Check more details [here](https://github.com/THUDM/CodeGeeX/pull/65).
 
-* 🌟 **2023-02**: We are hosting [CodeGeeX "Coding With AI" Hackathon](https://dorahacks.io/hackathon/codegeex/), design cool applications based on CodeGeeX and win prizes (RTX 4090, DJI drone, etc)!
+* **2023-02**: We are hosting [CodeGeeX "Coding With AI" Hackathon](https://dorahacks.io/hackathon/codegeex/), design cool applications based on CodeGeeX and win prizes (RTX 4090, DJI drone, etc)!
 
 * **2022-12-31**: We release the FasterTransformer version of CodeGeeX in [codegeex-fastertransformer](https://github.com/CodeGeeX/codegeex-fastertransformer). The INT8 accelerated version reaches an a verage speed of <15ms/token. Happy new year to everyone!
 

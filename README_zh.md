@@ -4,14 +4,10 @@
     🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">论文</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> 插件 | 👋 欢迎加入 <a href="https://wj.qq.com/s2/11274205/a15b/"target="_blank">微信开发者交流群</a> 
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> 插件 | 👋 欢迎加入 <a href="resources/zh/wechat.md"target="_blank">微信开发者交流群</a> 
 </p>
 
-<div align="center">
-
-  <a href="">[![Cloud Studio Template](https://cs-res.codehub.cn/common/assets/icon-badge.svg)](https://cloudstudio.net/templates/h0kvkZvoO0U)</a>
-
-</div>
+🌟 [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) 已推出，更强，更快，更轻量。
 
 - [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型)
   - [新闻](#新闻)
@@ -43,13 +39,17 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 
 ## 新闻
 
-* **2023-03-30**: CodeGeeX 已论文发表在[arxiv](https://arxiv.org/abs/2303.17568)。
+* 🌟 **2023-07-24**: [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) 已推出，更强，更快，更轻量。支持超过100种语言，并具有多种新特性。
+
+* **2023-5-16**: CodeGeeX 论文已被 [KDD 2023, Long Beach](https://kdd.org/kdd2023/) 接收，并将在会上做相关报告。
+
+* **2023-03-30**: CodeGeeX 论文已发表在[arxiv](https://arxiv.org/abs/2303.17568)。
 
 * **2023-02-14**: CodeGeeX 现已支持 [Cloud Studio](https://cloudstudio.net/), 一款腾讯推出、十分好用的在线编辑器。单击此页面顶部的徽章可快速启动环境测试 CodeGeeX。
 
 * **2023-02-13**: 感谢 [OneFlow](https://github.com/Oneflow-Inc/oneflow) 加入了oneflow版推理支持，在FP16下比FasterTransformer还要快！更多优化细节请点击[这里](https://github.com/THUDM/CodeGeeX/pull/65).
 
-* 🌟 **2023-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
+* **2023-02**: [CodeGeeX "Coding With AI"黑客松](https://dorahacks.io/hackathon/codegeex/)正在进行中，为CodeGeeX设计应用并赢取奖品（RTX 4090、DJI无人机等）！
 
 * **2022-12-31**: 我们在 [codegeex-fastertransformer](https://github.com/CodeGeeX/codegeex-fastertransformer) 中发布了 CodeGeeX 的 FasterTransformer 版本。INT8加速版本达到 <15ms/token 的平均速度。祝大家新年快乐！
 
