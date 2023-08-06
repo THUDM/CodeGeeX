@@ -10,7 +10,7 @@ from collections import defaultdict
 from codegeex.benchmark.metric import estimate_pass_at_k
 
 error_types = {
-    "python"    : [
+    "python": [
         "accepted",
         "assertion error",
         "undefined error",
@@ -19,7 +19,7 @@ error_types = {
         "timeout error",
         "type error",
     ],
-    "java"      : [
+    "java": [
         "accepted",
         "compilation error",
         "assertion error",
@@ -36,7 +36,7 @@ error_types = {
         "arithmetic error",
         "others",
     ],
-    "cpp"       : [
+    "cpp": [
         "accepted",
         "compilation error",
         "assertion error",
@@ -57,7 +57,7 @@ error_types = {
         "range error",
         "type error",
     ],
-    "go"        : [
+    "go": [
         "accepted",
         "assertion error",
         "undefined error",
@@ -71,10 +71,10 @@ error_types = {
 
 
 def inspect_result(
-        input_dir: str = None,
-        input_file: str = None,
-        output_dir: str = None,
-        pass_at_k_outpath: str = None,
+    input_dir: str = None,
+    input_file: str = None,
+    output_dir: str = None,
+    pass_at_k_outpath: str = None,
 ):
     if input_dir is not None:
         input_files = glob.glob(input_dir + "/*_results.jsonl")
@@ -122,7 +122,11 @@ def inspect_result(
                     if language_type == "python":
                         if "assertionerror" in error.lower():
                             result_stats[task_id]["assertion error"] += 1
-                        elif "syntax" in error.lower() or "indent" in error.lower() or "literal" in error.lower():
+                        elif (
+                            "syntax" in error.lower()
+                            or "indent" in error.lower()
+                            or "literal" in error.lower()
+                        ):
                             result_stats[task_id]["syntax error"] += 1
                         elif "not defined" in error.lower():
                             result_stats[task_id]["undefined error"] += 1
@@ -169,29 +173,32 @@ def inspect_result(
                         elif "int main(): assertion" in error.lower():
                             result_stats[task_id]["assertion error"] += 1
                         elif "out_of_range" in error.lower():
-                            result_stats[task_id]['range error'] += 1
+                            result_stats[task_id]["range error"] += 1
                         elif "corrupted top size" in error.lower():
-                            result_stats[task_id]['range error'] += 1
+                            result_stats[task_id]["range error"] += 1
                         elif "length_error" in error.lower():
-                            result_stats[task_id]['range error'] += 1
+                            result_stats[task_id]["range error"] += 1
                         elif "invalid_argument" in error.lower():
-                            result_stats[task_id]['invalid argument'] += 1
+                            result_stats[task_id]["invalid argument"] += 1
                         elif "invalid pointer" in error.lower():
-                            result_stats[task_id]['pointer error'] += 1
+                            result_stats[task_id]["pointer error"] += 1
                         elif "double free" in error.lower():
-                            result_stats[task_id]['pointer error'] += 1
+                            result_stats[task_id]["pointer error"] += 1
                         elif "free()" in error.lower():
-                            result_stats[task_id]['pointer error'] += 1
+                            result_stats[task_id]["pointer error"] += 1
                         elif "logic_error" in error.lower():
-                            result_stats[task_id]['pointer error'] += 1
+                            result_stats[task_id]["pointer error"] += 1
                         elif "sysmalloc: assertion" in error.lower():
-                            result_stats[task_id]['pointer error'] += 1
+                            result_stats[task_id]["pointer error"] += 1
                         elif "stack smashing" in error.lower():
-                            result_stats[task_id]['out of memory'] += 1
+                            result_stats[task_id]["out of memory"] += 1
                         elif "bad_alloc" in error.lower():
-                            result_stats[task_id]['out of memory'] += 1
-                        elif "terminate called after throwing an instance of" in error.lower():
-                            result_stats[task_id]['package error'] += 1
+                            result_stats[task_id]["out of memory"] += 1
+                        elif (
+                            "terminate called after throwing an instance of"
+                            in error.lower()
+                        ):
+                            result_stats[task_id]["package error"] += 1
                         else:
                             result_stats[task_id]["others"] += 1
 
@@ -227,9 +234,9 @@ def inspect_result(
                         elif "timed out" in error:
                             result_stats[task_id]["timeout error"] += 1
                         elif "not used" in error:
-                            result_stats[task_id]['notused error'] += 1
+                            result_stats[task_id]["notused error"] += 1
                         elif "type" in error:
-                            result_stats[task_id]['type error'] += 1
+                            result_stats[task_id]["type error"] += 1
                     else:
                         incompleted = True
                         break
@@ -252,8 +259,11 @@ def inspect_result(
                 correct = np.array(correct)
 
                 ks = [1, 10, 100, 1000]
-                pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
-                            for k in ks if (total >= k).all()}
+                pass_at_k = {
+                    f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
+                    for k in ks
+                    if (total >= k).all()
+                }
 
                 print(pass_at_k)
                 pass_at_k["file"] = input_file
@@ -269,7 +279,7 @@ def inspect_result(
             except Exception as e:
                 print(e)
                 print(f"Data incompleted, aborted. {input_file}")
-                
+
     if pass_at_k_outpath is not None:
         jsonl_path = os.path.join(output_dir, pass_at_k_outpath)
         with open(jsonl_path, "w") as f_out:

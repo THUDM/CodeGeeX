@@ -67,7 +67,7 @@ class DistributedDataParallelBase(MegatronModule, ABC):
         return self.module.state_dict(destination, prefix, keep_vars)
 
     def state_dict_for_save_checkpoint(
-            self, destination=None, prefix="", keep_vars=False
+        self, destination=None, prefix="", keep_vars=False
     ):
         return self.module.state_dict_for_save_checkpoint(
             destination, prefix, keep_vars
@@ -94,7 +94,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
     """
 
     def __init__(
-            self, module, accumulate_allreduce_grads_in_fp32, use_contiguous_buffers
+        self, module, accumulate_allreduce_grads_in_fp32, use_contiguous_buffers
     ):
 
         super(DistributedDataParallel, self).__init__(module)
@@ -128,7 +128,7 @@ class DistributedDataParallel(DistributedDataParallelBase):
                 if param.requires_grad:
                     dtype = _get_buffer_type(param)
                     type_num_elements[dtype] = (
-                            type_num_elements.get(dtype, 0) + param.data.nelement()
+                        type_num_elements.get(dtype, 0) + param.data.nelement()
                     )
 
             # Allocate the buffer.
@@ -210,6 +210,6 @@ class DistributedDataParallel(DistributedDataParallelBase):
                     coalesced, group=mpu.get_data_parallel_group()
                 )
                 for buf, synced in zip(
-                        grads, _unflatten_dense_tensors(coalesced, grads)
+                    grads, _unflatten_dense_tensors(coalesced, grads)
                 ):
                     buf.copy_(synced)

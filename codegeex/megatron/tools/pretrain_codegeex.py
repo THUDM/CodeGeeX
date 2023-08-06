@@ -9,9 +9,9 @@ import deepspeed
 from deepspeed.runtime.utils import see_memory_usage
 from functools import partial
 
-from codegeex.megatron import get_args, print_rank_0, get_timers,get_tokenizer, mpu
+from codegeex.megatron import get_args, print_rank_0, get_timers, get_tokenizer, mpu
 from codegeex.megatron.data.prompt_dataset import build_train_valid_test_datasets
-from codegeex.megatron.model import CodeGeeXModel  #, CodeGeeXModelPipe
+from codegeex.megatron.model import CodeGeeXModel  # , CodeGeeXModelPipe
 from codegeex.megatron.training import pretrain
 from codegeex.megatron.utils import get_ltor_masks_and_position_ids
 from codegeex.megatron.utils import average_losses_across_data_parallel_group
@@ -62,7 +62,7 @@ def model_provider(pre_process=True, post_process=True):
                 num_tokentypes=0,
                 parallel_output=True,
             )
-            
+
             if args.load_state is not None:
                 timers = get_timers()
                 print_rank_0("Loading warmstarting model states ...")
@@ -70,7 +70,8 @@ def model_provider(pre_process=True, post_process=True):
                 mp_rank = mpu.get_tensor_model_parallel_rank()
                 if os.path.isdir(args.load_state):
                     model_path = os.path.join(
-                        args.load_state, "mp_rank_{:02d}_model_states.pt".format(mp_rank)
+                        args.load_state,
+                        "mp_rank_{:02d}_model_states.pt".format(mp_rank),
                     )
                 else:
                     model_path = args.load_state
@@ -82,7 +83,7 @@ def model_provider(pre_process=True, post_process=True):
                 timers("load-model-states").stop()
                 timers.log(["load-model-states"])
     see_memory_usage(f"After Building Model", force=True)
-    
+
     return model
 
 

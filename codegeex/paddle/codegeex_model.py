@@ -5,7 +5,11 @@ import paddle.nn.functional as F
 
 def fast_gelu(x):
     """Mindspore's fast gelu implementation."""
-    return x / (1 + paddle.exp(-1.702 * paddle.abs(x))) * paddle.exp(0.851 * (x - paddle.abs(x)))
+    return (
+        x
+        / (1 + paddle.exp(-1.702 * paddle.abs(x)))
+        * paddle.exp(0.851 * (x - paddle.abs(x)))
+    )
 
 
 class MLP(paddle.nn.Layer):
@@ -18,7 +22,7 @@ class MLP(paddle.nn.Layer):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
     ):
         super(MLP, self).__init__()
@@ -45,7 +49,7 @@ class MLP(paddle.nn.Layer):
         output = self.dense_4h_to_h(intermediate_parallel)
 
         return output
-    
+
 
 class SelfAttention(paddle.nn.Layer):
     """self-attention layer abstract class.
@@ -55,9 +59,9 @@ class SelfAttention(paddle.nn.Layer):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
-        num_attention_heads, 
+        num_attention_heads,
         layer_number,
         fp16=True,
         attention_softmax_in_fp32=True,
@@ -70,8 +74,10 @@ class SelfAttention(paddle.nn.Layer):
         self.layer_number = max(1, layer_number)
 
         assert self.hidden_size % self.num_attention_heads == 0
-        self.hidden_size_per_attention_head = int(self.hidden_size // self.num_attention_heads)
-        
+        self.hidden_size_per_attention_head = int(
+            self.hidden_size // self.num_attention_heads
+        )
+
         self.query = paddle.nn.Linear(self.hidden_size, self.hidden_size)
         self.key = paddle.nn.Linear(self.hidden_size, self.hidden_size)
         self.value = paddle.nn.Linear(self.hidden_size, self.hidden_size)
@@ -100,19 +106,22 @@ class SelfAttention(paddle.nn.Layer):
         key_layer = self.key(hidden_states)
         value_layer = self.value(hidden_states)
 
-        new_query_layer_shape = query_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = query_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         query_layer = query_layer.reshape(new_query_layer_shape)
 
-        new_query_layer_shape = key_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = key_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         key_layer = key_layer.reshape(new_query_layer_shape)
 
-        new_query_layer_shape = value_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = value_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         value_layer = value_layer.reshape(new_query_layer_shape)
 
         # ==================================
@@ -121,10 +130,12 @@ class SelfAttention(paddle.nn.Layer):
 
         if layer_past is not None:
             past_key, past_value = layer_past
-            key_layer = paddle.concat((past_key.cast(key_layer.dtype),
-                                   key_layer), axis=0)
-            value_layer = paddle.concat((past_value.cast(value_layer.dtype),
-                                     value_layer), axis=0)
+            key_layer = paddle.concat(
+                (past_key.cast(key_layer.dtype), key_layer), axis=0
+            )
+            value_layer = paddle.concat(
+                (past_value.cast(value_layer.dtype), value_layer), axis=0
+            )
         if get_key_value:
             present = (key_layer, value_layer)
 
@@ -133,18 +144,29 @@ class SelfAttention(paddle.nn.Layer):
         # ===================================
 
         # [b, np, sq, sk]
-        output_size = (query_layer.shape[1],
-                       query_layer.shape[2],
-                       query_layer.shape[0],
-                       key_layer.shape[0])
+        output_size = (
+            query_layer.shape[1],
+            query_layer.shape[2],
+            query_layer.shape[0],
+            key_layer.shape[0],
+        )
 
         # [sq, b, np, hn] -> [sq, b * np, hn]
-        query_layer = query_layer.reshape([output_size[2], output_size[0] * output_size[1], -1])
-        key_layer = key_layer.reshape([output_size[3], output_size[0] * output_size[1], -1])
+        query_layer = query_layer.reshape(
+            [output_size[2], output_size[0] * output_size[1], -1]
+        )
+        key_layer = key_layer.reshape(
+            [output_size[3], output_size[0] * output_size[1], -1]
+        )
 
         # Raw attention scores. [b * np, sq, sk]
-        matmul_result = paddle.matmul(query_layer.transpose([1, 0, 2]),
-                                     key_layer.transpose([1, 0, 2]).transpose([0, 2, 1])) / self.norm_factor
+        matmul_result = (
+            paddle.matmul(
+                query_layer.transpose([1, 0, 2]),
+                key_layer.transpose([1, 0, 2]).transpose([0, 2, 1]),
+            )
+            / self.norm_factor
+        )
 
         # change view to [b, np, sq, sk]
         attention_scores = matmul_result.reshape(output_size)
@@ -157,14 +179,12 @@ class SelfAttention(paddle.nn.Layer):
             with paddle.no_grad():
                 if layer_past is not None:
                     attention_mask = attention_mask[
-                                     ...,
-                                     attention_scores.shape[3] - 1,
-                                     :attention_scores.shape[3]].unsqueeze(2)
+                        ..., attention_scores.shape[3] - 1, : attention_scores.shape[3]
+                    ].unsqueeze(2)
                 else:
                     attention_mask = attention_mask[
-                                     ...,
-                                     :attention_scores.shape[3],
-                                     :attention_scores.shape[3]]
+                        ..., : attention_scores.shape[3], : attention_scores.shape[3]
+                    ]
 
         if context_length is not None:
             attention_mask = paddle.clone(attention_mask)
@@ -174,7 +194,9 @@ class SelfAttention(paddle.nn.Layer):
         # attention_scores = attention_mask_func(attention_scores, attention_mask)
         attention_scores = attention_scores - attention_mask * 10000.0
         if self.attention_softmax_in_fp32:
-            attention_probs = self.softmax(attention_scores.cast("float32")).cast("float16")
+            attention_probs = self.softmax(attention_scores.cast("float32")).cast(
+                "float16"
+            )
         else:
             attention_probs = self.softmax(attention_scores)
 
@@ -186,19 +208,26 @@ class SelfAttention(paddle.nn.Layer):
         # [sq, b, np, hn] --> [b, np, sq, hn]
 
         # context layer shape: [b, np, sq, hn]
-        output_size = (value_layer.shape[1],
-                       value_layer.shape[2],
-                       query_layer.shape[0],
-                       value_layer.shape[3])
+        output_size = (
+            value_layer.shape[1],
+            value_layer.shape[2],
+            query_layer.shape[0],
+            value_layer.shape[3],
+        )
 
-        # change view [sq, b * np, hn] 
-        value_layer = value_layer.reshape([value_layer.shape[0], output_size[0] * output_size[1], -1])
+        # change view [sq, b * np, hn]
+        value_layer = value_layer.reshape(
+            [value_layer.shape[0], output_size[0] * output_size[1], -1]
+        )
 
         # change view [b * np, sq, sk]
-        attention_probs = attention_probs.reshape([output_size[0] * output_size[1],
-                                               output_size[2], -1])
+        attention_probs = attention_probs.reshape(
+            [output_size[0] * output_size[1], output_size[2], -1]
+        )
 
-        context_layer = paddle.bmm(attention_probs, value_layer.unsqueeze(0).transpose([0, 2, 1, 3]).squeeze(0))
+        context_layer = paddle.bmm(
+            attention_probs, value_layer.unsqueeze(0).transpose([0, 2, 1, 3]).squeeze(0)
+        )
 
         # change view [b, np, sq, hn]
         context_layer = context_layer.reshape(output_size)
@@ -207,8 +236,9 @@ class SelfAttention(paddle.nn.Layer):
         context_layer = context_layer.transpose([2, 0, 1, 3])
 
         # # [sq, b, np, hn] --> [sq, b, hp]
-        new_context_layer_shape = context_layer.shape[:-2] + \
-                                  [self.hidden_size,]
+        new_context_layer_shape = context_layer.shape[:-2] + [
+            self.hidden_size,
+        ]
         context_layer = context_layer.reshape(new_context_layer_shape)
 
         # =================
@@ -246,7 +276,9 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         self.layer_number = max(1, layer_number)
 
         assert self.hidden_size % self.num_attention_heads == 0
-        self.hidden_size_per_attention_head = int(self.hidden_size // self.num_attention_heads)
+        self.hidden_size_per_attention_head = int(
+            self.hidden_size // self.num_attention_heads
+        )
 
         self.query = paddle.nn.Linear(self.hidden_size, self.hidden_size)
         self.key = paddle.nn.Linear(self.hidden_size, self.hidden_size)
@@ -256,7 +288,7 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         self.softmax = paddle.nn.Softmax(axis=-1)
 
         self.dense = paddle.nn.Linear(self.hidden_size, self.hidden_size)
-        
+
     def forward(
         self,
         hidden_states,
@@ -273,19 +305,22 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         key_layer = self.key(hidden_states)
         value_layer = self.value(hidden_states)
 
-        new_query_layer_shape = query_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = query_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         query_layer = query_layer.reshape(new_query_layer_shape)
 
-        new_query_layer_shape = key_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = key_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         key_layer = key_layer.reshape(new_query_layer_shape)
 
-        new_query_layer_shape = value_layer.shape[:-1] + \
-                                [self.num_attention_heads,
-                                 self.hidden_size_per_attention_head]
+        new_query_layer_shape = value_layer.shape[:-1] + [
+            self.num_attention_heads,
+            self.hidden_size_per_attention_head,
+        ]
         value_layer = value_layer.reshape(new_query_layer_shape)
 
         # ==================================
@@ -294,10 +329,12 @@ class TopQuerySelfAttention(paddle.nn.Layer):
 
         if layer_past is not None:
             past_key, past_value = layer_past
-            key_layer = paddle.concat((past_key.cast(key_layer.dtype),
-                                   key_layer), axis=0)
-            value_layer = paddle.concat((past_value.cast(value_layer.dtype),
-                                     value_layer), axis=0)
+            key_layer = paddle.concat(
+                (past_key.cast(key_layer.dtype), key_layer), axis=0
+            )
+            value_layer = paddle.concat(
+                (past_value.cast(value_layer.dtype), value_layer), axis=0
+            )
         if get_key_value:
             present = (key_layer, value_layer)
 
@@ -306,18 +343,29 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         # ===================================
 
         # [b, np, sq, sk]
-        output_size = (query_layer.shape[1],
-                       query_layer.shape[2],
-                       query_layer.shape[0],
-                       key_layer.shape[0])
+        output_size = (
+            query_layer.shape[1],
+            query_layer.shape[2],
+            query_layer.shape[0],
+            key_layer.shape[0],
+        )
 
         # [s, b, np, hn] -> [s, b * np, hn]
-        query_layer = query_layer.reshape([output_size[2], output_size[0] * output_size[1], -1])
-        key_layer = key_layer.reshape([output_size[3], output_size[0] * output_size[1], -1])
+        query_layer = query_layer.reshape(
+            [output_size[2], output_size[0] * output_size[1], -1]
+        )
+        key_layer = key_layer.reshape(
+            [output_size[3], output_size[0] * output_size[1], -1]
+        )
 
         # Raw attention scores. [b * np, sq, sk]
-        matmul_result = paddle.matmul(query_layer.transpose([1, 0, 2]),
-                                     key_layer.transpose([1, 0, 2]).transpose([0, 2, 1])) / self.norm_factor
+        matmul_result = (
+            paddle.matmul(
+                query_layer.transpose([1, 0, 2]),
+                key_layer.transpose([1, 0, 2]).transpose([0, 2, 1]),
+            )
+            / self.norm_factor
+        )
 
         # change view to [b, np, s, s]
         attention_scores = matmul_result.reshape(output_size)
@@ -330,14 +378,12 @@ class TopQuerySelfAttention(paddle.nn.Layer):
             with paddle.no_grad():
                 if layer_past is not None:
                     attention_mask = attention_mask[
-                                     ...,
-                                     attention_scores.shape[3] - 1,
-                                     :attention_scores.shape[3]].unsqueeze(2)
+                        ..., attention_scores.shape[3] - 1, : attention_scores.shape[3]
+                    ].unsqueeze(2)
                 else:
                     attention_mask = attention_mask[
-                                     ...,
-                                     :attention_scores.shape[3],
-                                     :attention_scores.shape[3]]
+                        ..., : attention_scores.shape[3], : attention_scores.shape[3]
+                    ]
 
         if context_length is not None:
             attention_mask = paddle.clone(attention_mask)
@@ -347,10 +393,12 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         # attention_scores = attention_mask_func(attention_scores, attention_mask)
         attention_scores = attention_scores - attention_mask * 10000.0
         if self.attention_softmax_in_fp32:
-            attention_probs = self.softmax(attention_scores.cast("float32")).cast("float16")
+            attention_probs = self.softmax(attention_scores.cast("float32")).cast(
+                "float16"
+            )
         else:
             attention_probs = self.softmax(attention_scores)
-            
+
         # =========================
         # Context layer. [sq, b, hp]
         # =========================
@@ -359,20 +407,27 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         # [sq, b, np, hn] --> [b, np, sq, hn]
 
         # context layer shape: [b, np, sq, hn]
-        output_size = (value_layer.shape[1],
-                       value_layer.shape[2],
-                       query_layer.shape[0],
-                       value_layer.shape[3])
+        output_size = (
+            value_layer.shape[1],
+            value_layer.shape[2],
+            query_layer.shape[0],
+            value_layer.shape[3],
+        )
 
         # change view [sq, b * np, hn]
-        value_layer = value_layer.reshape([value_layer.shape[0], output_size[0] * output_size[1], -1])
+        value_layer = value_layer.reshape(
+            [value_layer.shape[0], output_size[0] * output_size[1], -1]
+        )
 
         # change view [b * np, sq, sk]
-        attention_probs = attention_probs.reshape([output_size[0] * output_size[1],
-                                               output_size[2], -1])
+        attention_probs = attention_probs.reshape(
+            [output_size[0] * output_size[1], output_size[2], -1]
+        )
 
         # matmul: [b * np, sq, hn]
-        context_layer = paddle.bmm(attention_probs, value_layer.unsqueeze(0).transpose([0, 2, 1, 3]).squeeze(0))
+        context_layer = paddle.bmm(
+            attention_probs, value_layer.unsqueeze(0).transpose([0, 2, 1, 3]).squeeze(0)
+        )
 
         # change view [b, np, sq, hn]
         context_layer = context_layer.reshape(output_size)
@@ -381,8 +436,9 @@ class TopQuerySelfAttention(paddle.nn.Layer):
         context_layer = context_layer.transpose([2, 0, 1, 3])
 
         # [sq, b, np, hn] --> [sq, b, hp]
-        new_context_layer_shape = context_layer.shape[:-2] + \
-                                  [self.hidden_size,]
+        new_context_layer_shape = context_layer.shape[:-2] + [
+            self.hidden_size,
+        ]
         context_layer = context_layer.reshape(new_context_layer_shape)
 
         # =================
@@ -405,10 +461,10 @@ class TransformerLayer(paddle.nn.Layer):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
         num_attention_heads,
-        layer_number, 
+        layer_number,
         layernorm_epsilon=1e-5,
         fp16=True,
         attention_softmax_in_fp32=True,
@@ -419,19 +475,23 @@ class TransformerLayer(paddle.nn.Layer):
         self.layer_number = layer_number
 
         # Layernorm on the input data.
-        self.input_layernorm = paddle.nn.LayerNorm(hidden_size,
-                                                  epsilon=self.layernorm_epsilon)
+        self.input_layernorm = paddle.nn.LayerNorm(
+            hidden_size, epsilon=self.layernorm_epsilon
+        )
 
         # Self attention.
-        self.attention = SelfAttention(hidden_size,
-                                       num_attention_heads, 
-                                       layer_number,
-                                       fp16,
-                                       attention_softmax_in_fp32)
+        self.attention = SelfAttention(
+            hidden_size,
+            num_attention_heads,
+            layer_number,
+            fp16,
+            attention_softmax_in_fp32,
+        )
 
         # Layernorm on the input data.
-        self.post_attention_layernorm = paddle.nn.LayerNorm(self.hidden_size,
-                                                           epsilon=self.layernorm_epsilon)
+        self.post_attention_layernorm = paddle.nn.LayerNorm(
+            self.hidden_size, epsilon=self.layernorm_epsilon
+        )
         self.mlp = MLP(self.hidden_size)
 
     def forward(
@@ -449,12 +509,14 @@ class TransformerLayer(paddle.nn.Layer):
         layernorm_output = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attention_output = self.attention(layernorm_output,
-                                          attention_mask,
-                                          layer_past=layer_past,
-                                          get_key_value=get_key_value,
-                                          prompt_length=prompt_length,
-                                          context_length=context_length)
+        attention_output = self.attention(
+            layernorm_output,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             attention_output, presents = attention_output
@@ -462,7 +524,7 @@ class TransformerLayer(paddle.nn.Layer):
         # Residual connection.
         residual = hidden_states
         layernorm_input = attention_output + residual
-        
+
         # Use FP32 for Layernorm
         # layernorm_output = self.post_attention_layernorm(layernorm_input.cast("float32")).cast("float16")
         layernorm_output = self.post_attention_layernorm(layernorm_input)
@@ -483,7 +545,7 @@ class TopQueryLayer(paddle.nn.Layer):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
         num_attention_heads,
         layer_number,
@@ -496,16 +558,18 @@ class TopQueryLayer(paddle.nn.Layer):
         self.layer_number = layer_number
 
         # Use FP32 for Layernorm
-        self.input_layernorm = paddle.nn.LayerNorm(self.hidden_size,
-                                                  epsilon=self.layernorm_epsilon)
+        self.input_layernorm = paddle.nn.LayerNorm(
+            self.hidden_size, epsilon=self.layernorm_epsilon
+        )
 
         # Self attention.
-        self.attention = TopQuerySelfAttention(self.hidden_size,
-                                               self.num_attention_heads,
-                                               self.layer_number)
+        self.attention = TopQuerySelfAttention(
+            self.hidden_size, self.num_attention_heads, self.layer_number
+        )
         # Layernorm on the input data.
-        self.post_attention_layernorm = paddle.nn.LayerNorm(self.hidden_size,
-                                                           epsilon=self.layernorm_epsilon)
+        self.post_attention_layernorm = paddle.nn.LayerNorm(
+            self.hidden_size, epsilon=self.layernorm_epsilon
+        )
 
         # MLP
         self.mlp = MLP(self.hidden_size)
@@ -528,13 +592,15 @@ class TopQueryLayer(paddle.nn.Layer):
         layernorm_output = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attention_output = self.attention(layernorm_output,
-                                          query_hidden_state,
-                                          attention_mask,
-                                          layer_past=layer_past,
-                                          get_key_value=get_key_value,
-                                          prompt_length=prompt_length,
-                                          context_length=context_length)
+        attention_output = self.attention(
+            layernorm_output,
+            query_hidden_state,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             attention_output, presents = attention_output
@@ -542,7 +608,7 @@ class TopQueryLayer(paddle.nn.Layer):
         # Residual connection.
         residual = hidden_states
         layernorm_input = attention_output + residual
-        
+
         # Use FP32 for Layernorm
         # layernorm_output = self.post_attention_layernorm(layernorm_input.cast("float32")).cast("float16")
         layernorm_output = self.post_attention_layernorm(layernorm_input)
@@ -584,22 +650,27 @@ class Transformer(paddle.nn.Layer):
 
         if self.num_unique_layers is None:
             self.num_unique_layers = self.num_layers
-        assert self.num_layers % self.num_unique_layers == 0, \
-            'number of layers should be divisible by number of unique layers'
-        
+        assert (
+            self.num_layers % self.num_unique_layers == 0
+        ), "number of layers should be divisible by number of unique layers"
+
         # Transformer layers.
         def build_layer(layer_number):
-            return TransformerLayer(self.hidden_size, self.num_attention_heads, layer_number)
+            return TransformerLayer(
+                self.hidden_size, self.num_attention_heads, layer_number
+            )
 
         self.layers = paddle.nn.LayerList(
-            [build_layer(i + 1) for i in range(self.num_unique_layers)])
+            [build_layer(i + 1) for i in range(self.num_unique_layers)]
+        )
 
-        self.topQueryLayer = TopQueryLayer(self.hidden_size,
-                                           self.num_attention_heads,
-                                           self.num_unique_layers)
+        self.topQueryLayer = TopQueryLayer(
+            self.hidden_size, self.num_attention_heads, self.num_unique_layers
+        )
 
-        self.final_layernorm = paddle.nn.LayerNorm(self.hidden_size,
-                                                  epsilon=self.layernorm_epsilon)
+        self.final_layernorm = paddle.nn.LayerNorm(
+            self.hidden_size, epsilon=self.layernorm_epsilon
+        )
 
     def _get_layer_index(self, layer_number):
         return layer_number % self.num_unique_layers
@@ -621,7 +692,6 @@ class Transformer(paddle.nn.Layer):
         hidden_states = hidden_states.transpose([1, 0, 2])
         query_hidden_state = query_hidden_state.transpose([1, 0, 2])
 
-    
         if get_key_value:
             presents = []
         for index in range(self.num_layers):
@@ -629,12 +699,14 @@ class Transformer(paddle.nn.Layer):
             past = None
             if layer_past is not None:
                 past = layer_past[index]
-            hidden_states = layer(hidden_states,
-                                  attention_mask,
-                                  layer_past=past,
-                                  get_key_value=get_key_value,
-                                  prompt_length=prompt_length,
-                                  context_length=context_length)
+            hidden_states = layer(
+                hidden_states,
+                attention_mask,
+                layer_past=past,
+                get_key_value=get_key_value,
+                prompt_length=prompt_length,
+                context_length=context_length,
+            )
             if get_key_value:
                 hidden_states, present = hidden_states
                 presents.append(present)
@@ -649,13 +721,15 @@ class Transformer(paddle.nn.Layer):
         past = None
         if layer_past is not None:
             past = layer_past[self.num_layers]
-        hidden_states = self.topQueryLayer(hidden_states_,
-                                           query_hidden_state,
-                                           attention_mask,
-                                           layer_past=past,
-                                           get_key_value=get_key_value,
-                                           prompt_length=prompt_length,
-                                           context_length=context_length)
+        hidden_states = self.topQueryLayer(
+            hidden_states_,
+            query_hidden_state,
+            attention_mask,
+            layer_past=past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             hidden_states, present = hidden_states
@@ -695,35 +769,39 @@ class Embedding(paddle.nn.Layer):
         self.hidden_size = hidden_size
         self.vocab_size = vocab_size
         self.max_sequence_length = max_sequence_length
-        
+
         # Word embeddings.
         self.word_embeddings = paddle.nn.Embedding(self.vocab_size, self.hidden_size)
-        self._word_embeddings_key = 'word_embeddings'
-        
+        self._word_embeddings_key = "word_embeddings"
+
         # Position embedding.
-        self.position_embeddings = paddle.nn.Embedding(self.max_sequence_length, self.hidden_size)
+        self.position_embeddings = paddle.nn.Embedding(
+            self.max_sequence_length, self.hidden_size
+        )
         self.position_embeddings = self.position_embeddings.to(dtype="float16")
-        self._position_embeddings_key = 'position_embeddings'
-        
+        self._position_embeddings_key = "position_embeddings"
+
     def forward(self, input_ids, position_ids):
         # Embeddings.
         words_embeddings = self.word_embeddings(input_ids)
         position_embeddings = self.position_embeddings(position_ids)
         embeddings = words_embeddings + position_embeddings
-        
+
         return embeddings
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._word_embeddings_key] \
-            = self.word_embeddings.state_dict(destination, prefix, keep_vars)
-        state_dict_[self._position_embeddings_key] \
-            = self.position_embeddings.state_dict(
-            destination, prefix, keep_vars)
-        
+        state_dict_[self._word_embeddings_key] = self.word_embeddings.state_dict(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._position_embeddings_key
+        ] = self.position_embeddings.state_dict(destination, prefix, keep_vars)
+
         return state_dict_
 
     def set_state_dict(self, state_dict, use_structured_name=True):
@@ -736,11 +814,12 @@ class Embedding(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'word_embeddings' in key:
-                    state_dict_[key.split('word_embeddings.')[1]] \
-                        = state_dict[key]
-        state_dict_["weight"] = state_dict_["weight"][:self.vocab_size]
-        self.word_embeddings.set_state_dict(state_dict_, use_structured_name=use_structured_name)
+                if "word_embeddings" in key:
+                    state_dict_[key.split("word_embeddings.")[1]] = state_dict[key]
+        state_dict_["weight"] = state_dict_["weight"][: self.vocab_size]
+        self.word_embeddings.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
 
         # Position embedding.
         if self._position_embeddings_key in state_dict:
@@ -749,11 +828,12 @@ class Embedding(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'position_embeddings' in key:
-                    state_dict_[key.split('position_embeddings.')[1]] \
-                        = state_dict[key]
-        self.position_embeddings.set_state_dict(state_dict_, use_structured_name=use_structured_name)
-        
+                if "position_embeddings" in key:
+                    state_dict_[key.split("position_embeddings.")[1]] = state_dict[key]
+        self.position_embeddings.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
+
 
 class QueryEmbedding(paddle.nn.Layer):
     """Language model embeddings.
@@ -778,24 +858,27 @@ class QueryEmbedding(paddle.nn.Layer):
         self.max_sequence_length = max_sequence_length
 
         # Top query position embedding (serial).
-        self.top_query_embeddings = paddle.nn.Embedding(self.max_sequence_length, self.hidden_size)
+        self.top_query_embeddings = paddle.nn.Embedding(
+            self.max_sequence_length, self.hidden_size
+        )
         self.top_query_embeddings = self.top_query_embeddings.to(dtype="float16")
-        self._top_query_embeddings_key = 'top_query_embeddings'
-        
+        self._top_query_embeddings_key = "top_query_embeddings"
+
     def forward(self, position_ids):
         # Embeddings.
         embeddings = self.top_query_embeddings(position_ids)
-        
+
         return embeddings
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._top_query_embeddings_key] \
-            = self.top_query_embeddings.state_dict(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._top_query_embeddings_key
+        ] = self.top_query_embeddings.state_dict(destination, prefix, keep_vars)
 
         return state_dict_
 
@@ -809,11 +892,12 @@ class QueryEmbedding(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'top_query_embeddings' in key:
-                    state_dict_[key.split('top_query_embeddings.')[1]] \
-                        = state_dict[key]
-        self.top_query_embeddings.set_state_dict(state_dict_, use_structured_name=use_structured_name)
-        
+                if "top_query_embeddings" in key:
+                    state_dict_[key.split("top_query_embeddings.")[1]] = state_dict[key]
+        self.top_query_embeddings.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
+
 
 class TransformerLanguageModel(paddle.nn.Layer):
     """Transformer language model.
@@ -847,32 +931,32 @@ class TransformerLanguageModel(paddle.nn.Layer):
         self.max_position_embeddings = max_position_embeddings
 
         # Embeddings
-        self.embedding = Embedding(self.hidden_size,
-                                   self.padded_vocab_size,
-                                   self.max_position_embeddings)
-        self._embedding_key = 'embedding'
+        self.embedding = Embedding(
+            self.hidden_size, self.padded_vocab_size, self.max_position_embeddings
+        )
+        self._embedding_key = "embedding"
 
         # Query embeddings
-        self.topQueryEmbedding = QueryEmbedding(self.hidden_size,
-                                                self.padded_vocab_size,
-                                                self.max_position_embeddings)
-        self._topQueryEmbedding_key = 'topQueryEmbedding'
+        self.topQueryEmbedding = QueryEmbedding(
+            self.hidden_size, self.padded_vocab_size, self.max_position_embeddings
+        )
+        self._topQueryEmbedding_key = "topQueryEmbedding"
 
         # Transformer
-        self.transformer = Transformer(self.hidden_size,
-                                       self.num_attention_heads,
-                                       self.num_layers)
-        self._transformer_key = 'transformer'
+        self.transformer = Transformer(
+            self.hidden_size, self.num_attention_heads, self.num_layers
+        )
+        self._transformer_key = "transformer"
 
     def forward(
-            self,
-            input_ids,
-            position_ids,
-            attention_mask,
-            layer_past=None,
-            get_key_value=False,
-            prompt_length=None,
-            context_length=None,
+        self,
+        input_ids,
+        position_ids,
+        attention_mask,
+        layer_past=None,
+        get_key_value=False,
+        prompt_length=None,
+        context_length=None,
     ):
 
         # Embeddings.
@@ -881,30 +965,39 @@ class TransformerLanguageModel(paddle.nn.Layer):
         queryEmbedding_out = self.topQueryEmbedding(query_position_ids)
 
         # Transformer.
-        transformer_output = self.transformer(embedding_output,
-                                              queryEmbedding_out,
-                                              attention_mask,
-                                              layer_past=layer_past,
-                                              get_key_value=get_key_value,
-                                              prompt_length=prompt_length,
-                                              context_length=context_length)
+        transformer_output = self.transformer(
+            embedding_output,
+            queryEmbedding_out,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         return transformer_output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._embedding_key] \
-            = self.embedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._topQueryEmbedding_key] \
-            = self.topQueryEmbedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._transformer_key] \
-            = self.transformer.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._embedding_key
+        ] = self.embedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._topQueryEmbedding_key
+        ] = self.topQueryEmbedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._transformer_key
+        ] = self.transformer.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
 
         return state_dict_
 
@@ -918,9 +1011,11 @@ class TransformerLanguageModel(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
-        self.embedding.set_state_dict(state_dict_, use_structured_name=use_structured_name)
+        self.embedding.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
 
         if self._topQueryEmbedding_key in state_dict:
             state_dict_ = state_dict[self._topQueryEmbedding_key]
@@ -928,9 +1023,11 @@ class TransformerLanguageModel(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
-        self.topQueryEmbedding.set_state_dict(state_dict_, use_structured_name=use_structured_name)
+        self.topQueryEmbedding.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
 
         # Transformer.
         if self._transformer_key in state_dict:
@@ -939,9 +1036,11 @@ class TransformerLanguageModel(paddle.nn.Layer):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'transformer.' in key:
-                    state_dict_[key.split('transformer.')[1]] = state_dict[key]
-        self.transformer.set_state_dict(state_dict_, use_structured_name=use_structured_name)
+                if "transformer." in key:
+                    state_dict_[key.split("transformer.")[1]] = state_dict[key]
+        self.transformer.set_state_dict(
+            state_dict_, use_structured_name=use_structured_name
+        )
 
 
 class CodeGeeXModel(paddle.nn.Layer):
@@ -956,14 +1055,16 @@ class CodeGeeXModel(paddle.nn.Layer):
         max_position_embeddings,
     ):
         super(CodeGeeXModel, self).__init__()
-        
-        self.language_model = TransformerLanguageModel(hidden_size,
-                                                       num_layers,
-                                                       num_attention_heads,
-                                                       padded_vocab_size,
-                                                       max_position_embeddings)
+
+        self.language_model = TransformerLanguageModel(
+            hidden_size,
+            num_layers,
+            num_attention_heads,
+            padded_vocab_size,
+            max_position_embeddings,
+        )
         self._language_model_key = "language_model"
-        
+
     def forward(
         self,
         input_ids,
@@ -975,31 +1076,41 @@ class CodeGeeXModel(paddle.nn.Layer):
         context_length=None,
     ):
         # Language model.
-        lm_output = self.language_model(input_ids,
-                                        position_ids,
-                                        attention_mask,
-                                        layer_past=layer_past,
-                                        get_key_value=get_key_value,
-                                        prompt_length=prompt_length,
-                                        context_length=context_length)
+        lm_output = self.language_model(
+            input_ids,
+            position_ids,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             lm_output, presents = lm_output
 
-        output = F.linear(lm_output, self.language_model.embedding.word_embeddings.weight.cast("float16").transpose([1, 0]))
-        
+        output = F.linear(
+            lm_output,
+            self.language_model.embedding.word_embeddings.weight.cast(
+                "float16"
+            ).transpose([1, 0]),
+        )
+
         if get_key_value:
             output = [output, presents]
 
         return output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._language_model_key
+        ] = self.language_model.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
         return state_dict_
 
     def set_state_dict(self, state_dict, use_structured_name=True):
@@ -1007,4 +1118,6 @@ class CodeGeeXModel(paddle.nn.Layer):
 
         if self._language_model_key in state_dict:
             state_dict = state_dict[self._language_model_key]
-        self.language_model.set_state_dict(state_dict, use_structured_name=use_structured_name)
+        self.language_model.set_state_dict(
+            state_dict, use_structured_name=use_structured_name
+        )

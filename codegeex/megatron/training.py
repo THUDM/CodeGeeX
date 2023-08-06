@@ -66,7 +66,6 @@ from filelock import FileLock
 import pathlib
 
 
-
 def print_datetime(string):
     """Note that this call will sync across all ranks."""
     torch.distributed.barrier()
@@ -191,11 +190,22 @@ def pretrain(
         if args.co_evaluation:
             for key, value in valid_data_iterator.items():
                 evaluate_and_print_results(
-                    prefix, valid_forward_step_func, value, model, iteration, False, tag=key
+                    prefix,
+                    valid_forward_step_func,
+                    value,
+                    model,
+                    iteration,
+                    False,
+                    tag=key,
                 )
         else:
             evaluate_and_print_results(
-                prefix, valid_forward_step_func, valid_data_iterator, model, iteration, False
+                prefix,
+                valid_forward_step_func,
+                valid_data_iterator,
+                model,
+                iteration,
+                False,
             )
 
     if args.save and iteration != 0:
@@ -406,7 +416,7 @@ def setup_model_and_optimizer(model_provider_func):
         print_rank_0("DeepSpeed is enabled.")
         pp = mpu.get_pipeline_model_parallel_world_size()
         print_rank_0(pp)
-        
+
         model, optimizer, _, lr_scheduler = deepspeed.initialize(
             model=model[0],
             optimizer=optimizer,
@@ -440,13 +450,17 @@ def setup_model_and_optimizer(model_provider_func):
         timers("load-checkpoint").start()
         if args.low_memory_load:
             load_start = time.perf_counter()
-            with FileLock(os.path.join(pathlib.Path.home(), "checkpoint_lock"), timeout=-1):
+            with FileLock(
+                os.path.join(pathlib.Path.home(), "checkpoint_lock"), timeout=-1
+            ):
                 this_rank_load_start = time.perf_counter()
                 print(f"Rank {args.rank} is loading checkpoint ...")
                 args.iteration = load_checkpoint(model, optimizer, lr_scheduler)
                 this_rank_load_time = time.perf_counter() - this_rank_load_start
                 load_time = time.perf_counter() - load_start
-                print(f"Rank {args.rank} loaded checkpoint, this rank time: {this_rank_load_time}, total time: {load_time}")
+                print(
+                    f"Rank {args.rank} loaded checkpoint, this rank time: {this_rank_load_time}, total time: {load_time}"
+                )
         else:
             args.iteration = load_checkpoint(model, optimizer, lr_scheduler)
         print(f"Rank {args.rank} loaded checkpoint and waiting for other ranks")
@@ -918,7 +932,7 @@ def train(
     timers("interval-time").start()
     print_datetime("before the start of training step")
     report_memory_flag = True
-    
+
     while iteration < args.train_iters and (
         args.train_tokens is None or args.consumed_train_tokens < args.train_tokens
     ):
@@ -979,20 +993,38 @@ def train(
             if args.co_evaluation:
                 for key, value in valid_data_iterator.items():
                     evaluate_and_print_results(
-                        prefix, valid_forward_step_func, value, model, iteration, False, tag=key
+                        prefix,
+                        valid_forward_step_func,
+                        value,
+                        model,
+                        iteration,
+                        False,
+                        tag=key,
                     )
             else:
                 if args.gold:
                     evaluate_and_print_results_gold(
-                        prefix, forward_step_func, valid_data_iterator, model, iteration, False
+                        prefix,
+                        forward_step_func,
+                        valid_data_iterator,
+                        model,
+                        iteration,
+                        False,
                     )
                 evaluate_and_print_results(
-                    prefix, valid_forward_step_func, valid_data_iterator, model, iteration, False
+                    prefix,
+                    valid_forward_step_func,
+                    valid_data_iterator,
+                    model,
+                    iteration,
+                    False,
                 )
 
         # Checkpointing
         saved_checkpoint = False
-        if args.save and args.save_interval and (iteration % args.save_interval == 0):  # debugging
+        if (
+            args.save and args.save_interval and (iteration % args.save_interval == 0)
+        ):  # debugging
             save_checkpoint_and_time(iteration, model, optimizer, lr_scheduler)
             saved_checkpoint = True
 
@@ -1209,7 +1241,7 @@ def evaluate_and_print_results_gold(
     print_rank_last("-" * length)
     print_rank_last(string)
     print_rank_last("-" * length)
-    
+
 
 def cyclic_iter(iter):
     while True:
@@ -1326,9 +1358,7 @@ def build_train_valid_test_data_iterators(build_train_valid_test_datasets_provid
             valid_data_iterator = {}
             for key, value in valid_dataloader.items():
                 valid_data_iterator[key] = (
-                    iter(value)
-                    if dl_type == "single"
-                    else iter(cyclic_iter(value))
+                    iter(value) if dl_type == "single" else iter(cyclic_iter(value))
                 )
         else:
             valid_data_iterator = (
@@ -1344,9 +1374,7 @@ def build_train_valid_test_data_iterators(build_train_valid_test_datasets_provid
             test_data_iterator = {}
             for key, value in test_dataloader.items():
                 test_data_iterator[key] = (
-                    iter(value)
-                    if dl_type == "single"
-                    else iter(cyclic_iter(value))
+                    iter(value) if dl_type == "single" else iter(cyclic_iter(value))
                 )
         else:
             test_data_iterator = (

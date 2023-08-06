@@ -105,13 +105,25 @@ def _build_train_valid_test_datasets(
     """Build train, valid, and test datasets."""
 
     # Indexed dataset.
-    assert os.path.exists(data_prefix + "_input_ids.bin"), f"Input tokens datafile not found: {data_prefix}_input_ids.bin"
-    assert os.path.exists(data_prefix + "_attention_mask.bin"), f"Attention mask datafile not found: {data_prefix}_attention_mask.bin"
-    assert os.path.exists(data_prefix + "_labels.bin"), f"Labels datafile not found: {data_prefix}_labels.bin"
+    assert os.path.exists(
+        data_prefix + "_input_ids.bin"
+    ), f"Input tokens datafile not found: {data_prefix}_input_ids.bin"
+    assert os.path.exists(
+        data_prefix + "_attention_mask.bin"
+    ), f"Attention mask datafile not found: {data_prefix}_attention_mask.bin"
+    assert os.path.exists(
+        data_prefix + "_labels.bin"
+    ), f"Labels datafile not found: {data_prefix}_labels.bin"
 
-    input_ids_indexed_dataset = get_indexed_dataset_(data_prefix + "_input_ids", data_impl, skip_warmup)
-    attention_mask_indexed_dataset = get_indexed_dataset_(data_prefix + "_attention_mask", data_impl, skip_warmup)
-    labels_indexed_dataset = get_indexed_dataset_(data_prefix + "_labels", data_impl, skip_warmup)
+    input_ids_indexed_dataset = get_indexed_dataset_(
+        data_prefix + "_input_ids", data_impl, skip_warmup
+    )
+    attention_mask_indexed_dataset = get_indexed_dataset_(
+        data_prefix + "_attention_mask", data_impl, skip_warmup
+    )
+    labels_indexed_dataset = get_indexed_dataset_(
+        data_prefix + "_labels", data_impl, skip_warmup
+    )
 
     total_num_of_documents = input_ids_indexed_dataset.sizes.shape[0]
     splits = get_train_valid_test_split_(splits_string, total_num_of_documents)
@@ -212,8 +224,14 @@ class PromptDataset(torch.utils.data.Dataset):
         # Checks
         assert np.min(documents) >= 0
         assert np.max(documents) < input_ids_indexed_dataset.sizes.shape[0]
-        assert input_ids_indexed_dataset.sizes.shape[0] == attention_mask_index_dataset.sizes.shape[0]
-        assert attention_mask_index_dataset.sizes.shape[0] == labels_indexed_dataset.sizes.shape[0]
+        assert (
+            input_ids_indexed_dataset.sizes.shape[0]
+            == attention_mask_index_dataset.sizes.shape[0]
+        )
+        assert (
+            attention_mask_index_dataset.sizes.shape[0]
+            == labels_indexed_dataset.sizes.shape[0]
+        )
 
         # Build index mappings.
         self.doc_idx = _build_index_mappings(
@@ -251,7 +269,13 @@ class PromptDataset(torch.utils.data.Dataset):
 
 
 def _build_index_mappings(
-    name, data_prefix, documents, sizes, num_samples, seq_length, seed,
+    name,
+    data_prefix,
+    documents,
+    sizes,
+    num_samples,
+    seq_length,
+    seed,
 ):
     """Build index mappings.
     We only have to build doc-idx in prompt dataset.
@@ -298,8 +322,8 @@ def _build_index_mappings(
     torch.distributed.all_reduce(counts, group=mpu.get_data_parallel_group())
     torch.distributed.all_reduce(counts, group=mpu.get_pipeline_model_parallel_group())
     assert counts[0].item() == (
-            torch.distributed.get_world_size()
-            // torch.distributed.get_world_size(group=mpu.get_tensor_model_parallel_group())
+        torch.distributed.get_world_size()
+        // torch.distributed.get_world_size(group=mpu.get_tensor_model_parallel_group())
     )
     # Load mappings.
     start_time = time.time()

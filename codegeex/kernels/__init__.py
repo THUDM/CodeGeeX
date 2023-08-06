@@ -12,7 +12,9 @@ class Kernel:
     def __init__(self, filename: str, function_names: List[str]):
         filename = filename + ".fatbin"
         if not pkg_resources.resource_exists(RESOURCE_PACKAGE_NAME, filename):
-            raise RuntimeError("File `%s` not found in `%s`" % (filename, RESOURCE_PACKAGE_NAME))
+            raise RuntimeError(
+                "File `%s` not found in `%s`" % (filename, RESOURCE_PACKAGE_NAME)
+            )
         self.filename = filename
         self.code = pkg_resources.resource_string(RESOURCE_PACKAGE_NAME, filename)
         self._function_names = function_names
@@ -50,12 +52,19 @@ def compress_int4_weight(weight: torch.Tensor):  # (n, m)
             blockDim,
             0,
             stream,
-            [ctypes.c_void_p(weight.data_ptr()), ctypes.c_void_p(out.data_ptr()), ctypes.c_int32(n), ctypes.c_int32(m)],
+            [
+                ctypes.c_void_p(weight.data_ptr()),
+                ctypes.c_void_p(out.data_ptr()),
+                ctypes.c_int32(n),
+                ctypes.c_int32(m),
+            ],
         )
         return out
 
 
-def extract_weight_to_half(weight: torch.Tensor, scale_list: torch.Tensor, source_bit_width: int):
+def extract_weight_to_half(
+    weight: torch.Tensor, scale_list: torch.Tensor, source_bit_width: int
+):
     if source_bit_width == 8:
         func = kernels.int8WeightExtractionHalf
     elif source_bit_width == 4:
@@ -65,7 +74,9 @@ def extract_weight_to_half(weight: torch.Tensor, scale_list: torch.Tensor, sourc
 
     with torch.cuda.device(weight.device):
         n, m = weight.size(0), weight.size(1)
-        out = torch.empty(n, m * (8 // source_bit_width), dtype=torch.half, device="cuda")
+        out = torch.empty(
+            n, m * (8 // source_bit_width), dtype=torch.half, device="cuda"
+        )
         stream = torch.cuda.current_stream()
 
         gridDim = (n, 1, 1)

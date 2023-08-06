@@ -131,8 +131,8 @@ def generate_samples_input_from_file(model):
             raw_text_len = 0
 
             if (
-                    mpu.is_pipeline_first_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_first_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 raw_text = all_raw_text[input_pos]
                 input_pos += 1
@@ -174,8 +174,8 @@ def generate_samples_input_from_file(model):
             # For pipeline parallel we send context tokens to other stages
             # so they get the lengths correct
             if (
-                    mpu.get_tensor_model_parallel_rank() == 0
-                    and args.pipeline_model_parallel_size > 1
+                mpu.get_tensor_model_parallel_rank() == 0
+                and args.pipeline_model_parallel_size > 1
             ):
                 if mpu.is_pipeline_first_stage():
                     src = mpu.get_pipeline_model_parallel_first_rank()
@@ -206,8 +206,8 @@ def generate_samples_input_from_file(model):
                     decode_tokens, _ = decode_tokens
                     decode_tokens = decode_tokens[0].cpu().numpy().tolist()
                     trim_decode_tokens = tokenizer.detokenize(decode_tokens)[
-                                         raw_text_len:
-                                         ]
+                        raw_text_len:
+                    ]
                     print("\nMegatron-LM:", trim_decode_tokens, flush=True)
 
                     fname_out.write("\n\nMegatron-LM:")
@@ -261,8 +261,8 @@ def generate_samples_interactive_code_contest(model, print_frequency=10):
             raw_text_len = 0
 
             if (
-                    mpu.is_pipeline_first_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_first_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 # os.system("clear")
                 raw_text = []
@@ -320,8 +320,8 @@ def generate_samples_interactive_code_contest(model, print_frequency=10):
             # For pipeline parallel we send context tokens to other stages
             # so they get the lengths correct
             if (
-                    mpu.get_tensor_model_parallel_rank() == 0
-                    and args.pipeline_model_parallel_size > 1
+                mpu.get_tensor_model_parallel_rank() == 0
+                and args.pipeline_model_parallel_size > 1
             ):
                 if mpu.is_pipeline_first_stage():
                     src = mpu.get_pipeline_model_parallel_first_rank()
@@ -337,13 +337,15 @@ def generate_samples_interactive_code_contest(model, print_frequency=10):
                     torch.distributed.broadcast(context_tokens_tensor, src, group)
                     context_tokens = context_tokens_tensor.cpu().numpy().tolist()
 
-            token_stream = get_token_stream(model, [context_tokens for _ in range(args.micro_batch_size)])
+            token_stream = get_token_stream(
+                model, [context_tokens for _ in range(args.micro_batch_size)]
+            )
 
             for counter, decode_tokens in enumerate(token_stream):
                 if (
-                        counter % print_frequency != 0
-                        or mpu.get_tensor_model_parallel_rank() != 0
-                        or not mpu.is_pipeline_first_stage()
+                    counter % print_frequency != 0
+                    or mpu.get_tensor_model_parallel_rank() != 0
+                    or not mpu.is_pipeline_first_stage()
                 ):
                     continue
 
@@ -353,11 +355,15 @@ def generate_samples_interactive_code_contest(model, print_frequency=10):
                 decode_tokens, _ = decode_tokens
                 decode_tokens = decode_tokens[0].cpu().numpy().tolist()
                 trim_decode_tokens = tokenizer.detokenize(decode_tokens)[raw_text_len:]
-                print(f"\nMegatron-LM (gen len: {counter}):", trim_decode_tokens, flush=True)
+                print(
+                    f"\nMegatron-LM (gen len: {counter}):",
+                    trim_decode_tokens,
+                    flush=True,
+                )
 
             if (
-                    mpu.is_pipeline_first_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_first_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 os.system("clear")
                 print("\nContext:", raw_text, flush=True)
@@ -386,8 +392,8 @@ def generate_samples_interactive(model, print_frequency=24):
             raw_text_len = 0
 
             if (
-                    mpu.is_pipeline_first_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_first_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 os.system("clear")
                 raw_text = input("\nContext prompt (stop to exit) >>> ")
@@ -430,8 +436,8 @@ def generate_samples_interactive(model, print_frequency=24):
             # For pipeline parallel we send context tokens to other stages
             # so they get the lengths correct
             if (
-                    mpu.get_tensor_model_parallel_rank() == 0
-                    and args.pipeline_model_parallel_size > 1
+                mpu.get_tensor_model_parallel_rank() == 0
+                and args.pipeline_model_parallel_size > 1
             ):
                 if mpu.is_pipeline_first_stage():
                     src = mpu.get_pipeline_model_parallel_first_rank()
@@ -451,9 +457,9 @@ def generate_samples_interactive(model, print_frequency=24):
 
             for counter, decode_tokens in enumerate(token_stream):
                 if (
-                        counter % print_frequency != 0
-                        or mpu.get_tensor_model_parallel_rank() != 0
-                        or not mpu.is_pipeline_first_stage()
+                    counter % print_frequency != 0
+                    or mpu.get_tensor_model_parallel_rank() != 0
+                    or not mpu.is_pipeline_first_stage()
                 ):
                     continue
 
@@ -466,8 +472,8 @@ def generate_samples_interactive(model, print_frequency=24):
                 print("\nMegatron-LM:", trim_decode_tokens, flush=True)
 
             if (
-                    mpu.is_pipeline_first_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_first_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 os.system("clear")
                 print("\nContext:", raw_text, flush=True)
@@ -507,7 +513,7 @@ def generate_samples_unconditional(model):
             length_batch = token_stream[1].cpu().numpy().tolist()
             assert len(length_batch) == args.micro_batch_size
             for tokens, length in zip(token_batch, length_batch):
-                tokens = tokens[1: length - 1]
+                tokens = tokens[1 : length - 1]
                 text = tokenizer.detokenize(tokens)
                 is_finished = length < args.seq_length - 1
                 datum = {"text": text, "length": length - 1, "finished": is_finished}
@@ -531,8 +537,8 @@ def generate_and_write_samples_unconditional(model):
     with open(args.genfile, "w") as f:
         for datum in generate_samples_unconditional(model):
             if (
-                    mpu.is_pipeline_last_stage()
-                    and mpu.get_tensor_model_parallel_rank() == 0
+                mpu.is_pipeline_last_stage()
+                and mpu.get_tensor_model_parallel_rank() == 0
             ):
                 f.write(json.dumps(datum) + "\n")
 
@@ -563,7 +569,12 @@ def topk_sampling(logits: torch.FloatTensor, num_samples: int):
     return topk_tokens, topk_log_prob
 
 
-def nuclear_sampling(logits: torch.FloatTensor, temperature: float, top_p: float = None, top_k: int = None):
+def nuclear_sampling(
+    logits: torch.FloatTensor,
+    temperature: float,
+    top_p: float = None,
+    top_k: int = None,
+):
     orig_log_probs = F.log_softmax(logits, dim=-1)
     logits /= temperature
     logits = top_k_logits(logits, top_k, top_p)
@@ -576,10 +587,17 @@ def nuclear_sampling(logits: torch.FloatTensor, temperature: float, top_p: float
     return tokens, new_scores
 
 
-def sample_topk_tokens(model,
-                       input_tokens, attention_mask, position_ids,
-                       context_length: int, num_samples: int):
-    assert context_length < input_tokens.shape[-1], "context_length must be smaller than seq_length"
+def sample_topk_tokens(
+    model,
+    input_tokens,
+    attention_mask,
+    position_ids,
+    context_length: int,
+    num_samples: int,
+):
+    assert (
+        context_length < input_tokens.shape[-1]
+    ), "context_length must be smaller than seq_length"
 
     model.eval()
     with torch.no_grad():
@@ -597,10 +615,19 @@ def sample_topk_tokens(model,
     return topk_sampling(logits, num_samples)
 
 
-def nuclear_sample_tokens(model,
-                          input_tokens, attention_mask, position_ids,
-                          context_length: int, temperature: float, top_p: float, top_k: int):
-    assert context_length < input_tokens.shape[-1], "context_length must be smaller than seq_length"
+def nuclear_sample_tokens(
+    model,
+    input_tokens,
+    attention_mask,
+    position_ids,
+    context_length: int,
+    temperature: float,
+    top_p: float,
+    top_k: int,
+):
+    assert (
+        context_length < input_tokens.shape[-1]
+    ), "context_length must be smaller than seq_length"
 
     model.eval()
     with torch.no_grad():
@@ -642,10 +669,14 @@ def expand_beams(beams: List[Beam], num_beams: int, model) -> List[Beam]:
 
     context_tokens_tensor = torch.cuda.LongTensor(context_tokens)
     tokens, attention_mask, position_ids = get_batch_(context_tokens_tensor)
-    tokens, scores = sample_topk_tokens(model, tokens, attention_mask, position_ids, context_length, num_beams)
+    tokens, scores = sample_topk_tokens(
+        model, tokens, attention_mask, position_ids, context_length, num_beams
+    )
     tokens = tokens.detach().cpu().tolist()
     scores = scores.detach().cpu().tolist()
-    assert len(tokens) == len(beams), "output tokens and input beams must have the same length"
+    assert len(tokens) == len(
+        beams
+    ), "output tokens and input beams must have the same length"
 
     all_beams = []
     for i in range(len(beams)):
@@ -684,7 +715,10 @@ def beam_search(model, context_tokens, num_beams: int):
         next_beams = []
         for beam in expanded_beams:
             if args.beam_warmup:
-                if len(beam.tokens) >= org_context_len + args.beam_warmup_length or beam.tokens[-1] == tokenizer.eod:
+                if (
+                    len(beam.tokens) >= org_context_len + args.beam_warmup_length
+                    or beam.tokens[-1] == tokenizer.eod
+                ):
                     finished_beams.append(beam)
                 else:
                     next_beams.append(beam)
@@ -713,7 +747,9 @@ def beam_search(model, context_tokens, num_beams: int):
             if min_score >= beams[0].score:
                 break
             else:
-                print(f"we have got enough finished beams, but the minimal score is {min_score}")
+                print(
+                    f"we have got enough finished beams, but the minimal score is {min_score}"
+                )
                 print(f"and the maximum searching score is {beams[0].score}")
 
     # return top-k finished and unfinished beams
@@ -739,7 +775,9 @@ class Handle:
         return Handle(self.tokens + [new_token], self.score + log_prob)
 
 
-def expand_handles(handles: List[Handle], temperature: float, top_p: float, top_k: int, model):
+def expand_handles(
+    handles: List[Handle], temperature: float, top_p: float, top_k: int, model
+):
     args = get_args()
     tokenizer = get_tokenizer()
 
@@ -752,11 +790,21 @@ def expand_handles(handles: List[Handle], temperature: float, top_p: float, top_
 
     context_tokens_tensor = torch.cuda.LongTensor(context_tokens)
     tokens, attention_mask, position_ids = get_batch_(context_tokens_tensor)
-    tokens, scores = nuclear_sample_tokens(model, tokens, attention_mask, position_ids, context_length, temperature,
-                                           top_p, top_k)
+    tokens, scores = nuclear_sample_tokens(
+        model,
+        tokens,
+        attention_mask,
+        position_ids,
+        context_length,
+        temperature,
+        top_p,
+        top_k,
+    )
     tokens = tokens.detach().cpu().tolist()
     scores = scores.detach().cpu().tolist()
-    assert len(tokens) == len(handles), "output tokens and input must have the same length"
+    assert len(tokens) == len(
+        handles
+    ), "output tokens and input must have the same length"
 
     all_beams = []
     for i in range(len(handles)):
@@ -768,7 +816,14 @@ def expand_handles(handles: List[Handle], temperature: float, top_p: float, top_
     return all_beams
 
 
-def generate_nuclear_sampling(model, context_tokens, num_samples: int, temperature: float, top_p: float, top_k: int):
+def generate_nuclear_sampling(
+    model,
+    context_tokens,
+    num_samples: int,
+    temperature: float,
+    top_p: float,
+    top_k: int,
+):
     """Beam search.
 
     Note that this function does not support model parallel!
@@ -799,16 +854,16 @@ def generate_nuclear_sampling(model, context_tokens, num_samples: int, temperatu
 
 
 def forward_step(
-        model,
-        tokens,
-        position_ids,
-        attention_mask,
-        tokentype_ids,
-        layer_past=None,
-        get_key_value=None,
-        forward_method_parallel_output=None,
-        prompt_length=None,
-        context_length=None,
+    model,
+    tokens,
+    position_ids,
+    attention_mask,
+    tokentype_ids,
+    layer_past=None,
+    get_key_value=None,
+    forward_method_parallel_output=None,
+    prompt_length=None,
+    context_length=None,
 ):
     # Hidden size changes when not using recompute, need to tell p2p_communicate
     # functions the correct size
@@ -839,15 +894,15 @@ def forward_step(
 
 
 def get_token_stream(
-        model,
-        context_tokens,
-        return_scores: bool = False,
-        prompt_length: int = None,
-        micro_batch_size: int = None,
-        bad_ids: List = None,
-        temperature: float = None,
-        topp: float = None,
-        topk: int = None,
+    model,
+    context_tokens,
+    return_scores: bool = False,
+    prompt_length: int = None,
+    micro_batch_size: int = None,
+    bad_ids: List = None,
+    temperature: float = None,
+    topp: float = None,
+    topk: int = None,
 ):
     args = get_args()
     tokenizer = get_tokenizer()
@@ -869,7 +924,9 @@ def get_token_stream(
     )
 
     context_length = context_length_tensor.min().item()
-    tokens, attention_mask, position_ids = get_batch(context_tokens_tensor, micro_batch_size)
+    tokens, attention_mask, position_ids = get_batch(
+        context_tokens_tensor, micro_batch_size
+    )
 
     batch_token_iterator = sample_sequence_batch(
         model,
@@ -903,19 +960,19 @@ def switch(val1, val2, boolean):
 
 
 def sample_sequence_batch(
-        model,
-        context_tokens,
-        context_lengths,
-        attention_mask,
-        position_ids,
-        maxlen=None,
-        type_ids=None,
-        return_scores: bool = False,
-        prompt_length: int = None,
-        bad_ids: List = None,
-        temperature: float = None,
-        topp: float = None,
-        topk: int = None,
+    model,
+    context_tokens,
+    context_lengths,
+    attention_mask,
+    position_ids,
+    maxlen=None,
+    type_ids=None,
+    return_scores: bool = False,
+    prompt_length: int = None,
+    bad_ids: List = None,
+    temperature: float = None,
+    topp: float = None,
+    topk: int = None,
 ):
     args = get_args()
     tokenizer = get_tokenizer()
@@ -951,12 +1008,15 @@ def sample_sequence_batch(
             scores = torch.zeros([batch_size]).float().cuda()
 
         if args.beam_search:
-            beams = beam_search(model, context_tokens=tokens.cpu().numpy().tolist()[0][:context_length],
-                                num_beams=args.num_beams)
+            beams = beam_search(
+                model,
+                context_tokens=tokens.cpu().numpy().tolist()[0][:context_length],
+                num_beams=args.num_beams,
+            )
             if args.beam_warmup:
                 beam = beams[0]
                 tokens_ = beam.tokens
-                tokens_ = (tokens_ if tokens_[-1] != tokenizer.eod else tokens_[:-1])
+                tokens_ = tokens_ if tokens_[-1] != tokenizer.eod else tokens_[:-1]
                 tokens_warmup = []
                 for i in range(batch_size):
                     tokens_warmup.append(tokens_.copy())
@@ -976,14 +1036,15 @@ def sample_sequence_batch(
         else:
             while context_length <= (maxlen):
                 if args.recompute:
-                    logits = model(tokens,
-                                position_ids,
-                                attention_mask,
-                                tokentype_ids=type_ids,
-                                forward_method_parallel_output=False,
-                                prompt_length=prompt_length,
-                                context_length=context_length,
-                                )
+                    logits = model(
+                        tokens,
+                        position_ids,
+                        attention_mask,
+                        tokentype_ids=type_ids,
+                        forward_method_parallel_output=False,
+                        prompt_length=prompt_length,
+                        context_length=context_length,
+                    )
                     logits = logits[:, context_length - 1, :]
                 else:
                     types2use = None
@@ -993,23 +1054,25 @@ def sample_sequence_batch(
                         if type_ids is not None:
                             types2use = type_ids[:, :context_length]
                     else:
-                        tokens2use = tokens[:, context_length - 1].view(
-                            batch_size, -1)
+                        tokens2use = tokens[:, context_length - 1].view(batch_size, -1)
                         positions2use = position_ids[:, context_length - 1].view(
-                            batch_size, -1)
+                            batch_size, -1
+                        )
                         if type_ids is not None:
                             types2use = type_ids[:, context_length - 1].view(
-                                batch_size, -1)
-                    logits, layer_past = model(tokens2use,
-                                            positions2use,
-                                            attention_mask,
-                                            layer_past=layer_past,
-                                            get_key_value=True,
-                                            tokentype_ids=types2use,
-                                            forward_method_parallel_output=False,
-                                            prompt_length=prompt_length,
-                                            context_length=context_length,
-                                            )
+                                batch_size, -1
+                            )
+                    logits, layer_past = model(
+                        tokens2use,
+                        positions2use,
+                        attention_mask,
+                        layer_past=layer_past,
+                        get_key_value=True,
+                        tokentype_ids=types2use,
+                        forward_method_parallel_output=False,
+                        prompt_length=prompt_length,
+                        context_length=context_length,
+                    )
                     logits = logits[:, -1].view(batch_size, -1).contiguous()
 
                 if mpu.is_pipeline_last_stage():
@@ -1029,7 +1092,9 @@ def sample_sequence_batch(
 
                     started = context_lengths <= context_length
 
-                    new_tokens = switch(tokens[:, context_length].view(-1), prev, started)
+                    new_tokens = switch(
+                        tokens[:, context_length].view(-1), prev, started
+                    )
 
                     if not args.greedy and return_scores:
                         indices = prev.view(-1, 1)

@@ -294,7 +294,7 @@ def parse_args(extra_args_provider=None, defaults={}, ignore_unknown_args=False)
             "for distribute-checkpointed-activations to work you "
             "need to enable checkpoint-activations"
         )
-    
+
     _print_args(args)
     return args
 
@@ -392,10 +392,12 @@ def _add_network_size_args(parser):
         action="store_true",
         help="If set, use original BERT residula connection " "ordering.",
     )
-    group.add_argument('--scaled-upper-triang-masked-softmax-fusion',
-                       action='store_true',
-                       help='Enable fusion of query_key_value_scaling '
-                       'time (upper diagonal) masking, softmax.')
+    group.add_argument(
+        "--scaled-upper-triang-masked-softmax-fusion",
+        action="store_true",
+        help="Enable fusion of query_key_value_scaling "
+        "time (upper diagonal) masking, softmax.",
+    )
     group.add_argument(
         "--openai-gelu",
         action="store_true",
@@ -530,11 +532,7 @@ def _add_regularization_args(parser):
         default=0.05,
         help="Beta for GOLD tempering.",
     )
-    group.add_argument(
-        "--play-tau",
-        type=float,
-        default=2.0
-    )
+    group.add_argument("--play-tau", type=float, default=2.0)
     group.add_argument(
         "--clip-grad",
         type=float,
@@ -569,18 +567,18 @@ def _add_regularization_args(parser):
         action="store_true",
     )
     group.add_argument(
-        "--shrink-embedding-gradient-alpha", 
-        type=float, 
+        "--shrink-embedding-gradient-alpha",
+        type=float,
         default=1.0,
-        help='Shrink embedding gradient for alpha',
+        help="Shrink embedding gradient for alpha",
     )
     group.add_argument(
-        "--shrink-embedding-gradient-steps", 
-        nargs='*', 
+        "--shrink-embedding-gradient-steps",
+        nargs="*",
         default=None,
-        help='--shrink-embedding-gradient-steps <x1> <x2>'
-                            'Shrink embedding gradient alpha for x1 steps,'
-                            'then warm it up to 1.0 with x2 steps',
+        help="--shrink-embedding-gradient-steps <x1> <x2>"
+        "Shrink embedding gradient alpha for x1 steps,"
+        "then warm it up to 1.0 with x2 steps",
     )
 
     return parser
@@ -774,32 +772,32 @@ def _add_inference_args(parser):
     group = parser.add_argument_group(title="initialization")
 
     group.add_argument(
-        '--evaluation',
+        "--evaluation",
         action="store_true",
     )
     group.add_argument(
-        '--beam-warmup',
+        "--beam-warmup",
         action="store_true",
     )
     group.add_argument(
-        '--beam-warmup-length',
+        "--beam-warmup-length",
         type=int,
         default=0,
     )
     group.add_argument(
-        '--beam-search',
+        "--beam-search",
         action="store_true",
     )
     group.add_argument(
-        '--beam-search-nucleus',
+        "--beam-search-nucleus",
         action="store_true",
     )
     group.add_argument(
-        '--num-beams',
+        "--num-beams",
         type=int,
         default=4,
     )
-    
+
     return parser
 
 
@@ -933,7 +931,7 @@ def _add_checkpointing_args(parser):
         action="store_true",
         default=None,
         help="Load model checkpoint in low memory mode."
-             "On each machine, workers load the checkpoint one at a time."
+        "On each machine, workers load the checkpoint one at a time.",
     )
     group.add_argument(
         "--dist-timeout",
@@ -974,7 +972,9 @@ def _add_mixed_precision_args(parser):
     group = parser.add_argument_group(title="mixed precision")
 
     group.add_argument("--fp16", action="store_true", help="Run model in fp16 mode.")
-    group.add_argument("--ln-fp16", action="store_true", help="Run layernorm in fp16 mode.")
+    group.add_argument(
+        "--ln-fp16", action="store_true", help="Run layernorm in fp16 mode."
+    )
     group.add_argument(
         "--bf16", action="store_true", help="Run model in bfloat16 mode."
     )
@@ -989,7 +989,7 @@ def _add_mixed_precision_args(parser):
     group.add_argument(
         "--initial-loss-scale",
         type=float,
-        default=2 ** 32,
+        default=2**32,
         help="Initial loss-scale for dynamic loss scaling.",
     )
     group.add_argument(
@@ -1012,10 +1012,13 @@ def _add_mixed_precision_args(parser):
         action="store_true",
         help="Move residual connections to fp32.",
     )
-    group.add_argument('--apply-query-key-layer-scaling', action='store_true',
-                       help='Scale Q * K^T by 1 / layer-number. If this flag '
-                       'is set, then it will automatically set '
-                       'attention-softmax-in-fp32 to true')
+    group.add_argument(
+        "--apply-query-key-layer-scaling",
+        action="store_true",
+        help="Scale Q * K^T by 1 / layer-number. If this flag "
+        "is set, then it will automatically set "
+        "attention-softmax-in-fp32 to true",
+    )
     group.add_argument(
         "--attention-softmax-in-fp32",
         action="store_true",
@@ -1143,7 +1146,7 @@ def _add_validation_args(parser):
     group.add_argument(
         "--co-evaluation",
         action="store_true",
-        help="If set, run evaluation on each part of the validation set"
+        help="If set, run evaluation on each part of the validation set",
     )
 
     return parser
@@ -1171,15 +1174,17 @@ def _add_data_args(parser):
         "dataset2-path ...;"
         "when co-evaluation is enabled, the form will be dataset1-tag dataset1-path ...",
     )
-    group.add_argument("--index-cache-dir", type=str, default=None, help="Path to the index cache")
+    group.add_argument(
+        "--index-cache-dir", type=str, default=None, help="Path to the index cache"
+    )
     group.add_argument(
         "--test-data-path",
         nargs="*",
         default=None,
         help="Path to the test dataset. Accepted format:"
-             "1) a single data path, 2) multiple datasets in the"
-             "form: dataset1-tag dataset1-path dataset2-tag "
-             "dataset2-path ...",
+        "1) a single data path, 2) multiple datasets in the"
+        "form: dataset1-tag dataset1-path dataset2-tag "
+        "dataset2-path ...",
     )
     group.add_argument(
         "--split",
@@ -1191,21 +1196,21 @@ def _add_data_args(parser):
         "validation and 5%% for test.",
     )
     group.add_argument(
-        "--vocab-file", 
-        type=str, 
-        default=None, 
+        "--vocab-file",
+        type=str,
+        default=None,
         help="Path to the vocab file.",
     )
     group.add_argument(
-        "--merge-file", 
-        type=str, 
-        default=None, 
+        "--merge-file",
+        type=str,
+        default=None,
         help="Path to the BPE merge file.",
     )
     group.add_argument(
-        "--tokenizer-path", 
-        type=str, 
-        default=None, 
+        "--tokenizer-path",
+        type=str,
+        default=None,
         help="Path to the tokenizer dir.",
     )
     group.add_argument(

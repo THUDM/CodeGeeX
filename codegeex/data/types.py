@@ -11,10 +11,12 @@ class PromptSample:
 
 PromptDataset = Iterable[PromptSample]
 
+
 @dataclass
 class LabelSample:
     prompt: str
     label: int
     extra: dict = None
+
 
 LabelDataset = Iterable[LabelSample]

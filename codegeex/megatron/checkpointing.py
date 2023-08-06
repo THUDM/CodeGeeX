@@ -23,7 +23,13 @@ from glob import glob
 
 import torch
 
-from codegeex.megatron import get_args, mpu, print_rank_0, update_num_microbatches, utils
+from codegeex.megatron import (
+    get_args,
+    mpu,
+    print_rank_0,
+    update_num_microbatches,
+    utils,
+)
 
 _CHECKPOINT_VERSION = None
 
@@ -90,7 +96,9 @@ def get_checkpoint_name(checkpoints_path, iteration, release=False):
         return os.path.join(
             checkpoints_path,
             directory,
-            "mp_rank_{:02d}_model_states.pt".format(mpu.get_tensor_model_parallel_rank()),
+            "mp_rank_{:02d}_model_states.pt".format(
+                mpu.get_tensor_model_parallel_rank()
+            ),
         )
     return os.path.join(
         checkpoints_path,
@@ -299,10 +307,10 @@ def load_deepspeed_state(model):
 
 
 def load_checkpoint(
-    model, 
-    optimizer, 
-    lr_scheduler, 
-    load_arg="load", 
+    model,
+    optimizer,
+    lr_scheduler,
+    load_arg="load",
     strict=True,
 ):
     """Load a model checkpoint and return the iteration.
@@ -337,7 +345,9 @@ def load_checkpoint(
             # If no tracker file, return iretation zero.
             if not os.path.isfile(tracker_filename):
                 print_rank_0(
-                    "WARNING: could not find the metadata file {} ".format(tracker_filename)
+                    "WARNING: could not find the metadata file {} ".format(
+                        tracker_filename
+                    )
                 )
                 iteration = 0
                 release = True
@@ -366,14 +376,15 @@ def load_checkpoint(
                             )
                             sys.exit()
 
-                assert iteration > 0 or release, "error parsing metadata file {}".format(
-                    tracker_filename
-                )
+                assert (
+                    iteration > 0 or release
+                ), "error parsing metadata file {}".format(tracker_filename)
 
                 # Checkpoint.
                 checkpoint_name = get_checkpoint_name(load_dir, iteration, release)
-                print_rank_0(f" loading checkpoint from {args.load} at iteration {iteration}")
-                
+                print_rank_0(
+                    f" loading checkpoint from {args.load} at iteration {iteration}"
+                )
 
         # Load the checkpoint.
         try:

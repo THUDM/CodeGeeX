@@ -18,9 +18,17 @@ from codegeex.megatron import get_args, mpu
 from codegeex.megatron.model import LayerNorm
 from codegeex.megatron.enums import AttnMaskType
 from codegeex.megatron.model.module import MegatronModule
-from codegeex.megatron.model.language_model import parallel_lm_logits, get_language_model, EmbeddingPipe, QueryEmbeddingPipe
+from codegeex.megatron.model.language_model import (
+    parallel_lm_logits,
+    get_language_model,
+    EmbeddingPipe,
+    QueryEmbeddingPipe,
+)
 from codegeex.megatron.model.utils import init_method_normal, scaled_init_method_normal
-from codegeex.megatron.model.transformer import ParallelTransformerLayerPipe, ParallelTopQueryLayerPipe
+from codegeex.megatron.model.transformer import (
+    ParallelTransformerLayerPipe,
+    ParallelTopQueryLayerPipe,
+)
 from deepspeed.pipe import PipelineModule, LayerSpec, TiedLayerSpec
 
 
@@ -38,36 +46,40 @@ class CodeGeeXModel(MegatronModule):
             num_tokentypes=num_tokentypes,
             add_pooler=False,
             init_method=init_method_normal(args.init_method_std),
-            scaled_init_method=scaled_init_method_normal(args.init_method_std,
-                                                         args.num_layers))
+            scaled_init_method=scaled_init_method_normal(
+                args.init_method_std, args.num_layers
+            ),
+        )
 
     def set_input_tensor(self, input_tensor):
         """See megatron.model.transformer.set_input_tensor()"""
         self.language_model.set_input_tensor(input_tensor)
-        
+
     def forward(
-            self,
-            input_ids,
-            position_ids,
-            attention_mask,
-            labels=None,
-            tokentype_ids=None,
-            layer_past=None,
-            get_key_value=False,
-            forward_method_parallel_output=None,
-            prompt_length=None,
-            context_length=None,
+        self,
+        input_ids,
+        position_ids,
+        attention_mask,
+        labels=None,
+        tokentype_ids=None,
+        layer_past=None,
+        get_key_value=False,
+        forward_method_parallel_output=None,
+        prompt_length=None,
+        context_length=None,
     ):
 
         # Language model.
-        lm_output = self.language_model(input_ids,
-                                        position_ids,
-                                        attention_mask,
-                                        tokentype_ids=tokentype_ids,
-                                        layer_past=layer_past,
-                                        get_key_value=get_key_value,
-                                        prompt_length=prompt_length,
-                                        context_length=context_length)
+        lm_output = self.language_model(
+            input_ids,
+            position_ids,
+            attention_mask,
+            tokentype_ids=tokentype_ids,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             lm_output, presents = lm_output
@@ -80,7 +92,8 @@ class CodeGeeXModel(MegatronModule):
         output = parallel_lm_logits(
             lm_output,
             self.language_model.embedding.word_embeddings.weight,
-            parallel_output)
+            parallel_output,
+        )
 
         if get_key_value:
             output = [output, presents]
@@ -96,13 +109,16 @@ class CodeGeeXModel(MegatronModule):
 
             return loss
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._language_model_key
+        ] = self.language_model.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
         return state_dict_
 
     def load_state_dict(self, state_dict, strict=True):
@@ -134,7 +150,7 @@ class CodeGeeXModelPipe(PipelineModule, MegatronModule):
         init_method = init_method_normal(args.init_method_std)
 
         self.specs = []
-        
+
         # Embedding layer
         self.specs.append(
             TiedLayerSpec(

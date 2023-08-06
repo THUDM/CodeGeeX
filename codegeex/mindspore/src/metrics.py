@@ -35,7 +35,7 @@ class PPLMetric(Metric):
         pipeline_stages = context.get_auto_parallel_context("pipeline_stages")
         per_stage_device_num = get_group_size() // pipeline_stages
         stage_id = get_rank() // per_stage_device_num
-        self.is_last_stage = (stage_id == pipeline_stages - 1)
+        self.is_last_stage = stage_id == pipeline_stages - 1
 
     def clear(self):
         """Clear the internal evaluation result."""
@@ -72,7 +72,7 @@ class ValidationLoss(Metric):
         pipeline_stages = context.get_auto_parallel_context("pipeline_stages")
         per_stage_device_num = get_group_size() // pipeline_stages
         stage_id = get_rank() // per_stage_device_num
-        self.is_last_stage = (stage_id == pipeline_stages - 1)
+        self.is_last_stage = stage_id == pipeline_stages - 1
 
     def clear(self):
         """Clear the internal evaluation result."""

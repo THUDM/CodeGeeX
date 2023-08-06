@@ -55,14 +55,18 @@ def get_linear_layer(rows, columns, init_method):
 
 def fast_gelu(x):
     """Mindspore's fast gelu implementation."""
-    return x / (1 + torch.exp(-1.702 * torch.abs(x))) * torch.exp(0.851 * (x - torch.abs(x)))
+    return (
+        x
+        / (1 + torch.exp(-1.702 * torch.abs(x)))
+        * torch.exp(0.851 * (x - torch.abs(x)))
+    )
 
 
 @torch.jit.script
 def gelu_impl(x):
     """OpenAI's gelu implementation."""
     return (
-            0.5 * x * (1.0 + torch.tanh(0.7978845608028654 * x * (1.0 + 0.044715 * x * x)))
+        0.5 * x * (1.0 + torch.tanh(0.7978845608028654 * x * (1.0 + 0.044715 * x * x)))
     )
 
 
@@ -74,10 +78,10 @@ def openai_gelu(x):
 @torch.jit.script
 def erf_gelu(x):
     return (
-            x
-            * 0.5
-            * (
-                    torch.erf(x / 1.41421).to(dtype=x.dtype)
-                    + torch.ones_like(x).to(dtype=x.dtype)
-            )
+        x
+        * 0.5
+        * (
+            torch.erf(x / 1.41421).to(dtype=x.dtype)
+            + torch.ones_like(x).to(dtype=x.dtype)
+        )
     )
