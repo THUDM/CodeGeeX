@@ -28,7 +28,7 @@ RUN curl -o /workspace/download/openssl.tar.gz -SL https://www.openssl.org/sourc
     && rm /workspace/download/openssl.tar.gz && rm -r /workspace/openssl-3.0.0
 ENV PATH=/usr/bin/openssl:$PATH
 
-RUN curl -o /workspace/download/jdk.tar.gz -SL https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz \
+RUN curl -o /workspace/download/jdk.tar.gz -SL https://download.oracle.com/java/18/archive/jdk-18_linux-x64_bin.tar.gz \
     && mkdir /usr/java && tar -zxf /workspace/download/jdk.tar.gz -C /usr/java && rm /workspace/download/jdk.tar.gz \
     && java_path=`ls /usr/java/${path}` && echo "export JAVA_HOME=/usr/java/${java_path}" >> ~/.profile
 
