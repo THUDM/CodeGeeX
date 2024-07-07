@@ -9,7 +9,7 @@
 
 
 
-🌟 [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) 已推出，更强，更快，更轻量。| [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) has been released, more powerful, faster, and lightweight.
+🌟 The newest [CodeGeeX4](https://github.com/THUDM/CodeGeeX4) has been released. | 最新一代 [CodeGeeX4](https://github.com/THUDM/CodeGeeX4) 模型已经正式开源。
 
 - [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
   - [News](#news)
