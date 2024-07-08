@@ -112,8 +112,8 @@ def _build_num_microbatches_calculator(args):
     )
 
     _GLOBAL_NUM_MICROBATCHES_CALCULATOR = build_num_microbatches_calculator(args)
-    
-    
+
+
 def _build_tokenizer(args):
     """Initialize tokenizer."""
     global _GLOBAL_TOKENIZER

@@ -4,11 +4,16 @@ import oneflow.nn.functional as F
 from oneflow.nn.parameter import Parameter
 from ..quantization import QuantizedLinear
 
+
 def fast_gelu(x):
     """Mindspore's fast gelu implementation."""
-    if hasattr(torch._C, 'quick_gelu'):
+    if hasattr(torch._C, "quick_gelu"):
         return torch._C.quick_gelu(x)
-    return x / (1 + torch.exp(-1.702 * torch.abs(x))) * torch.exp(0.851 * (x - torch.abs(x)))
+    return (
+        x
+        / (1 + torch.exp(-1.702 * torch.abs(x)))
+        * torch.exp(0.851 * (x - torch.abs(x)))
+    )
 
 
 class MLP(torch.nn.Module):
@@ -20,7 +25,7 @@ class MLP(torch.nn.Module):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
     ):
         super(MLP, self).__init__()
@@ -47,7 +52,7 @@ class MLP(torch.nn.Module):
         output = self.dense_4h_to_h(intermediate_parallel)
 
         return output
-    
+
 
 class SelfAttention(torch.nn.Module):
     """self-attention layer abstract class.
@@ -56,9 +61,9 @@ class SelfAttention(torch.nn.Module):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
-        num_attention_heads, 
+        num_attention_heads,
         layer_number,
         fp16=True,
         attention_softmax_in_fp32=True,
@@ -71,8 +76,10 @@ class SelfAttention(torch.nn.Module):
         self.layer_number = max(1, layer_number)
 
         assert self.hidden_size % self.num_attention_heads == 0
-        self.hidden_size_per_attention_head = int(self.hidden_size // self.num_attention_heads)
-        
+        self.hidden_size_per_attention_head = int(
+            self.hidden_size // self.num_attention_heads
+        )
+
         self.query = torch.nn.Linear(self.hidden_size, self.hidden_size)
         self.key = torch.nn.Linear(self.hidden_size, self.hidden_size)
         self.value = torch.nn.Linear(self.hidden_size, self.hidden_size)
@@ -98,34 +105,47 @@ class SelfAttention(torch.nn.Module):
         # Query, Key, and Value
         # =====================
 
-        if hasattr(torch._C, 'grouped_matmul_bias') and not isinstance(self.query, QuantizedLinear):
-            query_layer, key_layer, value_layer = torch._C.grouped_matmul_bias([hidden_states, hidden_states, hidden_states], 
-                                                                                [self.query.weight, self.key.weight, self.value.weight],
-                                                                                [self.query.bias, self.key.bias, self.value.bias])
+        if hasattr(torch._C, "grouped_matmul_bias") and not isinstance(
+            self.query, QuantizedLinear
+        ):
+            query_layer, key_layer, value_layer = torch._C.grouped_matmul_bias(
+                [hidden_states, hidden_states, hidden_states],
+                [self.query.weight, self.key.weight, self.value.weight],
+                [self.query.bias, self.key.bias, self.value.bias],
+            )
         else:
             query_layer = self.query(hidden_states)
             key_layer = self.key(hidden_states)
             value_layer = self.value(hidden_states)
-        
-        fallback = not hasattr(torch._C, 'fused_multi_head_attention_inference_v2')
+
+        fallback = not hasattr(torch._C, "fused_multi_head_attention_inference_v2")
 
         if fallback:
-            if hasattr(torch._C, 'fused_codegeex_qkv_reshape'):
-                query_layer, key_layer, value_layer = torch._C.fused_codegeex_qkv_reshape(query_layer, key_layer, value_layer, self.num_attention_heads)
+            if hasattr(torch._C, "fused_codegeex_qkv_reshape"):
+                (
+                    query_layer,
+                    key_layer,
+                    value_layer,
+                ) = torch._C.fused_codegeex_qkv_reshape(
+                    query_layer, key_layer, value_layer, self.num_attention_heads
+                )
             else:
-                new_query_layer_shape = query_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = query_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 query_layer = query_layer.view(*new_query_layer_shape)
 
-                new_query_layer_shape = key_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = key_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 key_layer = key_layer.view(*new_query_layer_shape)
 
-                new_query_layer_shape = value_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = value_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 value_layer = value_layer.view(*new_query_layer_shape)
 
             # ==================================
@@ -134,10 +154,10 @@ class SelfAttention(torch.nn.Module):
 
             if layer_past is not None:
                 past_key, past_value = layer_past
-                key_layer = torch.cat((past_key.type_as(key_layer),
-                                    key_layer), dim=0)
-                value_layer = torch.cat((past_value.type_as(value_layer),
-                                        value_layer), dim=0)
+                key_layer = torch.cat((past_key.type_as(key_layer), key_layer), dim=0)
+                value_layer = torch.cat(
+                    (past_value.type_as(value_layer), value_layer), dim=0
+                )
             if get_key_value:
                 present = (key_layer, value_layer)
 
@@ -146,18 +166,29 @@ class SelfAttention(torch.nn.Module):
             # ===================================
 
             # [b, np, sq, sk]
-            output_size = (query_layer.size(1),
-                        query_layer.size(2),
-                        query_layer.size(0),
-                        key_layer.size(0))
+            output_size = (
+                query_layer.size(1),
+                query_layer.size(2),
+                query_layer.size(0),
+                key_layer.size(0),
+            )
 
             # [sq, b, np, hn] -> [sq, b * np, hn]
-            query_layer = query_layer.contiguous().view(output_size[2], output_size[0] * output_size[1], -1)
-            key_layer = key_layer.contiguous().view(output_size[3], output_size[0] * output_size[1], -1)
+            query_layer = query_layer.contiguous().view(
+                output_size[2], output_size[0] * output_size[1], -1
+            )
+            key_layer = key_layer.contiguous().view(
+                output_size[3], output_size[0] * output_size[1], -1
+            )
 
             # Raw attention scores. [b * np, sq, sk]
-            matmul_result = torch.matmul(query_layer.transpose(0, 1),
-                                        key_layer.transpose(0, 1).transpose(1, 2)) / self.norm_factor
+            matmul_result = (
+                torch.matmul(
+                    query_layer.transpose(0, 1),
+                    key_layer.transpose(0, 1).transpose(1, 2),
+                )
+                / self.norm_factor
+            )
 
             # change view to [b, np, sq, sk]
             attention_scores = matmul_result.view(*output_size)
@@ -171,29 +202,38 @@ class SelfAttention(torch.nn.Module):
                     with torch.no_grad():
                         if layer_past is not None:
                             attention_mask = attention_mask[
-                                            ...,
-                                            attention_scores.size(3) - 1,
-                                            :attention_scores.size(3)].unsqueeze(2)
+                                ...,
+                                attention_scores.size(3) - 1,
+                                : attention_scores.size(3),
+                            ].unsqueeze(2)
                         else:
                             attention_mask = attention_mask[
-                                            ...,
-                                            :attention_scores.size(3),
-                                            :attention_scores.size(3)]
+                                ...,
+                                : attention_scores.size(3),
+                                : attention_scores.size(3),
+                            ]
 
                 if context_length is not None:
                     attention_mask = torch.clone(attention_mask)
                     attention_mask[:, :, context_length:, :] = True
-                
+
                 attention_mask = ~attention_mask
                 attention_mask = attention_mask.contiguous()
 
             # attention scores and attention mask [b, np, sq, sk]
             # attention_scores = attention_mask_func(attention_scores, attention_mask)
-            if hasattr(torch._C, 'fused_scale_mask_softmax'):
+            if hasattr(torch._C, "fused_scale_mask_softmax"):
                 if self.attention_softmax_in_fp32:
-                    attention_probs = torch._C.fused_scale_mask_softmax(attention_scores.float(), attention_mask, fill_value=-10000.0, scale=1.0).half()
+                    attention_probs = torch._C.fused_scale_mask_softmax(
+                        attention_scores.float(),
+                        attention_mask,
+                        fill_value=-10000.0,
+                        scale=1.0,
+                    ).half()
                 else:
-                    attention_probs = torch._C.fused_scale_mask_softmax(attention_scores, attention_mask, fill_value=-10000.0, scale=1.0)
+                    attention_probs = torch._C.fused_scale_mask_softmax(
+                        attention_scores, attention_mask, fill_value=-10000.0, scale=1.0
+                    )
             else:
                 attention_scores = attention_scores - attention_mask * 10000.0
                 if self.attention_softmax_in_fp32:
@@ -209,19 +249,26 @@ class SelfAttention(torch.nn.Module):
             # [sq, b, np, hn] --> [b, np, sq, hn]
 
             # context layer shape: [b, np, sq, hn]
-            output_size = (value_layer.size(1),
-                        value_layer.size(2),
-                        query_layer.size(0),
-                        value_layer.size(3))
+            output_size = (
+                value_layer.size(1),
+                value_layer.size(2),
+                query_layer.size(0),
+                value_layer.size(3),
+            )
 
-            # change view [sq, b * np, hn] 
-            value_layer = value_layer.view(value_layer.size(0), output_size[0] * output_size[1], -1)
+            # change view [sq, b * np, hn]
+            value_layer = value_layer.view(
+                value_layer.size(0), output_size[0] * output_size[1], -1
+            )
 
             # change view [b * np, sq, sk]
-            attention_probs = attention_probs.view(output_size[0] * output_size[1],
-                                                output_size[2], -1)
+            attention_probs = attention_probs.view(
+                output_size[0] * output_size[1], output_size[2], -1
+            )
 
-            context_layer = torch.bmm(attention_probs, value_layer.unsqueeze(0).transpose(1, 2).squeeze(0))
+            context_layer = torch.bmm(
+                attention_probs, value_layer.unsqueeze(0).transpose(1, 2).squeeze(0)
+            )
 
             # change view [b, np, sq, hn]
             context_layer = context_layer.view(*output_size)
@@ -230,8 +277,7 @@ class SelfAttention(torch.nn.Module):
             context_layer = context_layer.permute(2, 0, 1, 3).contiguous()
 
             # # [sq, b, np, hn] --> [sq, b, hp]
-            new_context_layer_shape = context_layer.size()[:-2] + \
-                                    (self.hidden_size,)
+            new_context_layer_shape = context_layer.size()[:-2] + (self.hidden_size,)
             context_layer = context_layer.view(*new_context_layer_shape)
         else:
             if layer_past is not None:
@@ -249,20 +295,19 @@ class SelfAttention(torch.nn.Module):
                 )
             if get_key_value:
                 present = (key_layer, value_layer)
-            
-            context_layer = torch._C.fused_multi_head_attention_inference_v2(
-                        query=query_layer, 
-                        key=key_layer, 
-                        value=value_layer, 
-                        query_head_size=self.hidden_size_per_attention_head, 
-                        causal=True, 
-                        causal_diagonal_offset=key_layer.shape[0]-query_layer.shape[0],
-                        query_layout="MB(HK)",
-                        key_layout="MB(HK)",
-                        value_layout="MB(HK)",
-                        output_layout="MB(HK)",
-                )
 
+            context_layer = torch._C.fused_multi_head_attention_inference_v2(
+                query=query_layer,
+                key=key_layer,
+                value=value_layer,
+                query_head_size=self.hidden_size_per_attention_head,
+                causal=True,
+                causal_diagonal_offset=key_layer.shape[0] - query_layer.shape[0],
+                query_layout="MB(HK)",
+                key_layout="MB(HK)",
+                value_layout="MB(HK)",
+                output_layout="MB(HK)",
+            )
 
         # =================
         # Output. [sq, b, h]
@@ -298,7 +343,9 @@ class TopQuerySelfAttention(torch.nn.Module):
         self.layer_number = max(1, layer_number)
 
         assert self.hidden_size % self.num_attention_heads == 0
-        self.hidden_size_per_attention_head = int(self.hidden_size // self.num_attention_heads)
+        self.hidden_size_per_attention_head = int(
+            self.hidden_size // self.num_attention_heads
+        )
 
         self.query = torch.nn.Linear(self.hidden_size, self.hidden_size)
         self.key = torch.nn.Linear(self.hidden_size, self.hidden_size)
@@ -308,7 +355,7 @@ class TopQuerySelfAttention(torch.nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
         self.dense = torch.nn.Linear(self.hidden_size, self.hidden_size)
-        
+
     def forward(
         self,
         hidden_states,
@@ -321,34 +368,47 @@ class TopQuerySelfAttention(torch.nn.Module):
     ):
 
         # hidden_states: [sq, b, h]
-        if hasattr(torch._C, 'grouped_matmul_bias') and not isinstance(self.query, QuantizedLinear):
-            query_layer, key_layer, value_layer = torch._C.grouped_matmul_bias([query_hidden_state, hidden_states, hidden_states], 
-                                                                                [self.query.weight, self.key.weight, self.value.weight],
-                                                                                [self.query.bias, self.key.bias, self.value.bias])
+        if hasattr(torch._C, "grouped_matmul_bias") and not isinstance(
+            self.query, QuantizedLinear
+        ):
+            query_layer, key_layer, value_layer = torch._C.grouped_matmul_bias(
+                [query_hidden_state, hidden_states, hidden_states],
+                [self.query.weight, self.key.weight, self.value.weight],
+                [self.query.bias, self.key.bias, self.value.bias],
+            )
         else:
             query_layer = self.query(query_hidden_state)
             key_layer = self.key(hidden_states)
             value_layer = self.value(hidden_states)
-        
-        fallback = not hasattr(torch._C, 'fused_multi_head_attention_inference_v2')
+
+        fallback = not hasattr(torch._C, "fused_multi_head_attention_inference_v2")
 
         if fallback:
-            if hasattr(torch._C, 'fused_codegeex_qkv_reshape'):
-                query_layer, key_layer, value_layer = torch._C.fused_codegeex_qkv_reshape(query_layer, key_layer, value_layer, self.num_attention_heads)
+            if hasattr(torch._C, "fused_codegeex_qkv_reshape"):
+                (
+                    query_layer,
+                    key_layer,
+                    value_layer,
+                ) = torch._C.fused_codegeex_qkv_reshape(
+                    query_layer, key_layer, value_layer, self.num_attention_heads
+                )
             else:
-                new_query_layer_shape = query_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = query_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 query_layer = query_layer.view(*new_query_layer_shape)
 
-                new_query_layer_shape = key_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = key_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 key_layer = key_layer.view(*new_query_layer_shape)
 
-                new_query_layer_shape = value_layer.size()[:-1] + \
-                                        (self.num_attention_heads,
-                                        self.hidden_size_per_attention_head)
+                new_query_layer_shape = value_layer.size()[:-1] + (
+                    self.num_attention_heads,
+                    self.hidden_size_per_attention_head,
+                )
                 value_layer = value_layer.view(*new_query_layer_shape)
 
             # ==================================
@@ -357,10 +417,10 @@ class TopQuerySelfAttention(torch.nn.Module):
 
             if layer_past is not None:
                 past_key, past_value = layer_past
-                key_layer = torch.cat((past_key.type_as(key_layer),
-                                    key_layer), dim=0)
-                value_layer = torch.cat((past_value.type_as(value_layer),
-                                        value_layer), dim=0)
+                key_layer = torch.cat((past_key.type_as(key_layer), key_layer), dim=0)
+                value_layer = torch.cat(
+                    (past_value.type_as(value_layer), value_layer), dim=0
+                )
             if get_key_value:
                 present = (key_layer, value_layer)
 
@@ -369,18 +429,29 @@ class TopQuerySelfAttention(torch.nn.Module):
             # ===================================
 
             # [b, np, sq, sk]
-            output_size = (query_layer.size(1),
-                        query_layer.size(2),
-                        query_layer.size(0),
-                        key_layer.size(0))
+            output_size = (
+                query_layer.size(1),
+                query_layer.size(2),
+                query_layer.size(0),
+                key_layer.size(0),
+            )
 
             # [s, b, np, hn] -> [s, b * np, hn]
-            query_layer = query_layer.contiguous().view(output_size[2], output_size[0] * output_size[1], -1)
-            key_layer = key_layer.contiguous().view(output_size[3], output_size[0] * output_size[1], -1)
+            query_layer = query_layer.contiguous().view(
+                output_size[2], output_size[0] * output_size[1], -1
+            )
+            key_layer = key_layer.contiguous().view(
+                output_size[3], output_size[0] * output_size[1], -1
+            )
 
             # Raw attention scores. [b * np, sq, sk]
-            matmul_result = torch.matmul(query_layer.transpose(0, 1),
-                                        key_layer.transpose(0, 1).transpose(1, 2)) / self.norm_factor
+            matmul_result = (
+                torch.matmul(
+                    query_layer.transpose(0, 1),
+                    key_layer.transpose(0, 1).transpose(1, 2),
+                )
+                / self.norm_factor
+            )
 
             # change view to [b, np, s, s]
             attention_scores = matmul_result.view(*output_size)
@@ -393,14 +464,14 @@ class TopQuerySelfAttention(torch.nn.Module):
                 with torch.no_grad():
                     if layer_past is not None:
                         attention_mask = attention_mask[
-                                        ...,
-                                        attention_scores.size(3) - 1,
-                                        :attention_scores.size(3)].unsqueeze(2)
+                            ...,
+                            attention_scores.size(3) - 1,
+                            : attention_scores.size(3),
+                        ].unsqueeze(2)
                     else:
                         attention_mask = attention_mask[
-                                        ...,
-                                        :attention_scores.size(3),
-                                        :attention_scores.size(3)]
+                            ..., : attention_scores.size(3), : attention_scores.size(3)
+                        ]
 
             if context_length is not None:
                 attention_mask = torch.clone(attention_mask)
@@ -413,7 +484,7 @@ class TopQuerySelfAttention(torch.nn.Module):
                 attention_probs = self.softmax(attention_scores.float()).half()
             else:
                 attention_probs = self.softmax(attention_scores)
-                
+
             # =========================
             # Context layer. [sq, b, hp]
             # =========================
@@ -422,20 +493,27 @@ class TopQuerySelfAttention(torch.nn.Module):
             # [sq, b, np, hn] --> [b, np, sq, hn]
 
             # context layer shape: [b, np, sq, hn]
-            output_size = (value_layer.size(1),
-                        value_layer.size(2),
-                        query_layer.size(0),
-                        value_layer.size(3))
+            output_size = (
+                value_layer.size(1),
+                value_layer.size(2),
+                query_layer.size(0),
+                value_layer.size(3),
+            )
 
             # change view [sq, b * np, hn]
-            value_layer = value_layer.view(value_layer.size(0), output_size[0] * output_size[1], -1)
+            value_layer = value_layer.view(
+                value_layer.size(0), output_size[0] * output_size[1], -1
+            )
 
             # change view [b * np, sq, sk]
-            attention_probs = attention_probs.view(output_size[0] * output_size[1],
-                                                output_size[2], -1)
+            attention_probs = attention_probs.view(
+                output_size[0] * output_size[1], output_size[2], -1
+            )
 
             # matmul: [b * np, sq, hn]
-            context_layer = torch.bmm(attention_probs, value_layer.unsqueeze(0).transpose(1, 2).squeeze(0))
+            context_layer = torch.bmm(
+                attention_probs, value_layer.unsqueeze(0).transpose(1, 2).squeeze(0)
+            )
 
             # change view [b, np, sq, hn]
             context_layer = context_layer.view(*output_size)
@@ -444,8 +522,7 @@ class TopQuerySelfAttention(torch.nn.Module):
             context_layer = context_layer.permute(2, 0, 1, 3).contiguous()
 
             # [sq, b, np, hn] --> [sq, b, hp]
-            new_context_layer_shape = context_layer.size()[:-2] + \
-                                    (self.hidden_size,)
+            new_context_layer_shape = context_layer.size()[:-2] + (self.hidden_size,)
             context_layer = context_layer.view(*new_context_layer_shape)
 
         else:
@@ -465,18 +542,18 @@ class TopQuerySelfAttention(torch.nn.Module):
             if get_key_value:
                 present = (key_layer, value_layer)
 
-            if hasattr(torch._C, 'fused_multi_head_attention_inference_v2'):
+            if hasattr(torch._C, "fused_multi_head_attention_inference_v2"):
                 context_layer = torch._C.fused_multi_head_attention_inference_v2(
-                        query=query_layer, 
-                        key=key_layer, 
-                        value=value_layer, 
-                        query_head_size=self.hidden_size_per_attention_head, 
-                        causal=True, 
-                        causal_diagonal_offset=key_layer.shape[0]-query_layer.shape[0],
-                        query_layout="MB(HK)",
-                        key_layout="MB(HK)",
-                        value_layout="MB(HK)",
-                        output_layout="MB(HK)",
+                    query=query_layer,
+                    key=key_layer,
+                    value=value_layer,
+                    query_head_size=self.hidden_size_per_attention_head,
+                    causal=True,
+                    causal_diagonal_offset=key_layer.shape[0] - query_layer.shape[0],
+                    query_layout="MB(HK)",
+                    key_layout="MB(HK)",
+                    value_layout="MB(HK)",
+                    output_layout="MB(HK)",
                 )
 
         # =================
@@ -498,10 +575,10 @@ class TransformerLayer(torch.nn.Module):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
         num_attention_heads,
-        layer_number, 
+        layer_number,
         layernorm_epsilon=1e-5,
         fp16=True,
         attention_softmax_in_fp32=True,
@@ -512,19 +589,23 @@ class TransformerLayer(torch.nn.Module):
         self.layer_number = layer_number
 
         # Layernorm on the input data.
-        self.input_layernorm = torch.nn.LayerNorm(hidden_size,
-                                                  eps=self.layernorm_epsilon)
+        self.input_layernorm = torch.nn.LayerNorm(
+            hidden_size, eps=self.layernorm_epsilon
+        )
 
         # Self attention.
-        self.attention = SelfAttention(hidden_size,
-                                       num_attention_heads, 
-                                       layer_number,
-                                       fp16,
-                                       attention_softmax_in_fp32)
+        self.attention = SelfAttention(
+            hidden_size,
+            num_attention_heads,
+            layer_number,
+            fp16,
+            attention_softmax_in_fp32,
+        )
 
         # Layernorm on the input data.
-        self.post_attention_layernorm = torch.nn.LayerNorm(self.hidden_size,
-                                                           eps=self.layernorm_epsilon)
+        self.post_attention_layernorm = torch.nn.LayerNorm(
+            self.hidden_size, eps=self.layernorm_epsilon
+        )
         self.mlp = MLP(self.hidden_size)
 
     def forward(
@@ -543,13 +624,15 @@ class TransformerLayer(torch.nn.Module):
         layernorm_output = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attention_output, attention_mask = self.attention(layernorm_output,
-                                          attention_mask,
-                                          layer_past=layer_past,
-                                          get_key_value=get_key_value,
-                                          prompt_length=prompt_length,
-                                          context_length=context_length,
-                                          layer_id=layer_id)
+        attention_output, attention_mask = self.attention(
+            layernorm_output,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+            layer_id=layer_id,
+        )
 
         if get_key_value:
             attention_output, presents = attention_output
@@ -557,7 +640,7 @@ class TransformerLayer(torch.nn.Module):
         # Residual connection.
         residual = hidden_states
         layernorm_input = attention_output + residual
-        
+
         # Use FP32 for Layernorm
         # layernorm_output = self.post_attention_layernorm(layernorm_input.float()).half()
         layernorm_output = self.post_attention_layernorm(layernorm_input)
@@ -577,7 +660,7 @@ class TopQueryLayer(torch.nn.Module):
     """
 
     def __init__(
-        self, 
+        self,
         hidden_size,
         num_attention_heads,
         layer_number,
@@ -590,16 +673,18 @@ class TopQueryLayer(torch.nn.Module):
         self.layer_number = layer_number
 
         # Use FP32 for Layernorm
-        self.input_layernorm = torch.nn.LayerNorm(self.hidden_size,
-                                                  eps=self.layernorm_epsilon)
+        self.input_layernorm = torch.nn.LayerNorm(
+            self.hidden_size, eps=self.layernorm_epsilon
+        )
 
         # Self attention.
-        self.attention = TopQuerySelfAttention(self.hidden_size,
-                                               self.num_attention_heads,
-                                               self.layer_number)
+        self.attention = TopQuerySelfAttention(
+            self.hidden_size, self.num_attention_heads, self.layer_number
+        )
         # Layernorm on the input data.
-        self.post_attention_layernorm = torch.nn.LayerNorm(self.hidden_size,
-                                                           eps=self.layernorm_epsilon)
+        self.post_attention_layernorm = torch.nn.LayerNorm(
+            self.hidden_size, eps=self.layernorm_epsilon
+        )
 
         # MLP
         self.mlp = MLP(self.hidden_size)
@@ -622,13 +707,15 @@ class TopQueryLayer(torch.nn.Module):
         layernorm_output = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attention_output = self.attention(layernorm_output,
-                                          query_hidden_state,
-                                          attention_mask,
-                                          layer_past=layer_past,
-                                          get_key_value=get_key_value,
-                                          prompt_length=prompt_length,
-                                          context_length=context_length)
+        attention_output = self.attention(
+            layernorm_output,
+            query_hidden_state,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             attention_output, presents = attention_output
@@ -636,7 +723,7 @@ class TopQueryLayer(torch.nn.Module):
         # Residual connection.
         residual = hidden_states
         layernorm_input = attention_output + residual
-        
+
         # Use FP32 for Layernorm
         # layernorm_output = self.post_attention_layernorm(layernorm_input.float()).half()
         layernorm_output = self.post_attention_layernorm(layernorm_input)
@@ -678,22 +765,27 @@ class Transformer(torch.nn.Module):
 
         if self.num_unique_layers is None:
             self.num_unique_layers = self.num_layers
-        assert self.num_layers % self.num_unique_layers == 0, \
-            'number of layers should be divisible by number of unique layers'
-        
+        assert (
+            self.num_layers % self.num_unique_layers == 0
+        ), "number of layers should be divisible by number of unique layers"
+
         # Transformer layers.
         def build_layer(layer_number):
-            return TransformerLayer(self.hidden_size, self.num_attention_heads, layer_number)
+            return TransformerLayer(
+                self.hidden_size, self.num_attention_heads, layer_number
+            )
 
         self.layers = torch.nn.ModuleList(
-            [build_layer(i + 1) for i in range(self.num_unique_layers)])
+            [build_layer(i + 1) for i in range(self.num_unique_layers)]
+        )
 
-        self.topQueryLayer = TopQueryLayer(self.hidden_size,
-                                           self.num_attention_heads,
-                                           self.num_unique_layers)
+        self.topQueryLayer = TopQueryLayer(
+            self.hidden_size, self.num_attention_heads, self.num_unique_layers
+        )
 
-        self.final_layernorm = torch.nn.LayerNorm(self.hidden_size,
-                                                  eps=self.layernorm_epsilon)
+        self.final_layernorm = torch.nn.LayerNorm(
+            self.hidden_size, eps=self.layernorm_epsilon
+        )
 
     def _get_layer_index(self, layer_number):
         return layer_number % self.num_unique_layers
@@ -723,13 +815,15 @@ class Transformer(torch.nn.Module):
             past = None
             if layer_past is not None:
                 past = layer_past[index]
-            hidden_states, attention_mask = layer(hidden_states,
-                                  attention_mask,
-                                  layer_past=past,
-                                  get_key_value=get_key_value,
-                                  prompt_length=prompt_length,
-                                  context_length=context_length,
-                                  layer_id=index)
+            hidden_states, attention_mask = layer(
+                hidden_states,
+                attention_mask,
+                layer_past=past,
+                get_key_value=get_key_value,
+                prompt_length=prompt_length,
+                context_length=context_length,
+                layer_id=index,
+            )
             if get_key_value:
                 hidden_states, present = hidden_states
                 presents.append(present)
@@ -744,13 +838,15 @@ class Transformer(torch.nn.Module):
         past = None
         if layer_past is not None:
             past = layer_past[self.num_layers]
-        hidden_states = self.topQueryLayer(hidden_states_,
-                                           query_hidden_state,
-                                           origin_attention_mask,
-                                           layer_past=past,
-                                           get_key_value=get_key_value,
-                                           prompt_length=prompt_length,
-                                           context_length=context_length)
+        hidden_states = self.topQueryLayer(
+            hidden_states_,
+            query_hidden_state,
+            origin_attention_mask,
+            layer_past=past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             hidden_states, present = hidden_states
@@ -789,35 +885,39 @@ class Embedding(torch.nn.Module):
         self.hidden_size = hidden_size
         self.vocab_size = vocab_size
         self.max_sequence_length = max_sequence_length
-        
+
         # Word embeddings.
         self.word_embeddings = torch.nn.Embedding(self.vocab_size, self.hidden_size)
-        self._word_embeddings_key = 'word_embeddings'
-        
+        self._word_embeddings_key = "word_embeddings"
+
         # Position embedding.
-        self.position_embeddings = torch.nn.Embedding(self.max_sequence_length, self.hidden_size)
+        self.position_embeddings = torch.nn.Embedding(
+            self.max_sequence_length, self.hidden_size
+        )
         self.position_embeddings = self.position_embeddings.half()
-        self._position_embeddings_key = 'position_embeddings'
-        
+        self._position_embeddings_key = "position_embeddings"
+
     def forward(self, input_ids, position_ids):
         # Embeddings.
         words_embeddings = self.word_embeddings(input_ids)
         position_embeddings = self.position_embeddings(position_ids)
         embeddings = words_embeddings + position_embeddings
-        
+
         return embeddings
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._word_embeddings_key] \
-            = self.word_embeddings.state_dict(destination, prefix, keep_vars)
-        state_dict_[self._position_embeddings_key] \
-            = self.position_embeddings.state_dict(
-            destination, prefix, keep_vars)
-        
+        state_dict_[self._word_embeddings_key] = self.word_embeddings.state_dict(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._position_embeddings_key
+        ] = self.position_embeddings.state_dict(destination, prefix, keep_vars)
+
         return state_dict_
 
     def load_state_dict(self, state_dict, strict=True):
@@ -830,10 +930,9 @@ class Embedding(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'word_embeddings' in key:
-                    state_dict_[key.split('word_embeddings.')[1]] \
-                        = state_dict[key]
-        state_dict_["weight"] = state_dict_["weight"][:self.vocab_size]
+                if "word_embeddings" in key:
+                    state_dict_[key.split("word_embeddings.")[1]] = state_dict[key]
+        state_dict_["weight"] = state_dict_["weight"][: self.vocab_size]
         self.word_embeddings.load_state_dict(state_dict_, strict=strict)
 
         # Position embedding.
@@ -843,11 +942,10 @@ class Embedding(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'position_embeddings' in key:
-                    state_dict_[key.split('position_embeddings.')[1]] \
-                        = state_dict[key]
+                if "position_embeddings" in key:
+                    state_dict_[key.split("position_embeddings.")[1]] = state_dict[key]
         self.position_embeddings.load_state_dict(state_dict_, strict=strict)
-        
+
 
 class QueryEmbedding(torch.nn.Module):
     """Language model embeddings.
@@ -871,24 +969,27 @@ class QueryEmbedding(torch.nn.Module):
         self.max_sequence_length = max_sequence_length
 
         # Top query position embedding (serial).
-        self.top_query_embeddings = torch.nn.Embedding(self.max_sequence_length, self.hidden_size)
+        self.top_query_embeddings = torch.nn.Embedding(
+            self.max_sequence_length, self.hidden_size
+        )
         self.top_query_embeddings = self.top_query_embeddings.half()
-        self._top_query_embeddings_key = 'top_query_embeddings'
-        
+        self._top_query_embeddings_key = "top_query_embeddings"
+
     def forward(self, position_ids):
         # Embeddings.
         embeddings = self.top_query_embeddings(position_ids)
-        
+
         return embeddings
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._top_query_embeddings_key] \
-            = self.top_query_embeddings.state_dict(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._top_query_embeddings_key
+        ] = self.top_query_embeddings.state_dict(destination, prefix, keep_vars)
 
         return state_dict_
 
@@ -902,11 +1003,10 @@ class QueryEmbedding(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'top_query_embeddings' in key:
-                    state_dict_[key.split('top_query_embeddings.')[1]] \
-                        = state_dict[key]
+                if "top_query_embeddings" in key:
+                    state_dict_[key.split("top_query_embeddings.")[1]] = state_dict[key]
         self.top_query_embeddings.load_state_dict(state_dict_, strict=strict)
-        
+
 
 class TransformerLanguageModel(torch.nn.Module):
     """Transformer language model.
@@ -939,32 +1039,32 @@ class TransformerLanguageModel(torch.nn.Module):
         self.max_position_embeddings = max_position_embeddings
 
         # Embeddings
-        self.embedding = Embedding(self.hidden_size,
-                                   self.padded_vocab_size,
-                                   self.max_position_embeddings)
-        self._embedding_key = 'embedding'
+        self.embedding = Embedding(
+            self.hidden_size, self.padded_vocab_size, self.max_position_embeddings
+        )
+        self._embedding_key = "embedding"
 
         # Query embeddings
-        self.topQueryEmbedding = QueryEmbedding(self.hidden_size,
-                                                self.padded_vocab_size,
-                                                self.max_position_embeddings)
-        self._topQueryEmbedding_key = 'topQueryEmbedding'
+        self.topQueryEmbedding = QueryEmbedding(
+            self.hidden_size, self.padded_vocab_size, self.max_position_embeddings
+        )
+        self._topQueryEmbedding_key = "topQueryEmbedding"
 
         # Transformer
-        self.transformer = Transformer(self.hidden_size,
-                                       self.num_attention_heads,
-                                       self.num_layers)
-        self._transformer_key = 'transformer'
+        self.transformer = Transformer(
+            self.hidden_size, self.num_attention_heads, self.num_layers
+        )
+        self._transformer_key = "transformer"
 
     def forward(
-            self,
-            input_ids,
-            position_ids,
-            attention_mask,
-            layer_past=None,
-            get_key_value=False,
-            prompt_length=None,
-            context_length=None,
+        self,
+        input_ids,
+        position_ids,
+        attention_mask,
+        layer_past=None,
+        get_key_value=False,
+        prompt_length=None,
+        context_length=None,
     ):
 
         # Embeddings.
@@ -973,30 +1073,39 @@ class TransformerLanguageModel(torch.nn.Module):
         queryEmbedding_out = self.topQueryEmbedding(query_position_ids)
 
         # Transformer.
-        transformer_output = self.transformer(embedding_output,
-                                              queryEmbedding_out,
-                                              attention_mask,
-                                              layer_past=layer_past,
-                                              get_key_value=get_key_value,
-                                              prompt_length=prompt_length,
-                                              context_length=context_length)
+        transformer_output = self.transformer(
+            embedding_output,
+            queryEmbedding_out,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         return transformer_output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
         """For easy load."""
 
         state_dict_ = {}
-        state_dict_[self._embedding_key] \
-            = self.embedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._topQueryEmbedding_key] \
-            = self.topQueryEmbedding.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
-        state_dict_[self._transformer_key] \
-            = self.transformer.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._embedding_key
+        ] = self.embedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._topQueryEmbedding_key
+        ] = self.topQueryEmbedding.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
+        state_dict_[
+            self._transformer_key
+        ] = self.transformer.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
 
         return state_dict_
 
@@ -1010,7 +1119,7 @@ class TransformerLanguageModel(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
         self.embedding.load_state_dict(state_dict_, strict=strict)
 
@@ -1020,7 +1129,7 @@ class TransformerLanguageModel(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if '_embeddings' in key:
+                if "_embeddings" in key:
                     state_dict_[key] = state_dict[key]
         self.topQueryEmbedding.load_state_dict(state_dict_, strict=strict)
 
@@ -1031,8 +1140,8 @@ class TransformerLanguageModel(torch.nn.Module):
             # for backward compatibility.
             state_dict_ = {}
             for key in state_dict.keys():
-                if 'transformer.' in key:
-                    state_dict_[key.split('transformer.')[1]] = state_dict[key]
+                if "transformer." in key:
+                    state_dict_[key.split("transformer.")[1]] = state_dict[key]
         self.transformer.load_state_dict(state_dict_, strict=strict)
 
 
@@ -1048,14 +1157,16 @@ class CodeGeeXModel(torch.nn.Module):
         max_position_embeddings,
     ):
         super(CodeGeeXModel, self).__init__()
-        
-        self.language_model = TransformerLanguageModel(hidden_size,
-                                                       num_layers,
-                                                       num_attention_heads,
-                                                       padded_vocab_size,
-                                                       max_position_embeddings)
+
+        self.language_model = TransformerLanguageModel(
+            hidden_size,
+            num_layers,
+            num_attention_heads,
+            padded_vocab_size,
+            max_position_embeddings,
+        )
         self._language_model_key = "language_model"
-        
+
     def forward(
         self,
         input_ids,
@@ -1067,31 +1178,38 @@ class CodeGeeXModel(torch.nn.Module):
         context_length=None,
     ):
         # Language model.
-        lm_output = self.language_model(input_ids,
-                                        position_ids,
-                                        attention_mask,
-                                        layer_past=layer_past,
-                                        get_key_value=get_key_value,
-                                        prompt_length=prompt_length,
-                                        context_length=context_length)
+        lm_output = self.language_model(
+            input_ids,
+            position_ids,
+            attention_mask,
+            layer_past=layer_past,
+            get_key_value=get_key_value,
+            prompt_length=prompt_length,
+            context_length=context_length,
+        )
 
         if get_key_value:
             lm_output, presents = lm_output
 
-        output = F.linear(lm_output, self.language_model.embedding.word_embeddings.weight.half())
-        
+        output = F.linear(
+            lm_output, self.language_model.embedding.word_embeddings.weight.half()
+        )
+
         if get_key_value:
             output = [output, presents]
 
         return output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-            destination, prefix, keep_vars)
+        state_dict_[
+            self._language_model_key
+        ] = self.language_model.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
         return state_dict_
 
     def load_state_dict(self, state_dict, strict=True):

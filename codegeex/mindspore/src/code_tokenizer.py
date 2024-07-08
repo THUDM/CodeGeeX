@@ -6,7 +6,7 @@ from transformers.models.gpt2 import GPT2TokenizerFast
 
 
 def encode_whitespaces(text, start_extra_id: int, max_len: int):
-    """ Encode whitespaces to extra tokens in GPT-J.
+    """Encode whitespaces to extra tokens in GPT-J.
 
     >>> encode_whitespaces('a\\n  b\\n   c', 10, 10)
     'a\\n<|extratoken_10|>b\\n<|extratoken_11|>c'
@@ -16,16 +16,18 @@ def encode_whitespaces(text, start_extra_id: int, max_len: int):
         if acc_len == 0:
             return text
         if acc_len == 1:
-            return text + ' '
-        assert acc_len <= max_len, f'Max whitespace run length {max_len}, but found {acc_len}'
+            return text + " "
+        assert (
+            acc_len <= max_len
+        ), f"Max whitespace run length {max_len}, but found {acc_len}"
         extra_id = start_extra_id - 2 + acc_len
-        extra_token = f'<|extratoken_{extra_id}|>'
+        extra_token = f"<|extratoken_{extra_id}|>"
         return text + extra_token
 
     acc_len = 0
-    res = ''
+    res = ""
     for ch in text:
-        if ch == ' ':
+        if ch == " ":
             acc_len += 1
             if acc_len == max_len:
                 res = push_acc_space(acc_len, res)
@@ -41,7 +43,7 @@ def encode_whitespaces(text, start_extra_id: int, max_len: int):
 
 
 def decode_whitespaces(text: str, start_extra_id: int, max_len: int):
-    """ Decode the whitespace-encoded strings produced by encode_whitespace.
+    """Decode the whitespace-encoded strings produced by encode_whitespace.
 
     >>> text = 'a\\n  b\\n   c'
     >>> s, l = 10, 10
@@ -50,17 +52,17 @@ def decode_whitespaces(text: str, start_extra_id: int, max_len: int):
     """
     for l in range(2, max_len + 1):
         token_id = start_extra_id - 2 + l
-        token = f'<|extratoken_{token_id}|>'
-        text = text.replace(token, ' ' * l)
+        token = f"<|extratoken_{token_id}|>"
+        text = text.replace(token, " " * l)
     return text
 
 
 class Code13BDictionary(object):
     def __init__(
-            self,
-            dict_file: str,
-            extra_token_ids: List[str] = None,
-            pad_to_vocab_size: int = -1,
+        self,
+        dict_file: str,
+        extra_token_ids: List[str] = None,
+        pad_to_vocab_size: int = -1,
     ):
         self._idx = dict()
         self._count = dict()
@@ -130,28 +132,36 @@ class Code13BDictionary(object):
 
 class CodeTokenizer(object):
     def __init__(
-            self,
-            tokenizer: GPT2TokenizerFast = None,
-            start_extra_id: int = 10,
-            max_len: int = 10,
-            mode='13b',
-            dict_file: str = None,
+        self,
+        tokenizer: GPT2TokenizerFast = None,
+        start_extra_id: int = 10,
+        max_len: int = 10,
+        mode="13b",
+        dict_file: str = None,
     ):
-        self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")
-        if mode not in ['6b', '13b']:
+        self.tokenizer = (
+            tokenizer
+            if tokenizer is not None
+            else AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")
+        )
+        if mode not in ["6b", "13b"]:
             raise ValueError(f"Invalid mode {mode}, choose from ['6b', '13b']")
         self.start_extra_id = start_extra_id
         self.max_len = max_len
         self.mode = mode
-        self.code_dict = Code13BDictionary(dict_file, pad_to_vocab_size=51200) if self.mode == '13b' else None
+        self.code_dict = (
+            Code13BDictionary(dict_file, pad_to_vocab_size=51200)
+            if self.mode == "13b"
+            else None
+        )
         self.eos_token_id = self.tokenizer.eos_token_id
 
     def encode_code(self, code: str):
-        if self.mode == '6b':
+        if self.mode == "6b":
             code = encode_whitespaces(code, self.start_extra_id, self.max_len)
             input_ids = self.tokenizer(code).input_ids
 
-        elif self.mode == '13b':
+        elif self.mode == "13b":
             code = encode_whitespaces(code, self.start_extra_id, self.max_len)
             input_ids = self.code_dict.map_tokens(self.tokenizer.encode(code))
             input_ids = np.array(input_ids, dtype=np.int64).reshape(1, -1)
@@ -159,13 +169,19 @@ class CodeTokenizer(object):
         return input_ids
 
     def decode_code(self, input_ids):
-        if self.mode == '6b':
+        if self.mode == "6b":
             texts = self.tokenizer.batch_decode(input_ids)
-            output_code = [decode_whitespaces(text, self.start_extra_id, self.max_len) for text in texts]
+            output_code = [
+                decode_whitespaces(text, self.start_extra_id, self.max_len)
+                for text in texts
+            ]
 
-        elif self.mode == '13b':
+        elif self.mode == "13b":
             input_ids = [self.code_dict.decode_tokens(input_ids.tolist()[0])]
             texts = self.tokenizer.batch_decode(input_ids)
-            output_code = [decode_whitespaces(text, self.start_extra_id, self.max_len) for text in texts]
+            output_code = [
+                decode_whitespaces(text, self.start_extra_id, self.max_len)
+                for text in texts
+            ]
 
         return output_code

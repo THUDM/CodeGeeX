@@ -12,7 +12,12 @@ parser.add_argument("--part", type=str, default=None)
 
 args = parser.parse_args()
 
-log_path = os.path.join(args.work_dir, "logs", os.environ.get("JOB_ID"), f'device{os.environ.get("RANK_ID")}')
+log_path = os.path.join(
+    args.work_dir,
+    "logs",
+    os.environ.get("JOB_ID"),
+    f'device{os.environ.get("RANK_ID")}',
+)
 tb_path = os.path.join(args.work_dir, "runs", os.environ.get("JOB_ID"))
 
 Path(log_path).mkdir(parents=True, exist_ok=True)
@@ -30,7 +35,8 @@ print("=================RANK_TABLE_FILE: ", os.environ["RANK_TABLE_FILE"], flush
 print("=================ms import done", flush=True)
 time.sleep(10)
 os.system(
-    "cp /home/work/rank_table/jobstart_hccl.json /home/work/sfs/xx; sudo chmod +777 /home/work/rank_table/jobstart_hccl.json")
+    "cp /home/work/rank_table/jobstart_hccl.json /home/work/sfs/xx; sudo chmod +777 /home/work/rank_table/jobstart_hccl.json"
+)
 ret = os.system(f"cd {log_path} && bash {args.script} 2>&1 | tee output.log")
 if os.environ.get("RANK_ID") == 0:
     log_dir = os.path.join(args.work_dir, "logs", os.environ.get("JOB_ID"))

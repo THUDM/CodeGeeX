@@ -64,20 +64,27 @@ class PadDataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.dataset[idx][0]
-        return (item[:self.seq_len],) if self.seq_len <= len(item) else (
-        np.concatenate((item, np.ones(self.seq_len - len(item)) * self.eod_id), axis=0),)
+        return (
+            (item[: self.seq_len],)
+            if self.seq_len <= len(item)
+            else (
+                np.concatenate(
+                    (item, np.ones(self.seq_len - len(item)) * self.eod_id), axis=0
+                ),
+            )
+        )
         # return (np.pad(item, (0, 1), constant_values=self.eod_id),)
 
 
 class BinaryDataset(Dataset):
     def __init__(
-            self,
-            path,
-            process_fn,
-            length_per_sample=64 + 1024 + 4096,
-            dtype="int32",
-            preload=False,
-            **kwargs,
+        self,
+        path,
+        process_fn,
+        length_per_sample=64 + 1024 + 4096,
+        dtype="int32",
+        preload=False,
+        **kwargs,
     ):  # TODO ARGS
         assert length_per_sample is not None
         self.length_per_sample = length_per_sample
@@ -169,7 +176,9 @@ class ConcatDataset(Dataset):
         else:
             sample_idx = idx - self.cumulative_sizes[dataset_idx - 1]
         sample_idx = sample_idx % len(self.datasets[dataset_idx])
-        return tuple(col.astype(np.int64) for col in self.datasets[dataset_idx][sample_idx])
+        return tuple(
+            col.astype(np.int64) for col in self.datasets[dataset_idx][sample_idx]
+        )
 
 
 class RandomMappingDataset(Dataset):
@@ -209,20 +218,25 @@ class BlockedSplitDataset(Dataset):
         self.wrapped_data = ds
         self.wrapped_data_len = len(ds)
         self.indices = indices
-        self.len = len(indices) * (len(ds) // block_size) + np.sum(indices < (len(ds) % block_size))
+        self.len = len(indices) * (len(ds) // block_size) + np.sum(
+            indices < (len(ds) % block_size)
+        )
 
     def __len__(self):
         return self.len
 
     def __getitem__(self, index):
         return self.wrapped_data[
-            (index // len(self.indices)) * self.block_size + self.indices[index % len(self.indices)]
-            ]
+            (index // len(self.indices)) * self.block_size
+            + self.indices[index % len(self.indices)]
+        ]
 
 
 class SubsetDataset(Dataset):
     def __init__(self, ds, start, length):
-        assert start >= 0 and length > 0 and start + length <= len(ds), "Illegal start or length"
+        assert (
+            start >= 0 and length > 0 and start + length <= len(ds)
+        ), "Illegal start or length"
         self.ds = ds
         self.start = start
         self.length = length
@@ -255,6 +269,7 @@ def split_train_val_test(ds, split=[0.99, 0.01, 0.0], seed=None):
             rtn_ds[i] = SubsetDataset(ds=ds, start=start_idx, length=proportion)
             start_idx += proportion
     return rtn_ds
+
 
 # def split_ds(ds, split=[0.99, 0.01, 0.0], seed=1):
 #     """

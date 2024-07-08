@@ -32,7 +32,7 @@ from src.tokenization_jieba import JIEBATokenizer
 def chunks(lst, n):
     """yield n sized chunks from list"""
     for i in range(0, len(lst), n):
-        yield lst[i: i + n]
+        yield lst[i : i + n]
 
 
 def package_file(it, n):
@@ -94,9 +94,7 @@ def tokenize_openwebtext(tokenizer, iterator, seq_length, eot):
             for para in f.read().split("\n\n"):
                 if para:
                     tokenized_text = tokenizer.tokenize(para)
-                    content += tokenizer.convert_tokens_to_ids(
-                        tokenized_text
-                    ) + [eot]
+                    content += tokenizer.convert_tokens_to_ids(tokenized_text) + [eot]
         for chunk in chunks(content, seq_length):
             sample = {}
             if len(chunk) == seq_length:
@@ -111,9 +109,7 @@ def tokenize_wiki(tokenizer, file_path, seq_length, eot):
         for para in clean_wikitext(f.read()).split("\n\n"):
             if para and para.strip().startswith("=") is False:
                 tokenized_text = tokenizer.tokenize(para)
-                content += tokenizer.convert_tokens_to_ids(tokenized_text) + [
-                    eot
-                ]
+                content += tokenizer.convert_tokens_to_ids(tokenized_text) + [eot]
     for chunk in chunks(content, seq_length):
         sample = {}
         if len(chunk) == seq_length:
@@ -160,9 +156,7 @@ def task_unit(iterator, tokenizer, seq_length, eot, parallel_writer=True):
             print("Process {} transformed {} records.".format(index, count))
         except StopIteration:
             if data_batch:
-                writer.write_raw_data(
-                    data_batch, parallel_writer=parallel_writer
-                )
+                writer.write_raw_data(data_batch, parallel_writer=parallel_writer)
                 print("Process {} transformed {} records.".format(index, count))
             break
 
@@ -194,9 +188,7 @@ if __name__ == "__main__":
     schema = {
         args.data_column_name: {"type": "int32", "shape": [-1]},
     }
-    writer = FileWriter(
-        file_name=args.output_file, shard_num=args.file_partition
-    )
+    writer = FileWriter(file_name=args.output_file, shard_num=args.file_partition)
     writer.add_schema(schema, args.dataset_type)
     writer.open_and_set_header()
 
@@ -219,14 +211,14 @@ if __name__ == "__main__":
     transforms_count = 0
     if args.dataset_type == "wiki":
         for x in tokenize_wiki(
-                word_tokenizer, args.input_glob, args.seq_length, args.eot
+            word_tokenizer, args.input_glob, args.seq_length, args.eot
         ):
             transforms_count += 1
             writer.write_raw_data([x])
         print("Transformed {} records.".format(transforms_count))
     elif args.dataset_type == "lambada":
         for x in tokenize_lambada(
-                word_tokenizer, args.input_glob, args.seq_length, args.eot
+            word_tokenizer, args.input_glob, args.seq_length, args.eot
         ):
             transforms_count += 1
             writer.write_raw_data([x])
@@ -242,9 +234,7 @@ if __name__ == "__main__":
             )
             pool.map(map_func, package_file(file_iter, args.file_batch_size))
     else:
-        raise ValueError(
-            "Not support dataset type: {}".format(args.dataset_type)
-        )
+        raise ValueError("Not support dataset type: {}".format(args.dataset_type))
 
     writer.commit()
     out_file = args.output_file

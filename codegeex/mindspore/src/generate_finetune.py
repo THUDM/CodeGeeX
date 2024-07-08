@@ -32,7 +32,9 @@ def topk_fun(logits, topk=5):
     return value, index
 
 
-def sampler(log_probs_revised, top_p, top_k_num, use_pynative=False, bad_words_index=[]):
+def sampler(
+    log_probs_revised, top_p, top_k_num, use_pynative=False, bad_words_index=[]
+):
     for i, bad_words in enumerate(bad_words_index):
         for bad_word in bad_words:
             log_probs_revised[i, bad_word] = -10000
@@ -75,7 +77,9 @@ def sampler(log_probs_revised, top_p, top_k_num, use_pynative=False, bad_words_i
     return p, p_args
 
 
-def generate_increment(model, origin_inputs, origin_length, config, tokenizer, verbose=False):
+def generate_increment(
+    model, origin_inputs, origin_length, config, tokenizer, verbose=False
+):
     """
     Text generation for incremental inference
 
@@ -101,7 +105,9 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
 
     batch_size, valid_length = origin_inputs.shape
     # Init outputs with original inputs
-    outputs = [[origin_inputs[i][j] for j in range(valid_length)] for i in range(batch_size)]
+    outputs = [
+        [origin_inputs[i][j] for j in range(valid_length)] for i in range(batch_size)
+    ]
     output_codes = [[] for _ in range(batch_size)]
     # If target length exceeds seq_length, use seq_length instead
     target_lengths = [min(seq_length, l + max_generate_length) for l in origin_length]
@@ -112,8 +118,12 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
     frequency_list = np.zeros((batch_size, vocab_embedding_vocab_size))
     pad_length = seq_length - origin_inputs.shape[-1]
     # Pad original inputs to seq_length
-    input_ids = np.pad(origin_inputs, ((0, 0), (0, pad_length)),
-                       'constant', constant_values=(end_token, end_token))
+    input_ids = np.pad(
+        origin_inputs,
+        ((0, 0), (0, pad_length)),
+        "constant",
+        constant_values=(end_token, end_token),
+    )
     if verbose:
         print("input_ids is ", input_ids)
 
@@ -121,7 +131,10 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
     current_indexes = [max(l - 1, 0) for l in valid_lengths]
     # batch_valid_length = Tensor(np.array([current_index for _ in range(batch_size)]), mstype.int32)
     batch_valid_length = Tensor(np.array(current_indexes), mstype.int32)
-    current_indexes = Tensor(np.array([current_indexes[i] + i * seq_length for i in range(batch_size)]), mstype.int32)
+    current_indexes = Tensor(
+        np.array([current_indexes[i] + i * seq_length for i in range(batch_size)]),
+        mstype.int32,
+    )
     # For first graph, not_init should be false
     init_true = Tensor([True], mstype.bool_)
     init_false = Tensor([False], mstype.bool_)
@@ -129,15 +142,20 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
     # Claim the first graph
     model.predict_network.add_flags_recursive(is_first_iteration=True)
     # Call a single inference with input size of (bs, seq_length)
-    logits = model.predict(Tensor(input_ids, mstype.int32),
-                           current_indexes, init, batch_valid_length)
+    logits = model.predict(
+        Tensor(input_ids, mstype.int32), current_indexes, init, batch_valid_length
+    )
 
     # Claim the second graph and set not_init to true
     init = init_true
     model.predict_network.add_flags_recursive(is_first_iteration=False)
 
-    comments_index = [2, ]  # '#': 2, ' #': 1303
-    newline_index = [198, ]  # '\n': 198
+    comments_index = [
+        2,
+    ]  # '#': 2, ' #': 1303
+    newline_index = [
+        198,
+    ]  # '\n': 198
     # A single loop generates one token, loop until reaching target seq_length or generating eod token
     while not all(gen_end):
         # Reshape the output logits
@@ -145,12 +163,22 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
         log_probs = logits.reshape(batch_size, vocab_embedding_vocab_size)
 
         # Get the revised log_probs considering frequency and presence penalty to eliminate duplicate in generated results
-        log_probs_revised = log_probs - frequency_list * frequency_penalty - (frequency_list > 0) * presence_penalty
+        log_probs_revised = (
+            log_probs
+            - frequency_list * frequency_penalty
+            - (frequency_list > 0) * presence_penalty
+        )
         log_probs_revised /= temperature
 
         bad_words_index = [[] for _ in range(batch_size)]
 
-        p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative, bad_words_index=bad_words_index)
+        p, p_args = sampler(
+            log_probs_revised,
+            top_p,
+            top_k_num,
+            use_pynative,
+            bad_words_index=bad_words_index,
+        )
         # Random select a token as final output for this round
         target_index = np.zeros(batch_size, dtype=np.int64)
         for i in range(batch_size):
@@ -160,11 +188,14 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
             print("=== p:", p, "shape:", p.shape)
             print("=== p_args:", p_args, "shape", p_args.shape)
             print(
-                f"=== Length {valid_lengths}, target index {target_index}, chosen token {p_args[np.arange(batch_size), target_index]}, generation end status {gen_end}.")
+                f"=== Length {valid_lengths}, target index {target_index}, chosen token {p_args[np.arange(batch_size), target_index]}, generation end status {gen_end}."
+            )
 
         # Update frequency list
         target = p_args[np.arange(batch_size), target_index]
-        frequency_list[np.arange(batch_size), target] = frequency_list[np.arange(batch_size), target] + 1
+        frequency_list[np.arange(batch_size), target] = (
+            frequency_list[np.arange(batch_size), target] + 1
+        )
 
         batch_valid_length = Tensor(np.array(valid_lengths), mstype.int32)
         current_indexes = Tensor(np.arange(batch_size, dtype=np.int32), mstype.int32)
@@ -182,6 +213,5 @@ def generate_increment(model, origin_inputs, origin_length, config, tokenizer, v
                     gen_end[i] = True
 
         # Call a single inference with input size of (bs, 1)
-        logits = model.predict(input_id, current_indexes,
-                               init, batch_valid_length)
+        logits = model.predict(input_id, current_indexes, init, batch_valid_length)
     return tokenizer.decode_code(output_codes)

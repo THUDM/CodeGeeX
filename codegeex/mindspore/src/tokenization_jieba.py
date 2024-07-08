@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tokenization classes for OpenAI GPT."""
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from io import open
 
@@ -22,18 +21,18 @@ import jieba
 import sentencepiece as spm
 
 
-class JIEBATokenizer():
+class JIEBATokenizer:
     r"""
     Jieba Tokenizer
     """
 
     def __init__(self, vocab_file, model_file, max_len=None):
         self.max_len = max_len if max_len is not None else int(1e12)
-        f = open(vocab_file, 'r')
+        f = open(vocab_file, "r")
         lines = f.readlines()
         self.encoder = {}
         for line in enumerate(lines):
-            key = line[1].split('\t')[0]
+            key = line[1].split("\t")[0]
             self.encoder[key] = line[0]
 
         self.decoder = {v: k for k, v in self.encoder.items()}
@@ -41,9 +40,9 @@ class JIEBATokenizer():
         self.sp = spm.SentencePieceProcessor(model_file=model_file)
         self.translator = str.maketrans(" \n", "\u2582\u2583")
 
-        self.eod_id = self.encoder['<eod>']
-        self.eot_id = self.encoder['<eot>']
-        self.pad_id = self.encoder['<pad>']
+        self.eod_id = self.encoder["<eod>"]
+        self.eot_id = self.encoder["<eot>"]
+        self.pad_id = self.encoder["<pad>"]
 
     @property
     def vocab_size(self):
@@ -57,8 +56,10 @@ class JIEBATokenizer():
         return self.eod_id
 
     def tokenize(self, text):
-        """ Tokenize a string. """
-        seg_list = [x.translate(self.translator) for x in jieba.cut(text, cut_all=False)]
+        """Tokenize a string."""
+        seg_list = [
+            x.translate(self.translator) for x in jieba.cut(text, cut_all=False)
+        ]
         new_seg = " ".join(seg_list)
         return self.sp.encode(new_seg)
 
@@ -74,5 +75,5 @@ class JIEBATokenizer():
 
     def decode(self, tokens):
         text = self.sp.decode(tokens)
-        text = text.replace(' ', '').replace('\u2582', ' ').replace('\u2583', '\n')
+        text = text.replace(" ", "").replace("\u2582", " ").replace("\u2583", "\n")
         return text
