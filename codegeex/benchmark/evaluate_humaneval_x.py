@@ -28,7 +28,7 @@ def process_humaneval_test(sample, problems, example_test=False):
     task_id = sample["task_id"]
     language = task_id.split("/")[0].lower()
 
-    prompt = sample["prompt"]
+    prompt = problems[task_id]["prompt"]
     if example_test and "example_test" in problems[task_id] and problems[task_id]["example_test"] != "":
         test = problems[task_id]["example_test"]
     else:
