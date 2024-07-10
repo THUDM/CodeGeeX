@@ -211,12 +211,11 @@ HumanEval-X中每个语言的样本，包含了声明、描述和解答，它们
 如果觉得我们的工作有帮助，欢迎引用以下论文：
 
 ```
-@misc{zheng2023codegeex,
-      title={CodeGeeX: A Pre-Trained Model for Code Generation with Multilingual Evaluations on HumanEval-X}, 
-      author={Qinkai Zheng and Xiao Xia and Xu Zou and Yuxiao Dong and Shan Wang and Yufei Xue and Zihan Wang and Lei Shen and Andi Wang and Yang Li and Teng Su and Zhilin Yang and Jie Tang},
-      year={2023},
-      eprint={2303.17568},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{zheng2023codegeex,
+  title={CodeGeeX: A Pre-Trained Model for Code Generation with Multilingual Benchmarking on HumanEval-X},
+  author={Qinkai Zheng and Xiao Xia and Xu Zou and Yuxiao Dong and Shan Wang and Yufei Xue and Zihan Wang and Lei Shen and Andi Wang and Yang Li and Teng Su and Zhilin Yang and Jie Tang},
+  booktitle={Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining},
+  pages={5673--5684},
+  year={2023}
 }
 ```
