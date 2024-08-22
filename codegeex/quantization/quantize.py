@@ -3,12 +3,23 @@ import torch
 from torch.nn.parameter import Parameter
 from codegeex.kernels import extract_weight_to_half
 from codegeex.megatron.mpu.layers import RowParallelLinear, ColumnParallelLinear
-from codegeex.megatron.mpu.mappings import copy_to_tensor_model_parallel_region, gather_from_tensor_model_parallel_region, reduce_from_tensor_model_parallel_region, scatter_to_tensor_model_parallel_region
+from codegeex.megatron.mpu.mappings import (
+    copy_to_tensor_model_parallel_region,
+    gather_from_tensor_model_parallel_region,
+    reduce_from_tensor_model_parallel_region,
+    scatter_to_tensor_model_parallel_region,
+)
 
 
 class W8A16Linear(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, inp: torch.Tensor, quant_w: torch.Tensor, scale_w: torch.Tensor, weight_bit_width):
+    def forward(
+        ctx,
+        inp: torch.Tensor,
+        quant_w: torch.Tensor,
+        scale_w: torch.Tensor,
+        weight_bit_width,
+    ):
         ctx.inp_shape = inp.size()
         ctx.weight_shape = quant_w.size()
         ctx.weight_bit_width = weight_bit_width
@@ -31,46 +42,59 @@ class W8A16Linear(torch.autograd.Function):
 
 class QuantizedLinear(torch.nn.Module):
     def __init__(
-        self, 
+        self,
         in_features: int,
         out_features: int,
-        weight_bit_width: int, 
-        weight: torch.Tensor = None, 
-        bias: torch.Tensor = None, 
-        *args, 
-        **kwargs
+        weight_bit_width: int,
+        weight: torch.Tensor = None,
+        bias: torch.Tensor = None,
+        *args,
+        **kwargs,
     ):
         super(QuantizedLinear, self).__init__()
-        
+
         self.in_features = in_features
         self.out_features = out_features
         self.weight_bit_width = weight_bit_width
 
         if weight is None:
             self.weight = torch.empty(
-                self.out_features, self.in_features * weight_bit_width // 8, dtype=torch.int8, device=kwargs["device"]
+                self.out_features,
+                self.in_features * weight_bit_width // 8,
+                dtype=torch.int8,
+                device=kwargs["device"],
             )
-            self.weight_scale = torch.empty(self.out_features, dtype=kwargs["params_dtype"], device=kwargs["device"])
+            self.weight_scale = torch.empty(
+                self.out_features, dtype=kwargs["params_dtype"], device=kwargs["device"]
+            )
         else:
-            self.weight_scale = (weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)).half()
-            self.weight = torch.round(weight / self.weight_scale[:, None]).to(torch.int8)
+            self.weight_scale = (
+                weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)
+            ).half()
+            self.weight = torch.round(weight / self.weight_scale[:, None]).to(
+                torch.int8
+            )
             if weight_bit_width == 4:
                 self.weight = compress_int4_weight(self.weight)
 
         if bias is None:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         else:
             self.bias = bias
-        
+
         self.weight = Parameter(self.weight.to(kwargs["device"]), requires_grad=False)
-        self.weight_scale = Parameter(self.weight_scale.to(kwargs["device"]), requires_grad=False)
+        self.weight_scale = Parameter(
+            self.weight_scale.to(kwargs["device"]), requires_grad=False
+        )
 
     def forward(self, input_):
         # Matrix multiply.
-        output = W8A16Linear.apply(input_, self.weight, self.weight_scale, self.weight_bit_width)
+        output = W8A16Linear.apply(
+            input_, self.weight, self.weight_scale, self.weight_bit_width
+        )
         if self.bias is not None:
             output = output + self.bias
-        
+
         return output
 
 
@@ -79,13 +103,15 @@ class QuantizedColumnParallelLinear(ColumnParallelLinear):
         self,
         input_size: int,
         output_size: int,
-        weight_bit_width: int, 
-        weight: torch.Tensor = None, 
-        bias: torch.Tensor = None, 
-        *args, 
+        weight_bit_width: int,
+        weight: torch.Tensor = None,
+        bias: torch.Tensor = None,
+        *args,
         **kwargs,
     ):
-        super(QuantizedColumnParallelLinear, self).__init__(input_size, output_size, *args, **kwargs)
+        super(QuantizedColumnParallelLinear, self).__init__(
+            input_size, output_size, *args, **kwargs
+        )
         self.input_size = input_size
         self.output_size = output_size
         self.weight_bit_width = weight_bit_width
@@ -97,29 +123,42 @@ class QuantizedColumnParallelLinear(ColumnParallelLinear):
 
         if weight is None:
             self.weight = torch.empty(
-                self.output_size, self.input_size * weight_bit_width // 8, dtype=torch.int8, device=kwargs["device"]
+                self.output_size,
+                self.input_size * weight_bit_width // 8,
+                dtype=torch.int8,
+                device=kwargs["device"],
             )
-            self.weight_scale = torch.empty(self.output_size, dtype=kwargs["params_dtype"], device=kwargs["device"])
+            self.weight_scale = torch.empty(
+                self.output_size, dtype=kwargs["params_dtype"], device=kwargs["device"]
+            )
         else:
-            self.weight_scale = (weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)).half()
-            self.weight = torch.round(weight / self.weight_scale[:, None]).to(torch.int8)
+            self.weight_scale = (
+                weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)
+            ).half()
+            self.weight = torch.round(weight / self.weight_scale[:, None]).to(
+                torch.int8
+            )
             if weight_bit_width == 4:
                 self.weight = compress_int4_weight(self.weight)
 
         if bias is None:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         else:
             del self.bias
             self.bias = bias
-            
+
         self.weight = Parameter(self.weight.to(kwargs["device"]), requires_grad=False)
-        self.weight_scale = Parameter(self.weight_scale.to(kwargs["device"]), requires_grad=False)
+        self.weight_scale = Parameter(
+            self.weight_scale.to(kwargs["device"]), requires_grad=False
+        )
 
     def forward(self, input_):
         # Set up backprop all-reduce.
         input_parallel = copy_to_tensor_model_parallel_region(input_)
         # Matrix multiply.
-        output_parallel = W8A16Linear.apply(input_parallel, self.weight, self.weight_scale, self.weight_bit_width)
+        output_parallel = W8A16Linear.apply(
+            input_parallel, self.weight, self.weight_scale, self.weight_bit_width
+        )
         if self.bias is not None and not self.skip_bias_add:
             output_parallel = output_parallel + self.bias
         if self.gather_output:
@@ -127,9 +166,9 @@ class QuantizedColumnParallelLinear(ColumnParallelLinear):
             output = gather_from_tensor_model_parallel_region(output_parallel)
         else:
             output = output_parallel
-            
+
         output_bias = self.bias if self.skip_bias_add else None
-        
+
         return output, output_bias
 
 
@@ -138,13 +177,15 @@ class QuantizedRowParallelLinear(RowParallelLinear):
         self,
         input_size: int,
         output_size: int,
-        weight_bit_width: int, 
-        weight: torch.Tensor = None, 
-        bias: torch.Tensor = None,  
-        *args, 
+        weight_bit_width: int,
+        weight: torch.Tensor = None,
+        bias: torch.Tensor = None,
+        *args,
         **kwargs,
     ):
-        super(QuantizedRowParallelLinear, self).__init__(input_size, output_size, *args, **kwargs)
+        super(QuantizedRowParallelLinear, self).__init__(
+            input_size, output_size, *args, **kwargs
+        )
         self.input_size = input_size
         self.output_size = output_size
         self.weight_bit_width = weight_bit_width
@@ -153,26 +194,37 @@ class QuantizedRowParallelLinear(RowParallelLinear):
         else:
             self.skip_bias_add = False
         del self.weight
-        
+
         if weight is None:
             self.weight = torch.empty(
-                self.output_size, self.input_size * weight_bit_width // 8, dtype=torch.int8, device=kwargs["device"]
+                self.output_size,
+                self.input_size * weight_bit_width // 8,
+                dtype=torch.int8,
+                device=kwargs["device"],
             )
-            self.weight_scale = torch.empty(self.output_size, dtype=kwargs["params_dtype"], device=kwargs["device"])
+            self.weight_scale = torch.empty(
+                self.output_size, dtype=kwargs["params_dtype"], device=kwargs["device"]
+            )
         else:
-            self.weight_scale = (weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)).half()
-            self.weight = torch.round(weight / self.weight_scale[:, None]).to(torch.int8)
+            self.weight_scale = (
+                weight.abs().max(dim=-1).values / ((2 ** (weight_bit_width - 1)) - 1)
+            ).half()
+            self.weight = torch.round(weight / self.weight_scale[:, None]).to(
+                torch.int8
+            )
             if weight_bit_width == 4:
                 self.weight = compress_int4_weight(self.weight)
 
         if bias is None:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         else:
             del self.bias
             self.bias = bias
-            
+
         self.weight = Parameter(self.weight.to(kwargs["device"]), requires_grad=False)
-        self.weight_scale = Parameter(self.weight_scale.to(kwargs["device"]), requires_grad=False)
+        self.weight_scale = Parameter(
+            self.weight_scale.to(kwargs["device"]), requires_grad=False
+        )
 
     def forward(self, input_):
         # Set up backprop all-reduce.
@@ -181,7 +233,9 @@ class QuantizedRowParallelLinear(RowParallelLinear):
         else:
             input_parallel = scatter_to_tensor_model_parallel_region(input_)
         # Matrix multiply.
-        output_parallel = W8A16Linear.apply(input_parallel, self.weight, self.weight_scale, self.weight_bit_width)
+        output_parallel = W8A16Linear.apply(
+            input_parallel, self.weight, self.weight_scale, self.weight_bit_width
+        )
         # All-reduce across all the partitions.
         output_ = reduce_from_tensor_model_parallel_region(output_parallel)
         if self.bias is not None and not self.skip_bias_add:
@@ -189,19 +243,19 @@ class QuantizedRowParallelLinear(RowParallelLinear):
         else:
             output = output_
         output_bias = self.bias if self.skip_bias_add else None
-        
+
         return output, output_bias
-    
+
 
 def quantize(model, weight_bit_width, backend="torch"):
     """Replace fp16 linear with quantized linear"""
-    
+
     for i in range(len(model.language_model.transformer.layers) + 1):
         if i == len(model.language_model.transformer.layers):
             layer = model.language_model.transformer.topQueryLayer
         else:
             layer = model.language_model.transformer.layers[i]
-        
+
         if backend == "torch":
             layer.attention.query = QuantizedLinear(
                 in_features=layer.attention.query.in_features,
@@ -325,5 +379,5 @@ def quantize(model, weight_bit_width, backend="torch"):
                 params_dtype=torch.half,
                 device=layer.mlp.dense_4h_to_h.weight.device,
             )
-            
+
     return model

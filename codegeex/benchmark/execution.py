@@ -12,6 +12,7 @@ import gzip
 import json
 from typing import *
 
+
 def dicts_to_jsonl(data_list: list, filename: str, compress: bool = True) -> None:
     """
     Method saves list of dicts into jsonl file.
@@ -20,34 +21,34 @@ def dicts_to_jsonl(data_list: list, filename: str, compress: bool = True) -> Non
         .jsonl suffix into the file.
     :param compress: (bool) should file be compressed into a gzip archive?
     """
-    sjsonl = '.jsonl'
-    sgz = '.gz'
+    sjsonl = ".jsonl"
+    sgz = ".gz"
     # Check filename
     if not filename.endswith(sjsonl):
         filename = filename + sjsonl
     # Save data
-    
+
     if compress:
         filename = filename + sgz
-        with gzip.open(filename, 'w') as compressed:
+        with gzip.open(filename, "w") as compressed:
             for ddict in data_list:
-                jout = json.dumps(ddict) + '\n'
-                jout = jout.encode('utf-8')
+                jout = json.dumps(ddict) + "\n"
+                jout = jout.encode("utf-8")
                 compressed.write(jout)
     else:
-        with open(filename, 'w') as out:
+        with open(filename, "w") as out:
             for ddict in data_list:
-                jout = json.dumps(ddict) + '\n'
+                jout = json.dumps(ddict) + "\n"
                 out.write(jout)
 
 
 def check_correctness(
-        task_id: str,
-        sample: dict,
-        language_type: str,
-        timeout: float = 3.0,
-        tmp_dir: str = None,
-        completion_id: Optional[int] = None,
+    task_id: str,
+    sample: dict,
+    language_type: str,
+    timeout: float = 3.0,
+    tmp_dir: str = None,
+    completion_id: Optional[int] = None,
 ) -> Dict:
     """
     Evaluates the functional correctness of a completion by running the test
@@ -62,6 +63,7 @@ def check_correctness(
                 # These system calls are needed when cleaning up tempdir.
                 import os
                 import shutil
+
                 rmtree = shutil.rmtree
                 rmdir = os.rmdir
                 chdir = os.chdir
@@ -97,7 +99,9 @@ def check_correctness(
                 os.chdir = chdir
 
         elif "go" in language_type.lower():
-            assert tmp_dir is not None, "Go should be evaluated in a dir where necessary module files installed."
+            assert (
+                tmp_dir is not None
+            ), "Go should be evaluated in a dir where necessary module files installed."
 
             import os
             import shutil
@@ -109,7 +113,7 @@ def check_correctness(
                 os.makedirs(tmp_dir)
 
             os.chdir(tmp_dir)
-            open(f"main_test.go", 'w').write(sample["test_code"])
+            open(f"main_test.go", "w").write(sample["test_code"])
             try:
                 exec_result = None
                 with time_limit(timeout):
@@ -122,7 +126,11 @@ def check_correctness(
                     # does not perform destructive actions on their host or network.
                     # Once you have read this disclaimer and taken appropriate precautions,
                     # uncomment the following line and proceed at your own risk:
-                     exec_result = subprocess.run(["go", "test", f"-timeout={timeout}s", "main_test.go"], timeout=timeout, capture_output=True)
+                    exec_result = subprocess.run(
+                        ["go", "test", f"-timeout={timeout}s", "main_test.go"],
+                        timeout=timeout,
+                        capture_output=True,
+                    )
 
                 if exec_result.returncode == 0:
                     result.append("passed")
@@ -154,7 +162,7 @@ def check_correctness(
                 os.makedirs(tmp_dir)
 
             os.chdir(tmp_dir)
-            open(f"test.js", 'w').write(sample["test_code"])
+            open(f"test.js", "w").write(sample["test_code"])
             try:
                 exec_result = None
                 with time_limit(timeout):
@@ -167,7 +175,9 @@ def check_correctness(
                     # does not perform destructive actions on their host or network.
                     # Once you have read this disclaimer and taken appropriate precautions,
                     # uncomment the following line and proceed at your own risk:
-                     exec_result = subprocess.run(["node", "test.js"], timeout=timeout, capture_output=True)
+                    exec_result = subprocess.run(
+                        ["node", "test.js"], timeout=timeout, capture_output=True
+                    )
 
                 if exec_result.stderr.decode():
                     err = exec_result.stderr.decode()
@@ -193,14 +203,19 @@ def check_correctness(
                 os.makedirs(tmp_dir)
 
             os.chdir(tmp_dir)
-            open(f"test.cpp", 'w').write(sample["test_code"])
+            open(f"test.cpp", "w").write(sample["test_code"])
             if "162" in task_id:
-                compilation_result = subprocess.run(["/usr/bin/g++", "-std=c++11", "test.cpp", "-lcrypto", "-lssl"],
-                                                    timeout=timeout,
-                                                    capture_output=True)
+                compilation_result = subprocess.run(
+                    ["/usr/bin/g++", "-std=c++11", "test.cpp", "-lcrypto", "-lssl"],
+                    timeout=timeout,
+                    capture_output=True,
+                )
             else:
-                compilation_result = subprocess.run(["/usr/bin/g++", "-std=c++11", "test.cpp"], timeout=timeout,
-                                                    capture_output=True)
+                compilation_result = subprocess.run(
+                    ["/usr/bin/g++", "-std=c++11", "test.cpp"],
+                    timeout=timeout,
+                    capture_output=True,
+                )
             if compilation_result.returncode != 0:
                 if compilation_result.stderr:
                     err = compilation_result.stderr.decode()
@@ -220,7 +235,9 @@ def check_correctness(
                         # does not perform destructive actions on their host or network.
                         # Once you have read this disclaimer and taken appropriate precautions,
                         # uncomment the following line and proceed at your own risk:
-                         exec_result = subprocess.run(["./a.out"], timeout=timeout, capture_output=True)
+                        exec_result = subprocess.run(
+                            ["./a.out"], timeout=timeout, capture_output=True
+                        )
 
                     if exec_result.returncode == 0:
                         result.append("passed")
@@ -240,16 +257,16 @@ def check_correctness(
                     result.append("timed out")
 
             shutil.rmtree(tmp_dir)
-        elif "rust" in language_type.lower():  
-            import os         
-            
+        elif "rust" in language_type.lower():
+            import os
+
             WD: str = os.path.dirname(os.path.abspath(__file__))
             RUST_DIR: str = os.path.join(WD, "rust")
             RUST_SRC: str = os.path.join(RUST_DIR, "src")
             RUST_BIN: str = os.path.join(RUST_SRC, "bin")
             RUST_TMP_DIR: str = os.path.join(RUST_DIR, "tmp")
             RUST_LOGS: str = os.path.join(RUST_TMP_DIR, "logs")
-            RUST_EXT: str = ".rs" 
+            RUST_EXT: str = ".rs"
 
             # Create mandatory tmp directories
             os.makedirs(RUST_TMP_DIR, exist_ok=True)
@@ -257,18 +274,18 @@ def check_correctness(
             os.makedirs(RUST_SRC, exist_ok=True)
             os.makedirs(RUST_BIN, exist_ok=True)
 
-            with tempfile.NamedTemporaryFile(dir = RUST_BIN, delete=False) as f:
-                #temporal file name
+            with tempfile.NamedTemporaryFile(dir=RUST_BIN, delete=False) as f:
+                # temporal file name
                 file_prefix = sample["task_id"].lower().replace("/", "_")
-                file_name:str =  file_prefix +RUST_EXT
-                
+                file_name: str = file_prefix + RUST_EXT
+
                 os.rename(f.name, os.path.join(RUST_BIN, file_name))
-                
+
                 # Sample to pure Rust function
                 rust_code: str = sample["test_code"]
 
                 # dump the rust source code in the target temporal file
-                f.write(rust_code.encode('utf-8'))
+                f.write(rust_code.encode("utf-8"))
 
             # Proceed towards Rust binaries compilation. Therefore move to Rust module root dir.
             os.chdir(RUST_DIR)
@@ -277,34 +294,43 @@ def check_correctness(
             # Pass OR Fail compilation
             log_filename: str = file_prefix + ".jsonl"
             log_path: str = os.path.join(RUST_LOGS, log_filename)
-            cargo_check: str = "cargo check --bin " + file_prefix + " --message-format json >> " + log_path
+            cargo_check: str = (
+                "cargo check --bin "
+                + file_prefix
+                + " --message-format json >> "
+                + log_path
+            )
             # Compilation build status
             returned_val_compilation: int
-            
+
             # Overwrite file content
             if os.path.exists(log_path):
-                if(file_size := os.path.getsize(log_path)) >= 0: 
+                if (file_size := os.path.getsize(log_path)) >= 0:
                     os.remove(log_path)
                     returned_val_compilation = os.system(cargo_check)
 
-            else: 
+            else:
                 returned_val_compilation = os.system(cargo_check)
 
-            # 0 means success   
+            # 0 means success
             if returned_val_compilation == 0:
 
-                #Execution pipeline
-                cargo_test: str = "cargo test --bin " +file_prefix+ " --message-format json >> " + log_path
+                # Execution pipeline
+                cargo_test: str = (
+                    "cargo test --bin "
+                    + file_prefix
+                    + " --message-format json >> "
+                    + log_path
+                )
                 returned_val_execution = os.system(cargo_test)
-                
+
                 if returned_val_execution == 0:
                     result.append("passed")
                 else:
-                   result.append(f"failed: execution error") 
+                    result.append(f"failed: execution error")
 
             else:
                 result.append(f"failed: compilation error")
-
 
         elif "java" in language_type.lower():
             assert tmp_dir is not None, "Java should be evaluated in a temporary dir."
@@ -319,13 +345,16 @@ def check_correctness(
                 os.makedirs(tmp_dir)
 
             os.chdir(tmp_dir)
-            open(os.path.join(tmp_dir, "Main.java"), 'w').write(sample["test_code"])
+            open(os.path.join(tmp_dir, "Main.java"), "w").write(sample["test_code"])
             res = "failed: unknown error"
             compile_returncode = -1
             for _ in range(5):
                 try:
-                    compilation_result = subprocess.run(['javac', os.path.join(tmp_dir, "Main.java")], timeout=5,
-                                                        capture_output=True)
+                    compilation_result = subprocess.run(
+                        ["javac", os.path.join(tmp_dir, "Main.java")],
+                        timeout=5,
+                        capture_output=True,
+                    )
                     compile_returncode = compilation_result.returncode
                     break
                 except subprocess.TimeoutExpired as e:
@@ -348,7 +377,9 @@ def check_correctness(
                     if exec_result.returncode == 0:
                         res = "passed"
                     elif exec_result.returncode == 1:
-                        if "AssertionError" in exec_result.stderr.decode('unicode-escape'):
+                        if "AssertionError" in exec_result.stderr.decode(
+                            "unicode-escape"
+                        ):
                             res = "failed: wrong answer"
                         else:
                             res = f"failed: {exec_result.stderr.decode()}"
@@ -359,7 +390,7 @@ def check_correctness(
             result.append(res)
 
             shutil.rmtree(tmp_dir)
-        
+
     manager = multiprocessing.Manager()
     result = manager.list()
 
@@ -373,17 +404,18 @@ def check_correctness(
         result.append("timed out")
 
     return {
-        "task_id"      : task_id,
+        "task_id": task_id,
         "completion_id": completion_id,
-        "test_code"    : sample["test_code"],
-        "prompt"       : sample["prompt"],
-        "generation"   : sample["generation"],
-        "result"       : result[0],
-        "passed"       : result[0] == "passed",
-        "finish"       : -1 if "finish" not in sample else sample["finish"],
-        "file"         : "" if "file" not in sample else sample["file"],
-        "output"       : [] if "output" not in sample else sample["output"],
+        "test_code": sample["test_code"],
+        "prompt": sample["prompt"],
+        "generation": sample["generation"],
+        "result": result[0],
+        "passed": result[0] == "passed",
+        "finish": -1 if "finish" not in sample else sample["finish"],
+        "file": "" if "file" not in sample else sample["file"],
+        "output": [] if "output" not in sample else sample["output"],
     }
+
 
 # Copyright (c) OpenAI (https://openai.com)
 
@@ -439,7 +471,7 @@ class TimeoutException(Exception):
 
 
 class WriteOnlyStringIO(io.StringIO):
-    """ StringIO that throws an exception when it's read from """
+    """StringIO that throws an exception when it's read from"""
 
     def read(self, *args, **kwargs):
         raise IOError
@@ -451,12 +483,12 @@ class WriteOnlyStringIO(io.StringIO):
         raise IOError
 
     def readable(self, *args, **kwargs):
-        """ Returns True if the IO object can be read. """
+        """Returns True if the IO object can be read."""
         return False
 
 
 class redirect_stdin(contextlib._RedirectStream):  # type: ignore
-    _stream = 'stdin'
+    _stream = "stdin"
 
 
 @contextlib.contextmanager
@@ -482,26 +514,35 @@ def reliability_guard(maximum_memory_bytes: Optional[int] = None):
 
     WARNING
     This function is NOT a security sandbox. Untrusted code, including, model-
-    generated code, should not be blindly executed outside of one. See the 
+    generated code, should not be blindly executed outside of one. See the
     Codex paper for more information about OpenAI's code sandbox, and proceed
     with caution.
     """
 
     if maximum_memory_bytes is not None:
         import resource
-        resource.setrlimit(resource.RLIMIT_AS, (maximum_memory_bytes, maximum_memory_bytes))
-        resource.setrlimit(resource.RLIMIT_DATA, (maximum_memory_bytes, maximum_memory_bytes))
-        if not platform.uname().system == 'Darwin':
-            resource.setrlimit(resource.RLIMIT_STACK, (maximum_memory_bytes, maximum_memory_bytes))
+
+        resource.setrlimit(
+            resource.RLIMIT_AS, (maximum_memory_bytes, maximum_memory_bytes)
+        )
+        resource.setrlimit(
+            resource.RLIMIT_DATA, (maximum_memory_bytes, maximum_memory_bytes)
+        )
+        if not platform.uname().system == "Darwin":
+            resource.setrlimit(
+                resource.RLIMIT_STACK, (maximum_memory_bytes, maximum_memory_bytes)
+            )
 
     faulthandler.disable()
 
     import builtins
+
     builtins.exit = None
     builtins.quit = None
 
     import os
-    os.environ['OMP_NUM_THREADS'] = '1'
+
+    os.environ["OMP_NUM_THREADS"] = "1"
 
     os.kill = None
     os.system = None
@@ -532,18 +573,21 @@ def reliability_guard(maximum_memory_bytes: Optional[int] = None):
     os.chdir = None
 
     import shutil
+
     shutil.rmtree = None
     shutil.move = None
     shutil.chown = None
 
     import subprocess
+
     subprocess.Popen = None  # type: ignore
 
-    __builtins__['help'] = None
+    __builtins__["help"] = None
 
     import sys
-    sys.modules['ipdb'] = None
-    sys.modules['joblib'] = None
-    sys.modules['resource'] = None
-    sys.modules['psutil'] = None
-    sys.modules['tkinter'] = None
+
+    sys.modules["ipdb"] = None
+    sys.modules["joblib"] = None
+    sys.modules["resource"] = None
+    sys.modules["psutil"] = None
+    sys.modules["tkinter"] = None

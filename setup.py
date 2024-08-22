@@ -22,5 +22,5 @@ setup(
         "cpm_kernels",
         "deepspeed>0.6.1",
     ],
-    entry_points={}
+    entry_points={},
 )

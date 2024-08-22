@@ -50,7 +50,7 @@ def get_input_data_batch_slice_map(input_ids, loss_mask, eod_id, rank, dis, eod_
     # input_ids = input_ids[rank * dis : (rank + 1) * dis]
     if np.any(input_ids > 60000):
         raise ValueError("==exceed error")
-    # print("===input_ids tpye: ", input_ids.dtype, flush=True) 
+    # print("===input_ids tpye: ", input_ids.dtype, flush=True)
     if not eod_reset:
         return input_ids
     seq_length = input_ids.shape[1] - 1
@@ -72,16 +72,29 @@ def get_input_data_batch_slice_map(input_ids, loss_mask, eod_id, rank, dis, eod_
         for i in range(eod_index.size):
             # Reset position_ids and attention_mask considering EOD
             index = eod_index[i]
-            batch_attention_mask[bs_i, (index + 1):, :(index + 1)] = 0
-            batch_position_ids[bs_i, (index + 1):] -= (index + 1 - prev_index)
+            batch_attention_mask[bs_i, (index + 1) :, : (index + 1)] = 0
+            batch_position_ids[bs_i, (index + 1) :] -= index + 1 - prev_index
             prev_index = index + 1
     # print(f"===batch_loss_mask: {batch_loss_mask}, shape: {batch_loss_mask.shape}, nonzero: {batch_loss_mask.nonzero()}")
     return batch_input_ids, batch_loss_mask, batch_position_ids, batch_attention_mask
 
 
-def create_dataset(batch_size, data_path, args_opt, device_num=1, rank=0, drop=True, full_batch=False,
-                   data_start_index=0,
-                   eod_reset=False, eod_id=50256, epoch=1, num_samples=None, train_and_eval=False, val_ratio=0):
+def create_dataset(
+    batch_size,
+    data_path,
+    args_opt,
+    device_num=1,
+    rank=0,
+    drop=True,
+    full_batch=False,
+    data_start_index=0,
+    eod_reset=False,
+    eod_id=50256,
+    epoch=1,
+    num_samples=None,
+    train_and_eval=False,
+    val_ratio=0,
+):
     """
     Create dataset
     Inputs:
@@ -117,48 +130,83 @@ def create_dataset(batch_size, data_path, args_opt, device_num=1, rank=0, drop=T
     # skip_num = args_opt.has_trained_steps * dis
     # skip_num = 0
     num_parallel_workers = 4
-    train_data = get_code_data(data_path, 'train', args_opt)
+    train_data = get_code_data(data_path, "train", args_opt)
     if train_and_eval:
-        val_data = get_code_data(data_path, 'val', args_opt)
+        val_data = get_code_data(data_path, "val", args_opt)
     else:
         val_data = None
 
-    dataset_train = ds.GeneratorDataset(train_data, column_names=['input_ids', 'loss_mask'], num_samples=num_samples,
-                                        num_shards=device_num, shard_id=rank, shuffle=True,
-                                        num_parallel_workers=num_parallel_workers)
+    dataset_train = ds.GeneratorDataset(
+        train_data,
+        column_names=["input_ids", "loss_mask"],
+        num_samples=num_samples,
+        num_shards=device_num,
+        shard_id=rank,
+        shuffle=True,
+        num_parallel_workers=num_parallel_workers,
+    )
     if train_and_eval:
-        dataset_val = ds.GeneratorDataset(val_data, column_names=['input_ids', 'loss_mask'], num_samples=num_samples,
-                                          num_shards=device_num, shard_id=rank, shuffle=True,
-                                          num_parallel_workers=num_parallel_workers)
+        dataset_val = ds.GeneratorDataset(
+            val_data,
+            column_names=["input_ids", "loss_mask"],
+            num_samples=num_samples,
+            num_shards=device_num,
+            shard_id=rank,
+            shuffle=True,
+            num_parallel_workers=num_parallel_workers,
+        )
     else:
         dataset_val = None
     type_cast_op = C.TypeCast(mstype.int32)
     type_cast_op_float = C.TypeCast(mstype.float16)
     type_cast_op_float2 = C.TypeCast(mstype.float32)
 
-    map_func = (
-        lambda input_ids, loss_mask: get_input_data_batch_slice_map(input_ids, loss_mask, eod_id, rank, dis, eod_reset))
+    map_func = lambda input_ids, loss_mask: get_input_data_batch_slice_map(
+        input_ids, loss_mask, eod_id, rank, dis, eod_reset
+    )
     # If eod_reset enabled, another two inputs will be generated through input_ids
     # dataset_train = dataset_train.skip(skip_num)
     dataset_train = dataset_train.batch(dis, drop_remainder=drop)
-    dataset_train = dataset_train.map(operations=map_func, input_columns=["input_ids", "loss_mask"],
-                                      output_columns=["input_ids", "loss_mask", "position_id", "attention_mask"],
-                                      column_order=["input_ids", "loss_mask", "position_id", "attention_mask"])
-    dataset_train = dataset_train.map(input_columns="position_id", operations=type_cast_op)
-    dataset_train = dataset_train.map(input_columns="attention_mask", operations=type_cast_op_float)
-    dataset_train = dataset_train.map(input_columns="loss_mask", operations=type_cast_op_float2)
-    dataset_train = dataset_train.map(input_columns="input_ids", operations=type_cast_op)
+    dataset_train = dataset_train.map(
+        operations=map_func,
+        input_columns=["input_ids", "loss_mask"],
+        output_columns=["input_ids", "loss_mask", "position_id", "attention_mask"],
+        column_order=["input_ids", "loss_mask", "position_id", "attention_mask"],
+    )
+    dataset_train = dataset_train.map(
+        input_columns="position_id", operations=type_cast_op
+    )
+    dataset_train = dataset_train.map(
+        input_columns="attention_mask", operations=type_cast_op_float
+    )
+    dataset_train = dataset_train.map(
+        input_columns="loss_mask", operations=type_cast_op_float2
+    )
+    dataset_train = dataset_train.map(
+        input_columns="input_ids", operations=type_cast_op
+    )
     dataset_train = dataset_train.repeat(epoch)
 
     if dataset_val is not None:
         dataset_val = dataset_val.batch(dis, drop_remainder=drop)
-        dataset_val = dataset_val.map(operations=map_func, input_columns=["input_ids", "loss_mask"],
-                                      output_columns=["input_ids", "loss_mask", "position_id", "attention_mask"],
-                                      column_order=["input_ids", "loss_mask", "position_id", "attention_mask"])
-        dataset_val = dataset_val.map(input_columns="position_id", operations=type_cast_op)
-        dataset_val = dataset_val.map(input_columns="attention_mask", operations=type_cast_op_float)
-        dataset_val = dataset_val.map(input_columns="loss_mask", operations=type_cast_op_float2)
-        dataset_val = dataset_val.map(input_columns="input_ids", operations=type_cast_op)
+        dataset_val = dataset_val.map(
+            operations=map_func,
+            input_columns=["input_ids", "loss_mask"],
+            output_columns=["input_ids", "loss_mask", "position_id", "attention_mask"],
+            column_order=["input_ids", "loss_mask", "position_id", "attention_mask"],
+        )
+        dataset_val = dataset_val.map(
+            input_columns="position_id", operations=type_cast_op
+        )
+        dataset_val = dataset_val.map(
+            input_columns="attention_mask", operations=type_cast_op_float
+        )
+        dataset_val = dataset_val.map(
+            input_columns="loss_mask", operations=type_cast_op_float2
+        )
+        dataset_val = dataset_val.map(
+            input_columns="input_ids", operations=type_cast_op
+        )
     return dataset_train, dataset_val
 
 

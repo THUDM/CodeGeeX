@@ -91,7 +91,7 @@ def add_code_generation_args(parser):
         "--recompute",
         action="store_true",
         help="During generation recompute all attention "
-             "instead of using previously computed keys/values.",
+        "instead of using previously computed keys/values.",
     )
     group.add_argument(
         "--load-deepspeed",
@@ -180,22 +180,22 @@ def add_code_generation_args(parser):
         action="store_true",
     )
     group.add_argument(
-        '--language-type',
+        "--language-type",
         default=None,
-        help='Identify the type of programming language to generate',
+        help="Identify the type of programming language to generate",
     )
     group.add_argument(
-        '--bad-ids',
+        "--bad-ids",
         nargs="*",
         type=int,
         default=None,
-        help='Specify bad ids that will not be used',
+        help="Specify bad ids that will not be used",
     )
     group.add_argument(
         "--quantize",
         action="store_true",
     )
-    
+
     return parser
 
 
@@ -210,8 +210,8 @@ def main(node_rank: int, local_rank: int, master_port: int, num_devices: int):
         extra_args_provider=add_code_generation_args,
         args_defaults={
             "tokenizer_type": "GPT2BPETokenizer",
-            "no_load_rng"   : True,
-            "no_load_optim" : True,
+            "no_load_rng": True,
+            "no_load_optim": True,
         },
     )
 
@@ -297,15 +297,17 @@ def server():
         default=1,
     )
     parser.add_argument(
-        '--language-type',
+        "--language-type",
         default=None,
-        help='Identify the type of programming language to generate',
+        help="Identify the type of programming language to generate",
     )
 
     args = parser.parse_known_args()[0]
     entries = read_dataset(args.input_path, dataset_type="humaneval")
 
-    assert args.samples_per_problem % args.micro_batch_size == 0, "samples_per_problem should be divisible by micro_batch_size"
+    assert (
+        args.samples_per_problem % args.micro_batch_size == 0
+    ), "samples_per_problem should be divisible by micro_batch_size"
 
     for entry in entries.values():
         entry["prompt"] = process_extra_prompt(entry["prompt"], args.language_type)
@@ -352,13 +354,20 @@ def server():
             else:
                 entry = remaining_entries.pop()
                 time_elapsed = time.perf_counter() - start_time
-                print(f"[ server ] Sending entry {entry['task_id']} to worker {rank}", flush=True)
-                remaining = (
-                        len(remaining_entries)
-                        / (len(all_entries) - len(remaining_entries))
-                        * time_elapsed
+                print(
+                    f"[ server ] Sending entry {entry['task_id']} to worker {rank}",
+                    flush=True,
                 )
-                time_per_sampple = 0.0 if num_finished == 0 else time_elapsed / num_finished / args.micro_batch_size
+                remaining = (
+                    len(remaining_entries)
+                    / (len(all_entries) - len(remaining_entries))
+                    * time_elapsed
+                )
+                time_per_sampple = (
+                    0.0
+                    if num_finished == 0
+                    else time_elapsed / num_finished / args.micro_batch_size
+                )
                 print(
                     f"[ server ] total {len(all_entries)}, assigned {len(all_entries) - len(remaining_entries)}, "
                     f"finished {num_finished}, "
@@ -374,7 +383,7 @@ def server():
                 socket.send_json({"pong": 1})
             else:
                 print(f"[ server ] {msg['task_id']} is not finished", flush=True)
-                remaining_entries.append(msg['task_id'])
+                remaining_entries.append(msg["task_id"])
                 socket.send_json({"pong": 1})
                 break
 
@@ -416,7 +425,7 @@ if __name__ == "__main__":
             node_rank = i
             break
     assert (
-            node_rank is not None
+        node_rank is not None
     ), f"Could not find hostname ({socket.gethostbyname(socket.gethostname())}) in hostlist"
 
     # launch server

@@ -60,9 +60,9 @@ def get_megatron_optimizer(model):
 
     if args.cpu_optimizer:
         raise NotImplementedError("need to add cpu adam")
-    
+
     param_groups = _get_params_for_weight_decay_optimization(model)
-   
+
     if args.optimizer == "adam":
         optimizer = Adam(
             param_groups,

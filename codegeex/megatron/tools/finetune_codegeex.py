@@ -8,7 +8,7 @@ import deepspeed
 from deepspeed.runtime.utils import see_memory_usage
 from functools import partial
 
-from codegeex.megatron import get_args, print_rank_0, get_timers,get_tokenizer, mpu
+from codegeex.megatron import get_args, print_rank_0, get_timers, get_tokenizer, mpu
 from codegeex.megatron.data.prompt_dataset import build_train_valid_test_datasets
 from codegeex.megatron.model import CodeGeeXModel
 from codegeex.megatron.training import pretrain
@@ -61,7 +61,7 @@ def model_provider(pre_process=True, post_process=True):
                 num_tokentypes=0,
                 parallel_output=True,
             )
-            
+
             if args.load_state is not None:
                 timers = get_timers()
                 print_rank_0("Loading warmstarting model states ...")
@@ -69,7 +69,8 @@ def model_provider(pre_process=True, post_process=True):
                 mp_rank = mpu.get_tensor_model_parallel_rank()
                 if os.path.isdir(args.load_state):
                     model_path = os.path.join(
-                        args.load_state, "mp_rank_{:02d}_model_states.pt".format(mp_rank)
+                        args.load_state,
+                        "mp_rank_{:02d}_model_states.pt".format(mp_rank),
                     )
                 else:
                     model_path = args.load_state
@@ -81,7 +82,7 @@ def model_provider(pre_process=True, post_process=True):
                 timers("load-model-states").stop()
                 timers.log(["load-model-states"])
     see_memory_usage(f"After Building Model", force=True)
-    
+
     return model
 
 
@@ -150,7 +151,7 @@ def get_batch_pipe(data):
         args.reset_attention_mask,
         args.eod_mask_loss,
     )
-    
+
     return (tokens, position_ids, attention_mask), (labels, loss_mask)
 
 
@@ -166,7 +167,9 @@ def loss_func(loss_mask, output_tensor):
             losses = prob * losses
 
         loss_mask = loss_mask.view(-1).float()
-        loss = torch.sum(losses.view(-1) * loss_mask) / torch.clamp_min(loss_mask.sum(), 1e-8)
+        loss = torch.sum(losses.view(-1) * loss_mask) / torch.clamp_min(
+            loss_mask.sum(), 1e-8
+        )
 
         return loss
 
@@ -184,7 +187,9 @@ def valid_loss_func(loss_mask, output_tensor):
 
     def compute_lm_loss(losses: torch.Tensor, loss_mask: torch.Tensor):
         loss_mask = loss_mask.view(-1).float()
-        loss = torch.sum(losses.view(-1) * loss_mask) / torch.clamp_min(loss_mask.sum(), 1e-8)
+        loss = torch.sum(losses.view(-1) * loss_mask) / torch.clamp_min(
+            loss_mask.sum(), 1e-8
+        )
 
         return loss
 
@@ -193,7 +198,7 @@ def valid_loss_func(loss_mask, output_tensor):
 
     # Reduce loss for logging.
     averaged_loss = average_losses_across_data_parallel_group([loss])
-    
+
     return loss, {"lm loss": averaged_loss[0]}
 
 
@@ -230,15 +235,19 @@ def valid_forward_step(data_iterator, model):
 def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid, and test datasets."""
     args = get_args()
-    
+
     print_rank_0("> building train, validation, and test datasets " "for GPT ...")
     if args.co_evaluation:
+
         def dataset_partition_path_parsing(data_path):
             dataset_path = {}
             for index in range(len(data_path)):
                 dataset_path[data_path[index]] = data_path[index]
             return dataset_path
-        assert args.valid_data_path is not None, "Valid data path must be given when --co-evaluation is turned on."
+
+        assert (
+            args.valid_data_path is not None
+        ), "Valid data path must be given when --co-evaluation is turned on."
         valid_data_path = dataset_partition_path_parsing(args.valid_data_path)
         if args.test_data_path is not None:
             test_data_path = dataset_partition_path_parsing(args.test_data_path)

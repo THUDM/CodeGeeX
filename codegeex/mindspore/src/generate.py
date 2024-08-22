@@ -118,8 +118,12 @@ def generate(model, origin_inputs, config, verbose=False):
     pad_length = seq_length - origin_inputs.shape[-1]
     # Pad original inputs to seq_length
     print("Original shape:", origin_inputs.shape)
-    input_ids = np.pad(origin_inputs, ((0, 0), (0, pad_length)),
-                       'constant', constant_values=(end_token, end_token))
+    input_ids = np.pad(
+        origin_inputs,
+        ((0, 0), (0, pad_length)),
+        "constant",
+        constant_values=(end_token, end_token),
+    )
     # print("input_ids is ", input_ids)
 
     # A single loop generates one token, loop until reaching target seq_length or generating eod token
@@ -133,8 +137,11 @@ def generate(model, origin_inputs, config, verbose=False):
         log_probs = model.predict(inputs, current_index)
         # Get the revised log_probs considering frequency and presence penalty to eliminate duplicate in generated results
         log_probs = log_probs.asnumpy().reshape(1, -1)
-        log_probs_revised = log_probs - frequency_list * \
-                            frequency_penalty - (frequency_list > 0) * presence_penalty
+        log_probs_revised = (
+            log_probs
+            - frequency_list * frequency_penalty
+            - (frequency_list > 0) * presence_penalty
+        )
         log_probs_revised /= temperature
 
         p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative)
@@ -145,14 +152,15 @@ def generate(model, origin_inputs, config, verbose=False):
             print("=== log_probs_revised is", log_probs_revised)
             print("=== p:", p, "shape:", p.shape)
             print("=== p_args:", p_args, "shape", p_args.shape)
-            print(f"=== Length {valid_length}, target index {target_index}, chosen token {p_args[target_index]}.")
+            print(
+                f"=== Length {valid_length}, target index {target_index}, chosen token {p_args[target_index]}."
+            )
 
         # Stop judgment
         if p_args[target_index] == end_token or valid_length == target_length - 1:
             outputs = input_ids
             if verbose:
-                print(
-                    f"=== generation end, last token: {p_args[target_index]}")
+                print(f"=== generation end, last token: {p_args[target_index]}")
             break
 
         # update frequency list
@@ -202,8 +210,12 @@ def generate_increment(model, origin_inputs, config, verbose=False):
     frequency_list = np.array([[0 for _ in range(vocab_embedding_vocab_size)]])
     pad_length = seq_length - origin_inputs.shape[-1]
     # Pad original inputs to seq_length
-    input_ids = np.pad(origin_inputs, ((0, 0), (0, pad_length)),
-                       'constant', constant_values=(end_token, end_token))
+    input_ids = np.pad(
+        origin_inputs,
+        ((0, 0), (0, pad_length)),
+        "constant",
+        constant_values=(end_token, end_token),
+    )
     print("input_ids is ", input_ids)
 
     # Indicate the exact token position
@@ -217,8 +229,9 @@ def generate_increment(model, origin_inputs, config, verbose=False):
     # Claim the first graph
     model.predict_network.add_flags_recursive(is_first_iteration=True)
     # Call a single inference with input size of (bs, seq_length)
-    logits = model.predict(Tensor(input_ids, mstype.int32),
-                           current_index, init, batch_valid_length)
+    logits = model.predict(
+        Tensor(input_ids, mstype.int32), current_index, init, batch_valid_length
+    )
 
     # Claim the second graph and set not_init to true
     init = init_true
@@ -231,8 +244,11 @@ def generate_increment(model, origin_inputs, config, verbose=False):
         log_probs = logits.reshape(1, vocab_embedding_vocab_size)
 
         # Get the revised log_probs considering frequency and presence penalty to eliminate duplicate in generated results
-        log_probs_revised = log_probs - frequency_list * \
-                            frequency_penalty - (frequency_list > 0) * presence_penalty
+        log_probs_revised = (
+            log_probs
+            - frequency_list * frequency_penalty
+            - (frequency_list > 0) * presence_penalty
+        )
         log_probs_revised /= temperature
 
         p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative)
@@ -243,7 +259,9 @@ def generate_increment(model, origin_inputs, config, verbose=False):
             print("=== log_probs_revised is", log_probs_revised)
             print("=== p:", p, "shape:", p.shape)
             print("=== p_args:", p_args, "shape", p_args.shape)
-            print(f"=== Length {valid_length}, target index {target_index}, chosen token {p_args[target_index]}.")
+            print(
+                f"=== Length {valid_length}, target index {target_index}, chosen token {p_args[target_index]}."
+            )
 
         # Stop judgment
         if p_args[target_index] == end_token or valid_length == target_length - 1:
@@ -262,7 +280,6 @@ def generate_increment(model, origin_inputs, config, verbose=False):
         outputs.append(int(target))
 
         # Call a single inference with input size of (bs, 1)
-        logits = model.predict(input_id, current_index,
-                               init, batch_valid_length)
+        logits = model.predict(input_id, current_index, init, batch_valid_length)
     # Return valid outputs out of padded outputs
     return np.array(outputs)

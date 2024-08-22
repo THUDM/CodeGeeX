@@ -259,7 +259,7 @@ def _initialize_distributed():
             world_size=args.world_size,
             rank=args.rank,
             init_method=init_method,
-            timeout=timeout
+            timeout=timeout,
         )
         print(f"  > (rank={args.rank}) process group initialized")
 

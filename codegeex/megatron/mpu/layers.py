@@ -287,7 +287,7 @@ class ColumnParallelLinear(torch.nn.Module):
         self.skip_bias_add = skip_bias_add
         self.params_dtype = params_dtype
         self.device = device
-        
+
         # Parameters.
         # Note: torch.nn.functional.linear performs XA^T + b and as a result
         # we allocate the transpose.
@@ -299,7 +299,9 @@ class ColumnParallelLinear(torch.nn.Module):
                     torch.empty(
                         self.output_size_per_partition,
                         self.input_size,
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
                 self.master_weight = _initialize_affine_weight_cpu(
@@ -317,8 +319,12 @@ class ColumnParallelLinear(torch.nn.Module):
                     torch.empty(
                         self.output_size_per_partition,
                         self.input_size,
-                        device=self.device if self.device is not None else torch.cuda.current_device(),
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        device=self.device
+                        if self.device is not None
+                        else torch.cuda.current_device(),
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
                 _initialize_affine_weight_gpu(
@@ -330,15 +336,23 @@ class ColumnParallelLinear(torch.nn.Module):
         if bias and not skip_init:
             if args.use_cpu_initialization:
                 self.bias = Parameter(
-                    torch.empty(self.output_size_per_partition, 
-                                dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype)
+                    torch.empty(
+                        self.output_size_per_partition,
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
+                    )
                 )
             else:
                 self.bias = Parameter(
                     torch.empty(
                         self.output_size_per_partition,
-                        device=self.device if self.device is not None else torch.cuda.current_device(),
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        device=self.device
+                        if self.device is not None
+                        else torch.cuda.current_device(),
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
             set_tensor_model_parallel_attributes(self.bias, True, 0, stride)
@@ -420,7 +434,7 @@ class RowParallelLinear(torch.nn.Module):
         self.skip_bias_add = skip_bias_add
         self.params_dtype = params_dtype
         self.device = device
-        
+
         # Parameters.
         # Note: torch.nn.functional.linear performs XA^T + b and as a result
         # we allocate the transpose.
@@ -432,7 +446,9 @@ class RowParallelLinear(torch.nn.Module):
                     torch.empty(
                         self.output_size,
                         self.input_size_per_partition,
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
                 self.master_weight = _initialize_affine_weight_cpu(
@@ -450,8 +466,12 @@ class RowParallelLinear(torch.nn.Module):
                     torch.empty(
                         self.output_size,
                         self.input_size_per_partition,
-                        device=self.device if self.device is not None else torch.cuda.current_device(),
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        device=self.device
+                        if self.device is not None
+                        else torch.cuda.current_device(),
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
                 _initialize_affine_weight_gpu(
@@ -459,19 +479,27 @@ class RowParallelLinear(torch.nn.Module):
                 )
         else:
             self.register_parameter("weight", None)
-            
+
         if bias and not skip_init:
             if args.use_cpu_initialization:
                 self.bias = Parameter(
-                    torch.empty(self.output_size, 
-                                dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype)
+                    torch.empty(
+                        self.output_size,
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
+                    )
                 )
             else:
                 self.bias = Parameter(
                     torch.empty(
                         self.output_size,
-                        device=self.device if self.device is not None else torch.cuda.current_device(),
-                        dtype=self.params_dtype if self.params_dtype is not None else args.params_dtype,
+                        device=self.device
+                        if self.device is not None
+                        else torch.cuda.current_device(),
+                        dtype=self.params_dtype
+                        if self.params_dtype is not None
+                        else args.params_dtype,
                     )
                 )
             # Always initialize bias to zero.

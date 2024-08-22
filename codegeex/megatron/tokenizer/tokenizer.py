@@ -23,7 +23,7 @@ from .gpt2_tokenization import GPT2Tokenizer
 from transformers import AutoTokenizer
 
 
-def encode_whitespaces(text: str, start_extra_id: int=10, max_len: int=10):
+def encode_whitespaces(text: str, start_extra_id: int = 10, max_len: int = 10):
     """Encode whitespaces to extra tokens.
 
     >>> encode_whitespaces('a\\n  b\\n   c', 10, 10)
@@ -34,7 +34,7 @@ def encode_whitespaces(text: str, start_extra_id: int=10, max_len: int=10):
     return text
 
 
-def decode_whitespaces(text: str, start_extra_id: int=10, max_len: int=10):
+def decode_whitespaces(text: str, start_extra_id: int = 10, max_len: int = 10):
     """Decode the whitespace-encoded strings produced by encode_whitespace.
 
     >>> text = 'a\\n  b\\n   c'
@@ -63,9 +63,7 @@ def build_hgf_tokenizer(args):
     ws_start_id = args.ws_encoding_start_id if "ws_encoding_start_id" in args else None
     ws_len = args.ws_encoding_length if "ws_encoding_length" in args else None
 
-    return HgfTokenizerWrapper(
-        tokenizer, ws_start=ws_start_id, ws_len=ws_len
-    )
+    return HgfTokenizerWrapper(tokenizer, ws_start=ws_start_id, ws_len=ws_len)
 
 
 def build_tokenizer(args):
@@ -218,10 +216,10 @@ class HgfTokenizerWrapper(AbstractTokenizer):
     """Wrapper for Hugging Face tokenizer."""
 
     def __init__(
-            self,
-            tokenizer,
-            ws_start: int = None,
-            ws_len: int = None,
+        self,
+        tokenizer,
+        ws_start: int = None,
+        ws_len: int = None,
     ):
         super(HgfTokenizerWrapper, self).__init__(tokenizer.__class__.__name__)
         self.tokenizer = tokenizer

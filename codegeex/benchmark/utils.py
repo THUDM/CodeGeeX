@@ -22,7 +22,7 @@ IMPORT_HELPER = {
         "from typing import *",
         "from collections import *",
     ],
-    "go"    : [
+    "go": [
         "math",
         "strings",
         "fmt",
@@ -34,7 +34,7 @@ IMPORT_HELPER = {
         "math/rand",
         "crypto/md5",
     ],
-    "cpp"   : [
+    "cpp": [
         "#include<stdlib.h>",
         "#include<algorithm>",
         "#include<math.h>",
@@ -58,7 +58,14 @@ def read_dataset(
     if "humaneval" in dataset_type.lower():
         if data_file is None:
             current_path = os.path.dirname(os.path.abspath(__file__))
-            data_file = os.path.join(current_path, "..", "humaneval-x", "python", "data", "humaneval_python.jsonl.gz")
+            data_file = os.path.join(
+                current_path,
+                "..",
+                "humaneval-x",
+                "python",
+                "data",
+                "humaneval_python.jsonl.gz",
+            )
         dataset = {task["task_id"]: task for task in stream_jsonl(data_file)}
     else:
         raise f"Dataset: {dataset_type} not supported."
@@ -75,7 +82,9 @@ def read_translation_dataset(
 ) -> Dict:
     if "humaneval" in dataset_type.lower():
         dataset_src = {task["task_id"]: task for task in stream_jsonl(data_file_src)}
-        dataset_tgt = {task["task_id"].split("/")[-1]: task for task in stream_jsonl(data_file_tgt)}
+        dataset_tgt = {
+            task["task_id"].split("/")[-1]: task for task in stream_jsonl(data_file_tgt)
+        }
         for k, sample in dataset_src.items():
             prompt = "code translation\n"
             if lang_src == "cpp":
@@ -84,7 +93,12 @@ def read_translation_dataset(
                 prompt += "JavaScript:\n"
             else:
                 prompt += f"{lang_src}:\n".capitalize()
-            prompt += dataset_src[k]["declaration"] + "\n" + dataset_src[k]["canonical_solution"].rstrip() + "\n"
+            prompt += (
+                dataset_src[k]["declaration"]
+                + "\n"
+                + dataset_src[k]["canonical_solution"].rstrip()
+                + "\n"
+            )
             if lang_tgt == "cpp":
                 prompt += "C++:\n"
             elif lang_tgt == "js":
@@ -126,7 +140,7 @@ def is_code_generation_finished(
     if "humaneval" in dataset.lower():
         if language_type.lower() == "python":
             for line in code.split("\n"):
-                if len(line.strip()) > 0 and line[0] != ' ' and line[0] != '\t':
+                if len(line.strip()) > 0 and line[0] != " " and line[0] != "\t":
                     return True
             end_words = ["\ndef", "\nclass", "\nif", "\n#", "\nprint"]
             for w in end_words:
@@ -164,27 +178,27 @@ def cleanup_code(
             end_words = ["\ndef", "\nclass", "\nif", "\n#", "\nprint", "\nassert"]
             for w in end_words:
                 if w in code:
-                    code = code[:code.rfind(w)]
+                    code = code[: code.rfind(w)]
         elif language_type.lower() == "java":
             main_pos = code.find("public static void main")
             if main_pos != -1:
-                code = code[:main_pos] + '}'
-            if '}' in code:
-                code = code[:code.rfind('}')] + '}'
-            if code.count('{') + 1 == code.count('}'):
+                code = code[:main_pos] + "}"
+            if "}" in code:
+                code = code[: code.rfind("}")] + "}"
+            if code.count("{") + 1 == code.count("}"):
                 code += "\n}"
         elif language_type.lower() == "go":
             end_words = ["\n//", "\nfunc main("]
             for w in end_words:
                 if w in code:
-                    code = code[:code.rfind(w)]
-            if '}' in code:
-                code = code[:code.rfind('}')] + '}'
+                    code = code[: code.rfind(w)]
+            if "}" in code:
+                code = code[: code.rfind("}")] + "}"
         elif language_type.lower() == "cpp":
-            if '}' in code:
-                code = code[:code.rfind('}')] + '}'
+            if "}" in code:
+                code = code[: code.rfind("}")] + "}"
         elif language_type.lower() == "js":
-            if '}' in code:
-                code = code[:code.rfind('}')] + '}'
+            if "}" in code:
+                code = code[: code.rfind("}")] + "}"
 
     return code

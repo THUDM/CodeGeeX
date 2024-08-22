@@ -28,17 +28,9 @@ def WalkDict(x):
 
 def parse_opt():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--pt", type=str, required=True, help="Path to pt checkpoint.")
     parser.add_argument(
-        "--pt",
-        type=str,
-        required=True,
-        help="Path to pt checkpoint."
-    )
-    parser.add_argument(
-        "--pdparams",
-        type=str,
-        required=True,
-        help="Path to pdparams checkpoint."
+        "--pdparams", type=str, required=True, help="Path to pdparams checkpoint."
     )
     opt = parser.parse_args()
     return opt

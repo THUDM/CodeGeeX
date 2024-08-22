@@ -23,28 +23,29 @@ class PanguAlphaConfig:
     PanGUConfig config class which defines the model size
     """
 
-    def __init__(self,
-                 batch_size=32,
-                 seq_length=2048,
-                 vocab_size=40000,
-                 hidden_size=768,
-                 ffn_hidden_size=768,
-                 num_layers=12,
-                 num_heads=12,
-                 load_ckpt_path=None,
-                 param_init_type=mstype.float32,
-                 post_layernorm_residual=False,
-                 dropout_rate=0.1,
-                 eod_token=50256,
-                 use_past=False,
-                 hidden_act="fast_gelu",
-                 eod_reset=True,
-                 enable_offload=False,
-                 use_moe=False,
-                 per_dp_dim_expert_num=4,
-                 parallel_config=None,
-                 softmax_compute_type=mstype.float16,
-                 ):
+    def __init__(
+        self,
+        batch_size=32,
+        seq_length=2048,
+        vocab_size=40000,
+        hidden_size=768,
+        ffn_hidden_size=768,
+        num_layers=12,
+        num_heads=12,
+        load_ckpt_path=None,
+        param_init_type=mstype.float32,
+        post_layernorm_residual=False,
+        dropout_rate=0.1,
+        eod_token=50256,
+        use_past=False,
+        hidden_act="fast_gelu",
+        eod_reset=True,
+        enable_offload=False,
+        use_moe=False,
+        per_dp_dim_expert_num=4,
+        parallel_config=None,
+        softmax_compute_type=mstype.float16,
+    ):
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.vocab_size = vocab_size
@@ -79,7 +80,7 @@ class PanguAlphaConfig:
 
 def set_parse(args_opt):
     r"""
-       Set config according to the mode
+    Set config according to the mode
     """
     if args_opt.mode == "200B":
         args_opt.embedding_size = 16384

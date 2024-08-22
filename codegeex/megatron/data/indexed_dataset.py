@@ -117,9 +117,7 @@ def __best_fitting_dtype(vocab_size=None):
 
 
 def make_mmap_builder(out_file, vocab_size=None):
-    return MMapIndexedDatasetBuilder(
-        out_file, dtype=__best_fitting_dtype(vocab_size)
-    )
+    return MMapIndexedDatasetBuilder(out_file, dtype=__best_fitting_dtype(vocab_size))
 
 
 def code(dtype):

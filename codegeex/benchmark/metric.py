@@ -25,9 +25,9 @@ from typing import *
 
 
 def estimate_pass_at_k(
-        num_samples: Union[int, List[int], np.ndarray],
-        num_correct: Union[List[int], np.ndarray],
-        k: int
+    num_samples: Union[int, List[int], np.ndarray],
+    num_correct: Union[List[int], np.ndarray],
+    k: int,
 ) -> np.ndarray:
     """
     Estimates pass@k of each problem and returns them in an array.
@@ -47,4 +47,6 @@ def estimate_pass_at_k(
         assert len(num_samples) == len(num_correct)
         num_samples_it = iter(num_samples)
 
-    return np.array([estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct)])
+    return np.array(
+        [estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct)]
+    )

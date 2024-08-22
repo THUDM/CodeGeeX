@@ -39,12 +39,12 @@ from src.utils import get_args
 
 def load_model(args_opt):
     r"""
-     The main function for load model
+    The main function for load model
     """
     # Set execution mode
-    context.set_context(save_graphs=False,
-                        mode=context.GRAPH_MODE,
-                        device_target=args_opt.device_target)
+    context.set_context(
+        save_graphs=False, mode=context.GRAPH_MODE, device_target=args_opt.device_target
+    )
     context.set_context(variable_memory_max_size="30GB")
     # Set parallel context
     if args_opt.distribute == "true":
@@ -59,7 +59,8 @@ def load_model(args_opt):
             full_batch=True,
             loss_repeated_mean=True,
             enable_parallel_optimizer=False,
-            pipeline_stages=args_opt.stage_num)
+            pipeline_stages=args_opt.stage_num,
+        )
         set_algo_parameters(elementwise_op_strategy_follow=True)
         _set_multi_subgraphs()
 
@@ -68,26 +69,29 @@ def load_model(args_opt):
         device_num = 1
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
-            strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path)
+            strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path
+        )
     context.set_context(
         save_graphs=False,
         save_graphs_path="/cache/graphs_of_device_id_" + str(rank),
     )
-    use_past = (args_opt.use_past == "true")
-    print('local_rank:{}, start to run...'.format(rank), flush=True)
+    use_past = args_opt.use_past == "true"
+    print("local_rank:{}, start to run...".format(rank), flush=True)
     if args_opt.export:
         use_past = True
     # Set model property
     model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
 
-    parallel_config = TransformerOpParallelConfig(data_parallel=data_parallel_num,
-                                                  model_parallel=model_parallel_num,
-                                                  pipeline_stage=args_opt.stage_num,
-                                                  micro_batch_num=args_opt.micro_size,
-                                                  optimizer_shard=False,
-                                                  vocab_emb_dp=bool(args_opt.word_emb_dp),
-                                                  recompute=True)
+    parallel_config = TransformerOpParallelConfig(
+        data_parallel=data_parallel_num,
+        model_parallel=model_parallel_num,
+        pipeline_stage=args_opt.stage_num,
+        micro_batch_num=args_opt.micro_size,
+        optimizer_shard=False,
+        vocab_emb_dp=bool(args_opt.word_emb_dp),
+        recompute=True,
+    )
 
     per_batch_size = args_opt.per_batch_size
     batch_size = per_batch_size * data_parallel_num
@@ -107,7 +111,7 @@ def load_model(args_opt):
         parallel_config=parallel_config,
         load_ckpt_path=args_opt.load_ckpt_path,
         param_init_type=mstype.float32
-        if args_opt.param_init_type == 'fp32'
+        if args_opt.param_init_type == "fp32"
         else mstype.float16,
     )
     print("===config is: ", config, flush=True)
@@ -119,23 +123,31 @@ def load_model(args_opt):
     eval_net.set_train(False)
     model_predict = Model(eval_net)
     # Compile network and obtain tensor layout for loading ckpt
-    inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
+    inputs_np = Tensor(
+        np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32
+    )
     current_index = Tensor(np.array([0 for _ in range(batch_size)]), mstype.int32)
 
     if args_opt.distribute == "false":
         predict_layout = None
     elif config.use_past:
-        batch_valid_length = Tensor(np.array([0 for _ in range(batch_size)]), mstype.int32)
+        batch_valid_length = Tensor(
+            np.array([0 for _ in range(batch_size)]), mstype.int32
+        )
         init_true = Tensor([True], mstype.bool_)
         print("Input shape:", inputs_np.shape, flush=True)
         inputs_np_1 = Tensor(np.ones(shape=(config.batch_size, 1)), mstype.int32)
         model_predict.predict_network.add_flags_recursive(is_first_iteration=True)
         print("is_first_iteration=True", flush=True)
-        predict_layout = model_predict.infer_predict_layout(inputs_np, current_index, init_true, batch_valid_length)
+        predict_layout = model_predict.infer_predict_layout(
+            inputs_np, current_index, init_true, batch_valid_length
+        )
         model_predict.predict_network.add_flags_recursive(is_first_iteration=False)
         print("is_first_iteration=False", flush=True)
         init_false = Tensor([False], mstype.bool_)
-        _ = model_predict.infer_predict_layout(inputs_np_1, current_index, init_false, batch_valid_length)
+        _ = model_predict.infer_predict_layout(
+            inputs_np_1, current_index, init_false, batch_valid_length
+        )
     else:
         predict_layout = model_predict.infer_predict_layout(inputs_np, current_index)
 
@@ -144,37 +156,53 @@ def load_model(args_opt):
         jobid = os.environ["BATCH_JOB_ID"]
         rank_id = rank
         mox.file.make_dirs("s3://wudao-1/yyf/graphs_" + jobid)
-        mox.file.copy_parallel(src_url="/cache/graphs_of_device_id_" + str(rank_id),
-                               dst_url="s3://wudao-1/yyf/graphs_" + jobid + "/" + str(rank_id))
+        mox.file.copy_parallel(
+            src_url="/cache/graphs_of_device_id_" + str(rank_id),
+            dst_url="s3://wudao-1/yyf/graphs_" + jobid + "/" + str(rank_id),
+        )
     print("======start load_distributed checkpoint", flush=True)
     if args_opt.load_ckpt_epoch > 0:
         time.sleep(rank * 0.1)
         os.mkdir(os.path.join(args_opt.save_checkpoint_path, f"rank_{rank}"))
         ckpt_name = f"code-13B{rank}-{args_opt.load_ckpt_epoch}.ckpt"
-        if not mox.file.exists(os.path.join(args_opt.load_ckpt_path, f"rank_{rank}", ckpt_name)):
+        if not mox.file.exists(
+            os.path.join(args_opt.load_ckpt_path, f"rank_{rank}", ckpt_name)
+        ):
             print(f"Checkpoint from rank {rank} doesn't exist!")
-        mox.file.copy(os.path.join(args_opt.load_ckpt_path, f"rank_{rank}", ckpt_name),
-                      os.path.join(args_opt.save_checkpoint_path, f"rank_{rank}", ckpt_name))
-        param_dict = load_checkpoint(os.path.join(args_opt.save_checkpoint_path, f"rank_{rank}", ckpt_name))
+        mox.file.copy(
+            os.path.join(args_opt.load_ckpt_path, f"rank_{rank}", ckpt_name),
+            os.path.join(args_opt.save_checkpoint_path, f"rank_{rank}", ckpt_name),
+        )
+        param_dict = load_checkpoint(
+            os.path.join(args_opt.save_checkpoint_path, f"rank_{rank}", ckpt_name)
+        )
         if param_dict.get("epoch_num") and param_dict.get("step_num"):
             args_opt.has_trained_epoches = int(param_dict["epoch_num"].data.asnumpy())
             args_opt.has_trained_steps = int(param_dict["step_num"].data.asnumpy())
         os.mkdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/1/rank_{rank}')
         while True:
-            num = len(os.listdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/1'))
+            num = len(
+                os.listdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/1')
+            )
             if num == device_num:
                 break
             if rank % 8 == 0:
                 print("Loaded ckpt in step 1: ", num)
             time.sleep(1)
         net_not_load = load_param_into_net(pangu_alpha, param_dict)
-        print("====== load_distributed checkpoint done, net_not_load: ", net_not_load, flush=True)
+        print(
+            "====== load_distributed checkpoint done, net_not_load: ",
+            net_not_load,
+            flush=True,
+        )
     return model_predict, config, rank
 
 
 def export_mindir(model_predict, config):
     """Export mindir model"""
-    inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
+    inputs_np = Tensor(
+        np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32
+    )
     current_index = Tensor(np.array([0]), mstype.int32)
 
     batch_valid_length = Tensor(np.array([0]), mstype.int32)
@@ -182,19 +210,34 @@ def export_mindir(model_predict, config):
     inputs_np_1 = Tensor(np.ones(shape=(config.batch_size, 1)), mstype.int32)
 
     model_predict.predict_network.add_flags_recursive(is_first_iteration=True)
-    export(model_predict.predict_network, inputs_np, current_index,
-           init_true, batch_valid_length, file_name='pangu_alpha_1024', file_format='MINDIR')
+    export(
+        model_predict.predict_network,
+        inputs_np,
+        current_index,
+        init_true,
+        batch_valid_length,
+        file_name="pangu_alpha_1024",
+        file_format="MINDIR",
+    )
     model_predict.predict_network.add_flags_recursive(is_first_iteration=False)
-    export(model_predict.predict_network, inputs_np_1, current_index,
-           init_true, batch_valid_length, file_name='pangu_alpha_1', file_format='MINDIR')
+    export(
+        model_predict.predict_network,
+        inputs_np_1,
+        current_index,
+        init_true,
+        batch_valid_length,
+        file_name="pangu_alpha_1",
+        file_format="MINDIR",
+    )
     print("Export finished and now exit.")
 
 
 def run_predict(model_predict, config, args_opt, rank):
     """run predict"""
     from src.generate_finetune import generate_increment
+
     # Define tokenizer
-    tokenizer = CodeTokenizer(mode='6b')
+    tokenizer = CodeTokenizer(mode="6b")
 
     # Tokenize input sentence to ids
     samples = [
@@ -202,7 +245,7 @@ def run_predict(model_predict, config, args_opt, rank):
         "# language: Python\ndef add(a, b):\n    '''\n    Find the sum of a and b.\n    '''\n",
         "def add(a, b):\n    '''\n    Find the sum of a and b.\n    '''\n",
         "# language: Python\ndef optimization():\n    '''\n    Find the maximum of P=E**2*R/(R + r)**2 if E and r are fixed but R varies. Import sympy. Use sympy. Find where the derivative is equal to zero. Substitute the value of R into P.\n    '''\n",
-        "from typing import List\n\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    \"\"\" Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    \"\"\"\n",
+        'from typing import List\n\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    """ Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    """\n',
         "// language: JavaScript\nfunction prime(n) {\n    // Find whether n is a prime number.\n",
         "string morse_encoder(string text) {\n    // Translate text into Morse code\n",
         "def morse_encoder(text):\n    # Translate text into Morse code separated by spaces\n",
@@ -225,16 +268,16 @@ def run_predict(model_predict, config, args_opt, rank):
     samples = [tokenizer.encode_code(l) for l in samples]
     generations = []
     batch_size = config.batch_size
-    verbose = (rank % 8 == 0)
-    save_path = f'/home/work/sfs/xx/pangu_alpha_code/generation_batch/{args_opt.temperature}.txt'  # TODO: set as current save path
+    verbose = rank % 8 == 0
+    save_path = f"/home/work/sfs/xx/pangu_alpha_code/generation_batch/{args_opt.temperature}.txt"  # TODO: set as current save path
     save_dir = os.path.split(save_path)[0]
     if rank == 0:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         if not os.path.exists(save_path):
-            f = open(save_path, 'w')
+            f = open(save_path, "w")
             f.close()
-        os.system(f'sudo chmod 777 -R {save_dir}')
+        os.system(f"sudo chmod 777 -R {save_dir}")
     batch = []
     input_length = []
     sample_ids = []
@@ -247,23 +290,31 @@ def run_predict(model_predict, config, args_opt, rank):
         if (i + 1) % batch_size == 0:
             valid_length = max(input_length)
             for j in range(len(batch)):
-                batch[j] = np.pad(batch[j], ((0, 0), (0, valid_length - input_length[j])),
-                                  'constant', constant_values=(args_opt.end_token, args_opt.end_token))
+                batch[j] = np.pad(
+                    batch[j],
+                    ((0, 0), (0, valid_length - input_length[j])),
+                    "constant",
+                    constant_values=(args_opt.end_token, args_opt.end_token),
+                )
             input_ids = np.concatenate(batch, axis=0)
             t0 = time.perf_counter()
-            output_ids = generate_increment(model_predict, input_ids, input_length, args_opt, tokenizer, verbose)
+            output_ids = generate_increment(
+                model_predict, input_ids, input_length, args_opt, tokenizer, verbose
+            )
             t1 = time.perf_counter()
             batch, input_length = [], []
             if rank % 8 == 0:
                 print(f"=== Batch time: {t1 - t0}s")
                 for k, out in enumerate(output_ids):
-                    if not out.endswith('\n'):
-                        out = out + '\n'
-                    print(f"=================== generation {sample_ids[k]} ====================")
+                    if not out.endswith("\n"):
+                        out = out + "\n"
+                    print(
+                        f"=================== generation {sample_ids[k]} ===================="
+                    )
                     print(out, flush=True)
                     generations.append(out)
                     if rank == 0:
-                        f = open(save_path, 'a')
+                        f = open(save_path, "a")
                         f.write(generations[-1])
                         f.close()
             sample_ids = []
@@ -273,24 +324,32 @@ def run_predict(model_predict, config, args_opt, rank):
             input_length.append(-1)
         valid_length = max(input_length)
         for j in range(len(batch)):
-            batch[j] = np.pad(batch[j], ((0, 0), (0, valid_length - batch[j].shape[1])),
-                              'constant', constant_values=(args_opt.end_token, args_opt.end_token))
+            batch[j] = np.pad(
+                batch[j],
+                ((0, 0), (0, valid_length - batch[j].shape[1])),
+                "constant",
+                constant_values=(args_opt.end_token, args_opt.end_token),
+            )
         input_ids = np.concatenate(batch, axis=0)
         t0 = time.perf_counter()
-        output_ids = generate_increment(model_predict, input_ids, input_length, args_opt, tokenizer, verbose)
+        output_ids = generate_increment(
+            model_predict, input_ids, input_length, args_opt, tokenizer, verbose
+        )
         t1 = time.perf_counter()
         if rank % 8 == 0:
             print(f"=== Batch time: {t1 - t0}s")
             for k, out in enumerate(output_ids):
                 if input_length[k] == -1:
                     break
-                if not out.endswith('\n'):
-                    out = out + '\n'
-                print(f"=================== generation {sample_ids[k]} ====================")
+                if not out.endswith("\n"):
+                    out = out + "\n"
+                print(
+                    f"=================== generation {sample_ids[k]} ===================="
+                )
                 print(out, flush=True)
                 generations.append(out)
                 if rank == 0:
-                    f = open(save_path, 'a')
+                    f = open(save_path, "a")
                     f.write(generations[-1])
                     f.close()
 

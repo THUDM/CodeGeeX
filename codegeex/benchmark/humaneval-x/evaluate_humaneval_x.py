@@ -16,10 +16,10 @@ from codegeex.benchmark.metric import estimate_pass_at_k
 from codegeex.benchmark.execution import check_correctness
 
 LANGUAGE_NAME = {
-    "cpp"   : "CPP",
-    "go"    : "Go",
-    "java"  : "Java",
-    "js"    : "JavaScript",
+    "cpp": "CPP",
+    "go": "Go",
+    "java": "Java",
+    "js": "JavaScript",
     "python": "Python",
 }
 
@@ -29,7 +29,11 @@ def process_humaneval_test(sample, problems, example_test=False):
     language = task_id.split("/")[0].lower()
 
     prompt = sample["prompt"]
-    if example_test and "example_test" in problems[task_id] and problems[task_id]["example_test"] != "":
+    if (
+        example_test
+        and "example_test" in problems[task_id]
+        and problems[task_id]["example_test"] != ""
+    ):
         test = problems[task_id]["example_test"]
     else:
         test = problems[task_id]["test"]
@@ -39,7 +43,7 @@ def process_humaneval_test(sample, problems, example_test=False):
     if language == "python":
         code_ = []
         for line in code.split("\n"):
-            if (len(line.strip()) > 0 and line[0] != ' ' and line[0] != '\t'):
+            if len(line.strip()) > 0 and line[0] != " " and line[0] != "\t":
                 break
             code_.append(line)
         code = "\n".join(code_)
@@ -68,10 +72,21 @@ def process_humaneval_test(sample, problems, example_test=False):
             if pkg not in test_setup:
                 p = pkg.split("/")[-1]
                 if p + "." in code:
-                    other_pkgs.append(f"\"{pkg}\"")
+                    other_pkgs.append(f'"{pkg}"')
         if other_pkgs:
-            import_other_pkgs = "import (\n" + "    ".join([p + "\n" for p in other_pkgs]) + ")"
-            test_string = test_setup + "\n" + import_other_pkgs + "\n" + prompt + code + "\n" + test
+            import_other_pkgs = (
+                "import (\n" + "    ".join([p + "\n" for p in other_pkgs]) + ")"
+            )
+            test_string = (
+                test_setup
+                + "\n"
+                + import_other_pkgs
+                + "\n"
+                + prompt
+                + code
+                + "\n"
+                + test
+            )
         else:
             test_string = test_setup + "\n" + prompt + code + "\n" + test
     elif language == "rust":
@@ -97,21 +112,20 @@ def stream_jsonl_all(filename: str) -> Iterable[Dict]:
 
 
 def evaluate_functional_correctness(
-        input_file: str = None,
-        tmp_dir: str = "./",
-        n_workers: int = 32,
-        timeout: float = 500.0,
-        problem_file: str = "../data/humaneval_python.jsonl.gz",
-        out_dir: str = None,
-        k: List[int] = [1, 10, 100],
-        test_groundtruth: bool = False,
-        example_test: bool = False,
+    input_file: str = None,
+    tmp_dir: str = "./",
+    n_workers: int = 32,
+    timeout: float = 500.0,
+    problem_file: str = "../data/humaneval_python.jsonl.gz",
+    out_dir: str = None,
+    k: List[int] = [1, 10, 100],
+    test_groundtruth: bool = False,
+    example_test: bool = False,
 ):
     if example_test:
         print("Example test...")
 
-    problems = read_dataset(problem_file,
-                            dataset_type="humaneval")
+    problems = read_dataset(problem_file, dataset_type="humaneval")
     sample_jsonl = stream_jsonl_all(input_file)
 
     if example_test:
@@ -121,7 +135,9 @@ def evaluate_functional_correctness(
     if out_dir is not None:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        out_file = os.path.join(out_dir, input_file.split('/')[-1].replace(".jsonl", suffix))
+        out_file = os.path.join(
+            out_dir, input_file.split("/")[-1].replace(".jsonl", suffix)
+        )
     else:
         out_file = os.path.join(input_file.replace(".jsonl", suffix))
 
@@ -149,10 +165,19 @@ def evaluate_functional_correctness(
                     lang = "js"
                 tmp_dir_ = os.path.join(tmp_dir, lang, "evaluation")
                 sample["generation"] = sample["canonical_solution"]
-                sample["test_code"] = process_humaneval_test(sample, problems, example_test)
+                sample["test_code"] = process_humaneval_test(
+                    sample, problems, example_test
+                )
                 if sample["test_code"] is None:
                     continue
-                args = (task_id, sample, lang, timeout, tmp_dir_, completion_id[task_id])
+                args = (
+                    task_id,
+                    sample,
+                    lang,
+                    timeout,
+                    tmp_dir_,
+                    completion_id[task_id],
+                )
                 future = executor.submit(check_correctness, *args)
                 futures.append(future)
                 completion_id[task_id] += 1
@@ -164,7 +189,11 @@ def evaluate_functional_correctness(
                 lang = task_id.split("/")[0].lower()
                 if translation_mode:
                     task_id = sample["task_id"].split("/")[-1]
-                    lang = regex.findall("-to-.*-", input_file)[0].split("-to-")[-1].rstrip("-")
+                    lang = (
+                        regex.findall("-to-.*-", input_file)[0]
+                        .split("-to-")[-1]
+                        .rstrip("-")
+                    )
                     for l in LANGUAGE_NAME:
                         if l in lang:
                             lang = l
@@ -174,7 +203,9 @@ def evaluate_functional_correctness(
                     lang = "js"
                 tmp_dir_ = os.path.join(tmp_dir, lang, "evaluation")
                 sample["task_id"] = task_id
-                sample["test_code"] = process_humaneval_test(sample, problems, example_test)
+                sample["test_code"] = process_humaneval_test(
+                    sample, problems, example_test
+                )
                 if sample["test_code"] is None:
                     continue
                 if "completion_id" in sample:
@@ -208,8 +239,11 @@ def evaluate_functional_correctness(
     correct = np.array(correct)
     if evaluate_pass_at_k:
         ks = k
-        pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
-                     for k in ks if (total >= k).all()}
+        pass_at_k = {
+            f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
+            for k in ks
+            if (total >= k).all()
+        }
         print(pass_at_k)
     else:
         print("Total:", np.sum(total))
@@ -222,7 +256,7 @@ def evaluate_functional_correctness(
             for r in res:
                 fp.write((json.dumps(r[1]) + "\n").encode("utf-8"))
     else:
-        fp = open(out_file, 'w')
+        fp = open(out_file, "w")
         for res in results.values():
             for r in res:
                 fp.write(json.dumps(r[1]) + "\n")
