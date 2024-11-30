@@ -90,8 +90,7 @@ aria2c -x 16 -s 16 -j 4 --continue=true -i urls.txt
 ```
 Run the following command to get the full model weights:
 ```bash
-cat codegeex_13b.tar.gz.* > codegeex_13b.tar.gz
-tar xvf codegeex_13b.tar.gz
+cat codegeex_13b.tar.gz.* | tar zxvf -
 ```
 
 ### Inference on GPUs
