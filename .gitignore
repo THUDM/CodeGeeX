@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+
+lib/
+codegeex.egg-info/
