@@ -26,11 +26,16 @@ if args.part is not None:
 else:
     os.environ["PART"] = "-1"
 
-print("=================RANK_TABLE_FILE: ", os.environ["RANK_TABLE_FILE"], flush=True)
+print("=================RANK_TABLE_FILE: ", os.environ.get("RANK_TABLE_FILE", "not set"), flush=True)
 print("=================ms import done", flush=True)
 time.sleep(10)
-os.system(
-    "cp /home/work/rank_table/jobstart_hccl.json /home/work/sfs/xx; sudo chmod +777 /home/work/rank_table/jobstart_hccl.json")
+# Use configurable temp directory (platform-specific for ModelArts)
+temp_dir = os.environ.get("MODELARTS_TEMP_DIR", "/home/work/sfs/xx")
+rank_table_source = "/home/work/rank_table/jobstart_hccl.json"
+if os.path.exists(rank_table_source):
+    os.system(f"cp {rank_table_source} {temp_dir}; sudo chmod +777 {rank_table_source}")
+else:
+    print(f"Warning: {rank_table_source} does not exist. Skipping copy.")
 ret = os.system(f"cd {log_path} && bash {args.script} 2>&1 | tee output.log")
 if os.environ.get("RANK_ID") == 0:
     log_dir = os.path.join(args.work_dir, "logs", os.environ.get("JOB_ID"))

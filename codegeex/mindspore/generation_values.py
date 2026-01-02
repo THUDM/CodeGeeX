@@ -199,9 +199,15 @@ def run_predict(model_predict, config, args_opt, rank):
                                           init, batch_valid_length)
     output = output_logits.asnumpy()
     if rank == 0:
-        np.save("/home/work/sfs/xx/pangu_alpha_code/output_6_7375_8.13.npy", output)  # TODO: set as current save path
-        os.system(
-            "chmod 777 /home/work/sfs/xx/pangu_alpha_code/output_6_7375_8.13.npy")  # TODO: set as current save path
+        # Use configurable output path
+        output_dir = getattr(args_opt, 'output_path', './output')
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, "output_values.npy")
+        np.save(output_file, output)
+        # Only try to chmod if on Unix-like system
+        if os.name != 'nt':
+            os.system(f"chmod 777 {output_file}")
+        print(f"== Output saved to: {output_file}")
         print("== Output shape: ", output.shape)
 
 

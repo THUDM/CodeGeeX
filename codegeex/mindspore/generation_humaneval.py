@@ -15,6 +15,7 @@
 """
 PanGu predict run
 """
+import gzip
 import json
 import os
 import time
@@ -198,25 +199,74 @@ def run_predict(model_predict, config, args_opt, rank):
     # Define tokenizer
     tokenizer = CodeTokenizer(mode='6b')
 
-    # Tokenize input sentence to ids
-    humaneval_path = '/home/work/sfs/xx/human_eval_x/data/humaneval_cpp.jsonl'  # TODO: set as current humaneval path
-    humaneval = open(humaneval_path, 'r').readlines()
-    humaneval = [json.loads(task) for task in humaneval if len(task) != 0]
+    # Determine language (default to cpp for backward compatibility)
+    lang = getattr(args_opt, 'language', 'cpp') or 'cpp'
+    lang_lower = lang.lower()
+    
+    # Language tag mapping
+    lang_tags = {
+        'cpp': '// language: C++\n',
+        'c++': '// language: C++\n',
+        'python': '# language: Python\n',
+        'java': '// language: Java\n',
+        'javascript': '// language: JavaScript\n',
+        'js': '// language: JavaScript\n',
+        'go': '// language: Go\n',
+    }
+    tag = lang_tags.get(lang_lower, f'// language: {lang}\n')
+
+    # Determine input path
+    if hasattr(args_opt, 'input_path') and args_opt.input_path:
+        humaneval_path = args_opt.input_path
+    else:
+        # Try relative path from current script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+        default_path = os.path.join(repo_root, 'codegeex', 'benchmark', 'humaneval-x', 
+                                   lang_lower, 'data', f'humaneval_{lang_lower}.jsonl.gz')
+        # Check if .gz file exists, otherwise try .jsonl
+        if os.path.exists(default_path):
+            humaneval_path = default_path
+        else:
+            default_path_jsonl = default_path.replace('.jsonl.gz', '.jsonl')
+            if os.path.exists(default_path_jsonl):
+                humaneval_path = default_path_jsonl
+            else:
+                # Fallback: use input_path or raise error
+                humaneval_path = default_path_jsonl
+                if rank == 0:
+                    print(f"Warning: Default path {humaneval_path} does not exist. Please set --input_path")
+    
+    # Open file (handle .gz files)
+    if humaneval_path.endswith('.gz'):
+        with gzip.open(humaneval_path, 'rt') as f:
+            humaneval = [json.loads(line) for line in f if line.strip()]
+    else:
+        with open(humaneval_path, 'r') as f:
+            humaneval = [json.loads(line) for line in f if line.strip()]
+    
     samples = [task['prompt'] for task in humaneval]
     generations = []
     batch_size = config.batch_size
     verbose = (rank % 8 == 0)
-    part = int(args_opt.part)
+    part = int(args_opt.part) if args_opt.part else 0
     gen_times = 12 # TODO: set as generation times of current task
     print(f"gen times: {gen_times}, part: {part}")
-    save_path = f'/home/work/sfs/xx/pangu_alpha_code/generation_humanevalx/cpp/temp_{args_opt.temperature}/samples_{args_opt.load_ckpt_epoch}_part_{part}.jsonl'  # TODO: set as current save path
+    
+    # Determine output path
+    output_dir = getattr(args_opt, 'output_path', './output')
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, 
+                            f'humaneval_{lang_lower}_temp_{args_opt.temperature}_samples_{args_opt.load_ckpt_epoch}_part_{part}.jsonl')
+    
     if rank == 0 and not os.path.exists(save_path):
         os.makedirs(os.path.split(save_path)[0], exist_ok=True)
-        f = open(save_path, 'w')
-        f.close()
-        os.system(f'sudo chmod 777 {save_path}')
+        with open(save_path, 'w') as f:
+            pass  # Create empty file
+        if os.name != 'nt':  # Only on Unix-like systems
+            os.system(f'chmod 777 {save_path}')
+    
     for i, sample in enumerate(samples):
-        tag = "// language: C++\n"
         sample = tag + sample
         if rank % 8 == 0:
             print(f"=================== prompt {i} ====================")
