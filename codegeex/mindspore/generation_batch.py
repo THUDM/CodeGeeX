@@ -226,15 +226,19 @@ def run_predict(model_predict, config, args_opt, rank):
     generations = []
     batch_size = config.batch_size
     verbose = (rank % 8 == 0)
-    save_path = f'/home/work/sfs/xx/pangu_alpha_code/generation_batch/{args_opt.temperature}.txt'  # TODO: set as current save path
-    save_dir = os.path.split(save_path)[0]
+    
+    # Use configurable output path
+    output_dir = getattr(args_opt, 'output_path', './output')
+    save_dir = os.path.join(output_dir, 'generation_batch')
+    save_path = os.path.join(save_dir, f'temp_{args_opt.temperature}.txt')
+    
     if rank == 0:
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        os.makedirs(save_dir, exist_ok=True)
         if not os.path.exists(save_path):
-            f = open(save_path, 'w')
-            f.close()
-        os.system(f'sudo chmod 777 -R {save_dir}')
+            with open(save_path, 'w') as f:
+                pass  # Create empty file
+        if os.name != 'nt':  # Only on Unix-like systems
+            os.system(f'chmod 777 -R {save_dir}')
     batch = []
     input_length = []
     sample_ids = []

@@ -219,9 +219,13 @@ def run_train(args_opt):
         #     args_opt.has_trained_steps = int(param_dict["step_num"].data.asnumpy())
         # args_opt.has_trained_steps = 9000
 
-        os.mkdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/1/rank_{rank}')
+        # Use configurable cache directory (platform-specific for checkpoint synchronization)
+        cache_base = os.environ.get('CODEGEEX_CACHE_BASE', '/home/work/sfs/cache')
+        batch_job_id = os.environ.get('BATCH_JOB_ID', 'default_job')
+        cache_dir_1 = os.path.join(cache_base, batch_job_id, '1')
+        os.makedirs(os.path.join(cache_dir_1, f'rank_{rank}'), exist_ok=True)
         while True:
-            num = len(os.listdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/1'))
+            num = len([d for d in os.listdir(cache_dir_1) if os.path.isdir(os.path.join(cache_dir_1, d)) and d.startswith('rank_')])
             if num == device_num:
                 break
             if rank % 64 == 0:
@@ -280,9 +284,13 @@ def run_train(args_opt):
         net_not_load = load_param_into_net(pangu_alpha_with_loss, param_dict)
         opt_not_load = load_param_into_net(optimizer, param_dict)
 
-        os.mkdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/2/rank_{rank}')
+        # Use configurable cache directory (platform-specific for checkpoint synchronization)
+        cache_base = os.environ.get('CODEGEEX_CACHE_BASE', '/home/work/sfs/cache')
+        batch_job_id = os.environ.get('BATCH_JOB_ID', 'default_job')
+        cache_dir_2 = os.path.join(cache_base, batch_job_id, '2')
+        os.makedirs(os.path.join(cache_dir_2, f'rank_{rank}'), exist_ok=True)
         while True:
-            num = len(os.listdir(f'/home/work/sfs/cache/{os.environ["BATCH_JOB_ID"]}/2'))
+            num = len([d for d in os.listdir(cache_dir_2) if os.path.isdir(os.path.join(cache_dir_2, d)) and d.startswith('rank_')])
             if num == device_num:
                 break
             if rank % 64 == 0:
@@ -317,7 +325,7 @@ def run_train(args_opt):
                     sink_size=args_opt.sink_size, dataset_sink_mode=True)
     finally:
         if args_opt.profiling:
-            jobid = os.environ["BATCH_JOB_ID"]
+            jobid = os.environ.get("BATCH_JOB_ID", "default_job")
             profiler.analyse()
             rank_id = rank
             if context.get_context("save_graphs"):

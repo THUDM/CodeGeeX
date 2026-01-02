@@ -310,6 +310,14 @@ def add_inference_params(opt):
                      default="true",
                      choices=["true", "false"],
                      help="Whether enable state reuse")
+    opt.add_argument("--output_path",
+                     type=str,
+                     default="./output",
+                     help="Output path for generated files")
+    opt.add_argument("--input_path",
+                     type=str,
+                     default=None,
+                     help="Input path for data files (e.g., HumanEval dataset)")
 
 
 def add_training_params(opt):

@@ -118,8 +118,14 @@ def create_dataset(batch_size, data_path, args_opt, device_num=1, rank=0, drop=T
     num_parallel_workers = 4
     train_data = get_code_data_train(data_path, args_opt, skip_num=(skip_num // num_parallel_workers))
     if train_and_eval:
-        val_data = get_code_data_eval("/home/work/sfs/xx/data_valid",
-                                      args_opt)  # TODO: set as current validation set path
+        # Use eval_data_url if provided, otherwise skip validation
+        val_data_path = getattr(args_opt, 'eval_data_url', None)
+        if val_data_path:
+            val_data = get_code_data_eval(val_data_path, args_opt)
+        else:
+            if rank == 0:
+                print("Warning: train_and_eval is True but eval_data_url is not set. Skipping validation data.")
+            val_data = None
     else:
         val_data = None
 
