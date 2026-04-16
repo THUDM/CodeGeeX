@@ -1,19 +1,67 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/" target="_blank">Blog</a> | 🪧 <a href="https://models.aminer.cn/codegeex/playground" target="_blank">DEMO</a> | 🤖 <a href="https://codegeex.cn/download/request" target="_blank">Download Model</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">Paper</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
+    🏠 <a href="https://codegeex.cn" target="_blank">Homepage</a> | 🚀 <a href="https://github.com/zai-org/CodeGeeX4" target="_blank">CodeGeeX4</a> | 🤗 <a href="https://huggingface.co/THUDM/codegeex4-all-9b" target="_blank">CodeGeeX4-ALL-9B</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">Original Paper</a> | 🌐 <a href="README_zh.md" target="_blank">中文</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> supported | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1s118ffrp-mpKKhQD0tKBmzNZVCyEZLw" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="resources/zh/wechat.md"target="_blank">WeChat</a>
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">JetBrains</a> | 🧭 <a href="https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md" target="_blank">Local Mode Guide</a> | 👋 Join our <a href="https://discord.gg/8gjHdkmAN6" target="_blank">Discord</a>, <a href="https://join.slack.com/t/codegeexworkspace/shared_invite/zt-1s118ffrp-mpKKhQD0tKBmzNZVCyEZLw" target="_blank">Slack</a>, <a href="https://t.me/+IipIayJ32B1jOTg1" target="_blank">Telegram</a>, <a href="resources/zh/wechat.md"target="_blank">WeChat</a>
 </p>
 
 
 
-🌟 The newest [CodeGeeX4](https://github.com/THUDM/CodeGeeX4) has been released. | 最新一代 [CodeGeeX4](https://github.com/THUDM/CodeGeeX4) 模型已经正式开源。
+🌟 The newest [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) has been released. | 最新一代 [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) 模型已经正式开源。
+
+> [!IMPORTANT]
+> This repository hosts the original CodeGeeX 13B research release and HumanEval-X materials.
+> If you want the current model family, current local deployment flow, or the latest IDE integrations, start with [CodeGeeX4](https://github.com/zai-org/CodeGeeX4).
+
+## Start here for current CodeGeeX releases
+
+| What you want | Current entry point | Why |
+|:--|:--|:--|
+| The latest open CodeGeeX model | [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) and [CodeGeeX4-ALL-9B on Hugging Face](https://huggingface.co/THUDM/codegeex4-all-9b) | Current open release for completion, function calling, repository Q&A, and local deployment |
+| A simple local quickstart | [`ollama run codegeex4`](https://github.com/zai-org/CodeGeeX4#ollama) | Lowest-friction way to try the latest model locally |
+| VS Code or JetBrains integration | [VS Code extension](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex) and [JetBrains plugin](https://plugins.jetbrains.com/plugin/20587-codegeex) | Current editor integrations |
+| Connect a local model to the IDE plugins | [CodeGeeX4 Local Mode Guideline](https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md) | Recommended path for current local inference plus plugin usage |
+| The historical 13B model and benchmark | Stay in this repository | This repo still documents the original multilingual release and HumanEval-X |
+
+## Repository scope and newer releases
+
+This repository is best treated as the historical research home for:
+
+- The original CodeGeeX 13B multilingual model release.
+- Legacy inference scripts for the 13B checkpoints.
+- HumanEval-X benchmark materials and the original research paper.
+
+If you are looking for newer CodeGeeX generations instead:
+
+- [CodeGeeX4](https://github.com/zai-org/CodeGeeX4): current recommended model family and local mode workflow.
+- [CodeGeeX2](https://github.com/THUDM/CodeGeeX2): newer than the original 13B release, but older than CodeGeeX4.
+
+## Plugin and IDE integration overview
+
+| Integration | Current link | Notes |
+|:--|:--|:--|
+| VS Code | [Marketplace extension](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex) | Best starting point for most editor users |
+| JetBrains | [Plugin page](https://plugins.jetbrains.com/plugin/20587-codegeex) | Supports IntelliJ IDEA, PyCharm, GoLand, CLion, and other JetBrains IDEs |
+| Local model + plugin integration | [Local Mode Guideline](https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md) | Recommended way to connect current local models to the plugins |
+| Legacy plugin implementation details | [vscode-extension/README.md](./vscode-extension/README.md) | Historical extension docs that match this repository's older model generation |
+
+## Common inference setup troubleshooting
+
+- If you are starting from scratch, use CodeGeeX4 instead of the legacy 13B stack in this repository. It is easier to deploy and better aligned with the current plugins.
+- For the legacy 13B scripts below, make sure `configs/codegeex_13b.sh` points to the extracted checkpoint directory before running any inference command.
+- Model download links in `urls.txt` are temporary. If `aria2c` fails with expired or forbidden URLs, request fresh links before retrying.
+- Pick the inference script that matches your hardware: standard, quantized, or model-parallel. The legacy scripts in this repo assume much larger GPU memory than CodeGeeX4.
+- If you want a modern local workflow with less setup, use [CodeGeeX4 on Ollama](https://github.com/zai-org/CodeGeeX4#ollama) or the [Local Mode Guideline](https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md).
 
 - [CodeGeeX: A Multilingual Code Generation Model](#codegeex-a-multilingual-code-generation-model)
+  - [Start here for current CodeGeeX releases](#start-here-for-current-codegeex-releases)
+  - [Repository scope and newer releases](#repository-scope-and-newer-releases)
+  - [Plugin and IDE integration overview](#plugin-and-ide-integration-overview)
+  - [Common inference setup troubleshooting](#common-inference-setup-troubleshooting)
   - [News](#news)
-  - [Getting Started](#getting-started)
+  - [Legacy CodeGeeX 13B quickstart](#legacy-codegeex-13b-quickstart)
     - [Installation](#installation)
     - [Model Weights](#model-weights)
     - [Inference on GPUs](#inference-on-gpus)
@@ -64,7 +112,7 @@ We introduce CodeGeeX, a large-scale multilingual code generation model with 13 
  
 * **2022-09-30**: We release the cross-platform source code and models weights for both Ascend and NVIDIA platforms.
 
-## Getting Started
+## Legacy CodeGeeX 13B quickstart
 
 CodeGeeX is initially implemented in Mindspore and trained Ascend 910 AI Processors. We provide a torch-compatible version based on [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) to facilitate usage on GPU platforms.
 ### Installation
