@@ -22,6 +22,15 @@ Please kindly let us know if you encounter any problem or have any suggestion, v
   - [Translation mode](#translation-mode)
   - [Prompt mode (Experimental)](#prompt-mode-experimental)
 
+## IDE and integration overview
+
+| Integration | Where to start | Notes |
+|---|---|---|
+| VS Code extension | this README | best entrypoint for editor-side completion and prompt mode |
+| JetBrains plugin | root `README.md` plugin link | install from JetBrains Marketplace, IDE version 2021.1+ |
+| Cloud Studio | root `README.md` Cloud Studio link | browser-based environment for trying CodeGeeX without local IDE setup |
+| API examples | `../api/README_zh.md` | useful when you need service-to-service integration instead of IDE plugins |
+
 ## Basic Usage
 Make sure vscode version is >= 1.68.0. Install the extension and enable it globally. There are four modes of usage:
 
