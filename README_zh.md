@@ -1,17 +1,46 @@
 <img src="resources/logo/codegeex_logo.png">
 
 <p align="center">
-    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 📖 <a href="https://models.aminer.cn/codegeex/blog/index_zh.html" target="_blank">博客</a> | 🪧 <a href="https://models.aminer.cn/codegeex/zh-CN/playground" target="_blank">示例</a> | 🤖 <a href="https://models.aminer.cn/codegeex/download/request" target="_blank">模型下载</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">论文</a> | 🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/README.md" target="_blank">English</a>
+    🏠 <a href="https://models.aminer.cn/codegeex/zh-CN" target="_blank">主页</a> | 🚀 <a href="https://github.com/zai-org/CodeGeeX4" target="_blank">CodeGeeX4</a> | 🤗 <a href="https://huggingface.co/THUDM/codegeex4-all-9b" target="_blank">CodeGeeX4-ALL-9B</a> | 📄 <a href="https://arxiv.org/abs/2303.17568" target="_blank">原始论文</a> | 🌐 <a href="./README.md" target="_blank">English</a>
 </p>
 <p align="center">
-    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Jetbrains</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">Cloud Studio</a> 插件 | 👋 欢迎加入 <a href="resources/zh/wechat.md"target="_blank">微信开发者交流群</a> 
+    🛠 <a href="https://marketplace.visualstudio.com/items?itemName=aminer.codegeex" target="_blank">VS Code</a>, <a href="https://plugins.jetbrains.com/plugin/20587-codegeex" target="_blank">JetBrains</a> | 🧭 <a href="https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md" target="_blank">本地模式指南</a> | 👋 欢迎加入 <a href="resources/zh/wechat.md"target="_blank">微信开发者交流群</a> 
 </p>
 
-🌟 [CodeGeeX2](https://github.com/THUDM/CodeGeeX2) 已推出，更强，更快，更轻量。
+🌟 最新一代 [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) 已开源。
+
+> [!IMPORTANT]
+> 本仓库主要保存 CodeGeeX 初代 13B 研究版本和 HumanEval-X 基准材料。
+> 如果你想使用当前模型家族、最新本地部署流程或最新 IDE 集成，建议先从 [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) 开始。
+
+## 当前版本入口（CodeGeeX4）
+
+| 你的目标 | 推荐入口 | 说明 |
+|:--|:--|:--|
+| 使用最新开源 CodeGeeX 模型 | [CodeGeeX4](https://github.com/zai-org/CodeGeeX4) + [CodeGeeX4-ALL-9B](https://huggingface.co/THUDM/codegeex4-all-9b) | 当前推荐的开源模型与工作流 |
+| 本地快速体验 | [`ollama run codegeex4`](https://github.com/zai-org/CodeGeeX4#ollama) | 最低门槛的本地启动方式 |
+| 使用 VS Code / JetBrains 插件 | [VS Code 插件](https://marketplace.visualstudio.com/items?itemName=aminer.codegeex) + [JetBrains 插件](https://plugins.jetbrains.com/plugin/20587-codegeex) | 当前 IDE 集成入口 |
+| 本地模型接入插件 | [CodeGeeX4 本地模式指南](https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md) | 推荐的本地推理 + 插件协同路径 |
+| 查看初代 13B 与 HumanEval-X 资料 | 本仓库 | 该仓库仍保留初代研究与评测材料 |
+
+## 仓库定位与版本关系
+
+本仓库更适合作为以下内容的历史研究主页：
+
+- CodeGeeX 初代 13B 多语言模型发布内容；
+- 初代 13B 推理脚本与相关说明；
+- HumanEval-X 基准与对应论文材料。
+
+如果你希望使用较新的 CodeGeeX 版本：
+
+- [CodeGeeX4](https://github.com/zai-org/CodeGeeX4)：当前推荐版本；
+- [CodeGeeX2](https://github.com/THUDM/CodeGeeX2)：早于 CodeGeeX4、但晚于初代 13B。
 
 - [CodeGeeX: 多语言代码生成模型](#codegeex-多语言代码生成模型)
+  - [当前版本入口（CodeGeeX4）](#当前版本入口codegeex4)
+  - [仓库定位与版本关系](#仓库定位与版本关系)
   - [新闻](#新闻)
-  - [使用指南](#使用指南)
+  - [初代 CodeGeeX 13B 使用指南](#初代-codegeex-13b-使用指南)
     - [安装](#安装)
     - [模型权重](#模型权重)
     - [用GPU进行推理](#用gpu进行推理)
@@ -60,7 +89,7 @@ CodeGeeX是一个具有130亿参数的多编程语言代码生成预训练模型
 * **2022-12-04**: 我们开源了量化代码（需要更少的显存：27GB -> 15GB）以及模型并行代码（可以运行在多个显存至少8GB的GPUs上）。
 
 * **2022-09-30**: 我们开源了跨平台代码和模型权重，同时支持昇腾和英伟达平台。
-## 使用指南
+## 初代 CodeGeeX 13B 使用指南
 
 CodeGeeX最初使用Mindspore框架实现，并在昇腾910AI芯片上进行训练。为适配更多平台，我们将其转换到[Megatron-LM](https://github.com/NVIDIA/Megatron-LM)框架，支持Pytorch+GPU环境。
 ### 安装
