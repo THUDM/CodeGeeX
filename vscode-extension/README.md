@@ -1,6 +1,6 @@
 ![codegeex_logo](../resources/logo/codegeex_logo.png)
 
-🌐 <a href="https://github.com/THUDM/CodeGeeX/blob/main/vscode-extension/README_zh.md" target="_blank">中文</a>
+🌐 <a href="https://github.com/zai-org/CodeGeeX/blob/main/vscode-extension/README_zh.md" target="_blank">中文</a>
 
 ![CodeGeeX vscode extension version](https://img.shields.io/visual-studio-marketplace/v/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
 ![CodeGeeX vscode extension last update](https://img.shields.io/visual-studio-marketplace/last-updated/aminer.codegeex?colorA=0B9FE0&colorB=brightgreen)
@@ -10,7 +10,7 @@
 
 We introduce CodeGeeX, a large-scale multilingual code generation model with 13 billion parameters, pretrained on a large code corpus of more than 20 programming languages. With CodeGeeX, we can generate codes by only providing natural language descriptions, complete any code snippet, or translate codes to other programming languages, etc. CodeGeeX also provides customizable features (**Prompt Mode**) to help you configure your own programming assistant. Happy coding!
 
-Please search "codegeex" in VS Code Marketplace to download it for free (minimum version requirement of VS Code is 1.68.0). For more information, please check out our [Homepage](https://models.aminer.cn/codegeex/) and [GitHub repo](https://github.com/THUDM/CodeGeeX).
+Please search "codegeex" in VS Code Marketplace to download it for free (minimum version requirement of VS Code is 1.68.0). For more information, please check out our [Homepage](https://models.aminer.cn/codegeex/) and [GitHub repo](https://github.com/zai-org/CodeGeeX).
 
 Please kindly let us know if you encounter any problem or have any suggestion, via [codegeex@aminer.cn](mailto:codegeex@aminer.cn).
 
@@ -27,9 +27,9 @@ Please kindly let us know if you encounter any problem or have any suggestion, v
 | Integration | Where to start | Notes |
 |---|---|---|
 | VS Code extension | this README | best entrypoint for editor-side completion and prompt mode |
-| JetBrains plugin | root `README.md` plugin link | install from JetBrains Marketplace, IDE version 2021.1+ |
-| Cloud Studio | root `README.md` Cloud Studio link | browser-based environment for trying CodeGeeX without local IDE setup |
+| JetBrains plugin | [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/20587-codegeex) | install from marketplace (IDE version 2021.1+) |
 | API examples | `../api/README_zh.md` | useful when you need service-to-service integration instead of IDE plugins |
+| Latest local-model workflow | [CodeGeeX4 local mode guide](https://github.com/zai-org/CodeGeeX4/blob/main/guides/Local_mode_guideline.md) | recommended path when pairing IDE plugins with current local models |
 
 ## Basic Usage
 Make sure vscode version is >= 1.68.0. Install the extension and enable it globally. There are four modes of usage:
